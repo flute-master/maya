@@ -46,6 +46,7 @@ import {
   countStoredMessages,
   downloadVault,
   bootVault,
+  keepLiveVault,
   loadVault,
   parseImport,
   patchReminder,
@@ -94,13 +95,13 @@ export function MayaApp() {
 
   useEffect(() => {
     setGpuOk(canRunOnDevice())
-    setVault(loadVault())
+    setVault((current) => keepLiveVault(current, loadVault()))
     setBootReady(true)
     let cancelled = false
     void hydrateVault().then((next) => {
       if (cancelled) return
       hydratedRef.current = true
-      setVault(next)
+      setVault((current) => keepLiveVault(current, next))
     })
     return () => {
       cancelled = true
@@ -109,7 +110,13 @@ export function MayaApp() {
 
   useEffect(() => {
     if ("serviceWorker" in navigator) {
-      void navigator.serviceWorker.register("/sw.js")
+      if (process.env.NODE_ENV === "development") {
+        void navigator.serviceWorker.getRegistrations().then((regs) =>
+          Promise.all(regs.map((reg) => reg.unregister()))
+        )
+      } else {
+        void navigator.serviceWorker.register("/sw.js")
+      }
     }
     const sync = () => setOnline(navigator.onLine)
     sync()
@@ -683,11 +690,23 @@ export function MayaApp() {
       )
       return
     }
+    setError("Allow screen capture in the browser prompt, then pick a window.")
     try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-        audio: false,
-      })
+      const stream = await Promise.race([
+        navigator.mediaDevices.getDisplayMedia({
+          video: true,
+          audio: false,
+        }),
+        new Promise<never>((_, reject) => {
+          window.setTimeout(() => {
+            const err = new Error(
+              "Screen capture did not start. Allow it in the prompt, or attach a screenshot with the paperclip."
+            )
+            err.name = "TimeoutError"
+            reject(err)
+          }, 15000)
+        }),
+      ])
       const track = stream.getVideoTracks()[0]
       if (!track) {
         setError("No screen track came through. Try the paperclip with a screenshot.")

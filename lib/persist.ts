@@ -31,8 +31,8 @@ export async function writeDeviceMemory(vault: MemoryVault): Promise<boolean> {
 }
 
 export async function hydrateVault(): Promise<MemoryVault> {
-  const local = loadVault()
   const disk = await readDeviceMemory()
+  const local = loadVault()
   if (!hasStoredVault() && disk) {
     saveVault(disk)
     return disk

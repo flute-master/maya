@@ -288,6 +288,27 @@ export function saveVault(vault: MemoryVault) {
   window.localStorage.setItem(VAULT_KEY, JSON.stringify(vault))
 }
 
+export function vaultHasChat(vault: MemoryVault) {
+  return vault.conversations.some((conversation) => conversation.messages.length > 0)
+}
+
+/** Keep an in-progress thread if a later boot/hydrate snapshot is empty. */
+export function keepLiveVault(current: MemoryVault, incoming: MemoryVault) {
+  if (vaultHasChat(current) && !vaultHasChat(incoming)) return current
+  if (vaultHasChat(current) && vaultHasChat(incoming)) {
+    const currentCount = current.conversations.reduce(
+      (sum, item) => sum + item.messages.length,
+      0
+    )
+    const incomingCount = incoming.conversations.reduce(
+      (sum, item) => sum + item.messages.length,
+      0
+    )
+    if (currentCount > incomingCount) return current
+  }
+  return incoming
+}
+
 export function activeConversation(vault: MemoryVault): Conversation {
   return (
     vault.conversations.find((conversation) => conversation.id === vault.activeId) ??
