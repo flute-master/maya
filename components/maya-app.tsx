@@ -87,6 +87,10 @@ export function MayaApp() {
   const retryRef = useRef<string | null>(null)
   const liveRef = useRef<HTMLAudioElement | null>(null)
   const hydratedRef = useRef(false)
+  const vaultRef = useRef(vault)
+  const sendingLock = useRef(false)
+  const sendGen = useRef(0)
+  vaultRef.current = vault
 
   const personality = vault.personality
   const conversation = activeConversation(vault)
@@ -101,7 +105,10 @@ export function MayaApp() {
     void hydrateVault().then((next) => {
       if (cancelled) return
       hydratedRef.current = true
-      setVault((current) => keepLiveVault(current, next))
+      setVault((current) => {
+        if (sendingLock.current) return current
+        return keepLiveVault(current, next)
+      })
     })
     return () => {
       cancelled = true
@@ -303,13 +310,21 @@ export function MayaApp() {
       const trimmed = text.trim()
       if (!trimmed) return
 
+      const snapshot = vaultRef.current
+      const personalityNow = snapshot.personality
+      const existing = activeConversation(snapshot).messages
+
       if (isSpeakCommand(trimmed)) {
-        const last = messages.filter(
+        const last = existing.filter(
           (message) => message.role === "assistant" && message.content
         ).at(-1)
         if (last) playVoice(last.content, last.id)
         return
       }
+
+      if (sendingLock.current) return
+      sendingLock.current = true
+      const gen = ++sendGen.current
 
       try {
         haltVoice()
@@ -317,7 +332,6 @@ export function MayaApp() {
         /* sending still works if voice teardown fails */
       }
 
-      abortRef.current?.abort()
       const abort = new AbortController()
       abortRef.current = abort
       retryRef.current = trimmed
@@ -326,6 +340,7 @@ export function MayaApp() {
 
       const approved =
         typeof retry === "object" ? retry.approved : undefined
+      const isRedo = retry !== false
       const userMessage: ChatMessage = {
         id: newId(),
         role: "user",
@@ -339,21 +354,28 @@ export function MayaApp() {
         createdAt: Date.now(),
       }
 
-      let nextMessages: ChatMessage[] = []
-      setVault((current) => {
-        const existing = activeConversation(current).messages
-        const source =
-          approved && existing.at(-1)?.role === "assistant"
-            ? existing.slice(0, -1)
-            : existing
-        nextMessages = retry
-          ? source
-          : [...source.filter((item) => item.id !== assistantMessage.id), userMessage]
-        const facts = retry ? [] : extractFacts(trimmed)
-        const learned = retry
-          ? current.learned
-          : updateLearned(current.learned, trimmed)
-        const withMessages = withActiveMessages(current, [
+      const source =
+        approved && existing.at(-1)?.role === "assistant"
+          ? existing.slice(0, -1)
+          : existing
+      const nextMessages: ChatMessage[] = isRedo
+        ? source
+        : [...source.filter((item) => item.id !== assistantMessage.id), userMessage]
+
+      if (!nextMessages.length || nextMessages.at(-1)?.role !== "user") {
+        sendingLock.current = false
+        setIsSending(false)
+        setError("Say something, then tap send — Enter also sends.")
+        return
+      }
+
+      const facts = isRedo ? [] : extractFacts(trimmed)
+      const learned = isRedo
+        ? snapshot.learned
+        : updateLearned(snapshot.learned, trimmed)
+
+      setVault((latest) => {
+        const withMessages = withActiveMessages(latest, [
           ...nextMessages,
           assistantMessage,
         ])
@@ -366,121 +388,117 @@ export function MayaApp() {
           learned,
         }
       })
-      const plan = retry ? null : parsePlan(intendedMeaning(trimmed))
-      const facts = retry ? [] : extractFacts(trimmed)
-      const learned = retry
-        ? vault.learned
-        : updateLearned(vault.learned, trimmed)
 
-      if (plan) {
-        if (
-          typeof Notification !== "undefined" &&
-          Notification.permission === "default" &&
-          (plan.kind === "reminder" || plan.kind === "alarm")
-        ) {
-          void Notification.requestPermission()
-        }
-
-        let reply = ""
-        let apply = (current: typeof vault) => current
-        if (plan.kind === "need-time") {
-          reply =
-            "Tell me when — in 10 minutes, at 7pm, tomorrow at 9. I’ll hold it in this app and ping you here. I can’t set the Clock app on your phone without Google login."
-        } else if (plan.kind === "reminder" || plan.kind === "alarm") {
-          const item = makeReminder(plan)
-          const cal = googleCalendarUrl(item.text, item.at)
-          reply = `Set. ${item.kind === "alarm" ? "Alarm" : "Reminder"} for ${formatWhen(item.at)}: ${item.text}. I’ll speak it here if this tab is open. Optional — add it in Google Calendar:\n${cal}`
-          apply = (current) => upsertReminder(current, item)
-        } else if (plan.kind === "task") {
-          const item = makeTask(plan.label)
-          reply = `On the list: ${item.text}. Say “what’s on my list” anytime, or “mark ${item.text} done”.`
-          apply = (current) => upsertTask(current, item)
-        } else if (plan.kind === "task-done") {
-          const match = (vault.tasks ?? []).find((item) =>
-            item.text.toLowerCase().includes(plan.label.toLowerCase())
-          )
-          if (match) {
-            reply = `Checked off: ${match.text}.`
-            apply = (current) => patchTask(current, match.id, { done: true })
-          } else {
-            reply = `I don’t see “${plan.label}” on the list. Say “add a task: …” first.`
-          }
-        } else {
-          const rems = (vault.reminders ?? []).filter((item) => !item.done)
-          const todos = (vault.tasks ?? []).filter((item) => !item.done)
-          const remLines = rems.length
-            ? rems
-                .map(
-                  (item) =>
-                    `• ${item.kind} · ${formatWhen(item.at)} · ${item.text}`
-                )
-                .join("\n")
-            : "No open reminders."
-          const taskLines = todos.length
-            ? todos.map((item) => `• ${item.text}`).join("\n")
-            : "No open tasks."
-          reply = `Reminders\n${remLines}\n\nTasks\n${taskLines}`
-        }
-
-        const filled: ChatMessage[] = [
-          ...nextMessages,
-          { ...assistantMessage, content: reply },
-        ]
-        setVault((current) => {
-          const withMsgs = withActiveMessages(apply(current), filled)
-          return {
-            ...withMsgs,
-            notes: upsertDigest(mergeFacts(withMsgs.notes, facts), filled),
-            learned,
-          }
-        })
-        setIsSending(false)
-        if (vault.prefs.speakReplies !== false) {
-          playVoice(reply, assistantMessage.id)
-        }
-        return
-      }
-
-      const memory = buildMemoryContext(
-        { ...vault, notes: mergeFacts(vault.notes, facts), learned },
-        nextMessages
-      )
-
-      const identity = readPublicIdentity(
-        [
-          ...vault.notes.map((note) => note.text),
-          ...nextMessages
-            .filter((message) => message.role === "user")
-            .map((message) => message.content),
-        ],
-        personality.callMe
-      )
-      const keepLearned = (extra: unknown) => {
-        if (!Array.isArray(extra)) return
-        const lines = extra.filter(
-          (line): line is string =>
-            typeof line === "string" && line.trim().length > 4
-        )
-        if (!lines.length) return
-        setVault((current) => ({
-          ...current,
-          notes: mergeFacts(current.notes, lines),
-        }))
-      }
+      const plan = isRedo ? null : parsePlan(intendedMeaning(trimmed))
 
       try {
+        if (plan) {
+          if (
+            typeof Notification !== "undefined" &&
+            Notification.permission === "default" &&
+            (plan.kind === "reminder" || plan.kind === "alarm")
+          ) {
+            void Notification.requestPermission()
+          }
+
+          let reply = ""
+          let apply = (current: typeof snapshot) => current
+          if (plan.kind === "need-time") {
+            reply =
+              "Tell me when — in 10 minutes, at 7pm, tomorrow at 9. I’ll hold it in this app and ping you here. I can’t set the Clock app on your phone without Google login."
+          } else if (plan.kind === "reminder" || plan.kind === "alarm") {
+            const item = makeReminder(plan)
+            const cal = googleCalendarUrl(item.text, item.at)
+            reply = `Set. ${item.kind === "alarm" ? "Alarm" : "Reminder"} for ${formatWhen(item.at)}: ${item.text}. I’ll speak it here if this tab is open. Optional — add it in Google Calendar:\n${cal}`
+            apply = (current) => upsertReminder(current, item)
+          } else if (plan.kind === "task") {
+            const item = makeTask(plan.label)
+            reply = `On the list: ${item.text}. Say “what’s on my list” anytime, or “mark ${item.text} done”.`
+            apply = (current) => upsertTask(current, item)
+          } else if (plan.kind === "task-done") {
+            const match = (snapshot.tasks ?? []).find((item) =>
+              item.text.toLowerCase().includes(plan.label.toLowerCase())
+            )
+            if (match) {
+              reply = `Checked off: ${match.text}.`
+              apply = (current) => patchTask(current, match.id, { done: true })
+            } else {
+              reply = `I don’t see “${plan.label}” on the list. Say “add a task: …” first.`
+            }
+          } else {
+            const rems = (snapshot.reminders ?? []).filter((item) => !item.done)
+            const todos = (snapshot.tasks ?? []).filter((item) => !item.done)
+            const remLines = rems.length
+              ? rems
+                  .map(
+                    (item) =>
+                      `• ${item.kind} · ${formatWhen(item.at)} · ${item.text}`
+                  )
+                  .join("\n")
+              : "No open reminders."
+            const taskLines = todos.length
+              ? todos.map((item) => `• ${item.text}`).join("\n")
+              : "No open tasks."
+            reply = `Reminders\n${remLines}\n\nTasks\n${taskLines}`
+          }
+
+          const filled: ChatMessage[] = [
+            ...nextMessages,
+            { ...assistantMessage, content: reply },
+          ]
+          setVault((latest) => {
+            const withMsgs = withActiveMessages(apply(latest), filled)
+            return {
+              ...withMsgs,
+              notes: upsertDigest(mergeFacts(withMsgs.notes, facts), filled),
+              learned,
+            }
+          })
+          if (snapshot.prefs.speakReplies !== false) {
+            playVoice(reply, assistantMessage.id)
+          }
+          return
+        }
+
+        const memory = buildMemoryContext(
+          { ...snapshot, notes: mergeFacts(snapshot.notes, facts), learned },
+          nextMessages
+        )
+
+        const identity = readPublicIdentity(
+          [
+            ...snapshot.notes.map((note) => note.text),
+            ...nextMessages
+              .filter((message) => message.role === "user")
+              .map((message) => message.content),
+          ],
+          personalityNow.callMe
+        )
+        const keepLearned = (extra: unknown) => {
+          if (!Array.isArray(extra)) return
+          const lines = extra.filter(
+            (line): line is string =>
+              typeof line === "string" && line.trim().length > 4
+          )
+          if (!lines.length) return
+          setVault((latest) => ({
+            ...latest,
+            notes: mergeFacts(latest.notes, lines),
+          }))
+        }
+
         let acc = ""
         const useDevice =
           !online &&
           !modelReady &&
-          vault.prefs.onDeviceModel !== false &&
+          snapshot.prefs.onDeviceModel !== false &&
           Boolean(deviceId)
 
         if (useDevice) {
           try {
             let hits: import("@/lib/types").SearchHit[] = []
             let searched = false
-            if (vault.prefs.allowSearch && online) {
+            if (snapshot.prefs.allowSearch && online) {
               const looked = await fetch("/api/lookup", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -488,7 +506,7 @@ export function MayaApp() {
                 body: JSON.stringify({
                   text: trimmed,
                   hometown: hometownFromNotes(
-                    vault.notes.map((note) => note.text)
+                    snapshot.notes.map((note) => note.text)
                   ),
                   identity,
                 }),
@@ -507,15 +525,15 @@ export function MayaApp() {
             const { replyOnDevice } = await import("@/lib/device-runtime")
             const deviceText = await replyOnDevice({
               messages: nextMessages,
-              personality,
+              personality: personalityNow,
               memory,
               hits,
-              onToken: (text) => {
-                acc = text
-                setMessages((current) =>
-                  current.map((message) =>
+              onToken: (chunk) => {
+                acc = chunk
+                setMessages((latest) =>
+                  latest.map((message) =>
                     message.id === assistantMessage.id
-                      ? { ...message, content: text }
+                      ? { ...message, content: chunk }
                       : message
                   )
                 )
@@ -540,13 +558,13 @@ export function MayaApp() {
                 role: message.role,
                 content: message.content,
               })),
-              personality,
+              personality: personalityNow,
               memory,
               learned,
-              allowSearch: vault.prefs.allowSearch && online,
-              useTrained: vault.prefs.useTrainedBrain !== false,
-              allowPython: vault.prefs.allowPython === true,
-              allowFileWrite: vault.prefs.allowFileWrite === true,
+              allowSearch: snapshot.prefs.allowSearch && online,
+              useTrained: snapshot.prefs.useTrainedBrain !== false,
+              allowPython: snapshot.prefs.allowPython === true,
+              allowFileWrite: snapshot.prefs.allowFileWrite === true,
               approved,
             }),
           })
@@ -601,24 +619,26 @@ export function MayaApp() {
             const { done, value } = await reader.read()
             if (done) break
             acc += decoder.decode(value, { stream: true })
-            const snapshot = acc
-            setMessages((current) =>
-              current.map((message) =>
+            const streamed = acc
+            setMessages((latest) =>
+              latest.map((message) =>
                 message.id === assistantMessage.id
-                  ? { ...message, content: snapshot, tools, pending }
+                  ? { ...message, content: streamed, tools, pending }
                   : message
               )
             )
           }
         }
 
-        if (vault.prefs.speakReplies !== false && acc.trim()) {
+        if (snapshot.prefs.speakReplies !== false && acc.trim()) {
           playVoice(acc, assistantMessage.id)
         }
       } catch (caught) {
-        setMessages((current) =>
-          current.filter((message) => message.id !== assistantMessage.id)
-        )
+        if (gen === sendGen.current) {
+          setMessages((latest) =>
+            latest.filter((message) => message.id !== assistantMessage.id)
+          )
+        }
         if ((caught as Error).name === "AbortError") return
         setError(
           caught instanceof Error
@@ -626,10 +646,13 @@ export function MayaApp() {
             : "Something went sideways. Try again."
         )
       } finally {
-        setIsSending(false)
+        if (gen === sendGen.current) {
+          sendingLock.current = false
+          setIsSending(false)
+        }
       }
     },
-    [messages, personality, playVoice, haltVoice, setMessages, vault, modelReady, online, deviceId]
+    [playVoice, haltVoice, setMessages, modelReady, online, deviceId]
   )
 
   const loadDevice = useCallback(async () => {
@@ -690,6 +713,18 @@ export function MayaApp() {
   }
 
   async function shareScreen() {
+    let embedded = false
+    try {
+      embedded = window.self !== window.top
+    } catch {
+      embedded = true
+    }
+    if (embedded) {
+      setError(
+        "Screen capture is blocked inside this embedded preview. Open Maya in its own tab, or attach a screenshot with the paperclip."
+      )
+      return
+    }
     if (!navigator.mediaDevices?.getDisplayMedia) {
       setError(
         "This browser cannot capture a screen still. Use the paperclip to attach a screenshot instead."
@@ -937,6 +972,7 @@ export function MayaApp() {
         onSend={send}
         onStop={() => {
           abortRef.current?.abort()
+          sendingLock.current = false
           setIsSending(false)
         }}
         speakReplies={vault.prefs.speakReplies !== false}

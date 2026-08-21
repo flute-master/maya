@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react"
 import { ArrowUp, Mic, Monitor, Paperclip, Square } from "lucide-react"
 
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -41,33 +41,46 @@ export function Composer({
   const boxRef = useRef<HTMLTextAreaElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const onSendRef = useRef(onSend)
+  const busyRef = useRef(busy)
+  const submittingRef = useRef(false)
   onSendRef.current = onSend
+  busyRef.current = busy
 
   function readBox() {
     return (boxRef.current?.value ?? value).trim()
   }
 
   function submit() {
+    if (submittingRef.current || busyRef.current) return
     const text = readBox()
     if (!text) return
+    submittingRef.current = true
     stopMic()
     onSendRef.current(text)
     setValue("")
     committedRef.current = ""
     if (boxRef.current) boxRef.current.value = ""
+    window.setTimeout(() => {
+      submittingRef.current = false
+    }, 400)
+  }
+
+  function onBoxKeyDown(
+    event: KeyboardEvent | ReactKeyboardEvent<HTMLTextAreaElement>
+  ) {
+    if (event.key !== "Enter" || event.shiftKey || event.isComposing) return
+    event.preventDefault()
+    event.stopPropagation()
+    submit()
   }
 
   useEffect(() => {
     const box = boxRef.current
     if (!box) return
-    function onKey(event: KeyboardEvent) {
-      if (event.key !== "Enter" || event.shiftKey || event.isComposing) return
-      event.preventDefault()
-      submit()
-    }
-    box.addEventListener("keydown", onKey)
+    const onKey = (event: KeyboardEvent) => onBoxKeyDown(event)
+    box.addEventListener("keydown", onKey, true)
     return () => {
-      box.removeEventListener("keydown", onKey)
+      box.removeEventListener("keydown", onKey, true)
       recRef.current?.abort()
     }
   }, [])
@@ -240,6 +253,8 @@ export function Composer({
           rows={1}
           value={value}
           onChange={(event) => setValue(event.target.value)}
+          onKeyDown={onBoxKeyDown}
+          enterKeyHint="send"
           placeholder={listening ? "Listening…" : `Message ${name}…`}
           aria-label={`Message ${name}`}
           className="max-h-36 min-h-11 flex-1 resize-none rounded-2xl border border-input bg-card px-4 py-2.5 text-base shadow-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
@@ -260,9 +275,10 @@ export function Composer({
           <button
             type="button"
             aria-label="Send"
+            disabled={!value.trim()}
             className={cn(
               buttonVariants({ size: "icon-lg" }),
-              "rounded-full"
+              "rounded-full disabled:pointer-events-none disabled:opacity-50"
             )}
             onClick={submit}
           >

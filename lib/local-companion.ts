@@ -79,7 +79,7 @@ function detectIntent(text: string): Intent {
     return "remember"
   }
   if (
-    /who are you|what are you|your name|tell me about yourself|what can you do/.test(
+    /who are you|what are you|your name|tell me about yourself|what can you (actually )?do/.test(
       lower
     )
   ) {

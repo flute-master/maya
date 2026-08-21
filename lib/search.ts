@@ -5,6 +5,7 @@ const UA =
   "MayaCompanion/0.1 (https://github.com/flute-master/maya; local personal companion)"
 
 const NOT_SEARCH = [
+  /what can you (actually )?do/,
   /who are you/,
   /what are you/,
   /tell me about yourself/,
