@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Download, RotateCcw, SlidersHorizontal } from "lucide-react"
+import { RotateCcw, SlidersHorizontal } from "lucide-react"
 
 import { ChatThread, type FollowAlong } from "@/components/chat-thread"
 import { Composer } from "@/components/composer"
@@ -36,6 +36,7 @@ import {
   startFreshConversation,
   withActiveMessages,
 } from "@/lib/vault"
+import { hydrateVault, writeDeviceMemory } from "@/lib/persist"
 
 export function MayaApp() {
   const [vault, setVault] = useState(loadVault)
@@ -47,9 +48,13 @@ export function MayaApp() {
   const [modelName, setModelName] = useState<string | null>(null)
   const [follow, setFollow] = useState<FollowAlong | null>(null)
   const [voiceStatus, setVoiceStatus] = useState<string | null>(null)
+  const [deviceSave, setDeviceSave] = useState<"saving" | "saved" | "error">(
+    "saved"
+  )
   const abortRef = useRef<AbortController | null>(null)
   const retryRef = useRef<string | null>(null)
   const liveRef = useRef<HTMLAudioElement | null>(null)
+  const hydratedRef = useRef(false)
 
   const personality = vault.personality
   const conversation = activeConversation(vault)
@@ -57,7 +62,27 @@ export function MayaApp() {
   const sage = isSage(personality)
 
   useEffect(() => {
+    let cancelled = false
+    void hydrateVault().then((next) => {
+      if (cancelled) return
+      hydratedRef.current = true
+      setVault(next)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
     saveVault(vault)
+    if (!hydratedRef.current) return
+    setDeviceSave("saving")
+    const timer = window.setTimeout(() => {
+      void writeDeviceMemory(vault).then((ok) => {
+        setDeviceSave(ok ? "saved" : "error")
+      })
+    }, 700)
+    return () => window.clearTimeout(timer)
   }, [vault])
 
   useEffect(() => {
@@ -355,15 +380,6 @@ export function MayaApp() {
             type="button"
             variant="ghost"
             size="sm"
-            onClick={() => downloadVault(vault)}
-          >
-            <Download />
-            <span className="hidden sm:inline">Export</span>
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
             onClick={startOver}
             disabled={empty && !error}
           >
@@ -464,6 +480,7 @@ export function MayaApp() {
         conversations={vault.conversations}
         activeId={vault.activeId}
         storedCount={countStoredMessages(vault)}
+        deviceSave={deviceSave}
         onExport={() => downloadVault(vault)}
         onImportFile={importMemory}
         onAddNote={(text) => setVault((current) => addNote(current, text))}

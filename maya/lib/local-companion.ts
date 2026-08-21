@@ -163,7 +163,7 @@ function rememberReply(
   if (!notes.length && !prior.length && !past.length) {
     return named(
       personality,
-      `Not yet {name} — this thread is still thin. Keep talking. I'll keep it on this machine, and you can export a memory file whenever you want to take me with you.`
+      `Not yet {name} — this thread is still thin. Keep talking. I keep it on this machine by myself.`
     )
   }
 

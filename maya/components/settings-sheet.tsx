@@ -46,6 +46,7 @@ export function SettingsSheet({
   conversations,
   activeId,
   storedCount,
+  deviceSave,
   onExport,
   onImportFile,
   onAddNote,
@@ -65,6 +66,7 @@ export function SettingsSheet({
   conversations: Conversation[]
   activeId: string
   storedCount: number
+  deviceSave?: "saving" | "saved" | "error"
   onExport: () => void
   onImportFile: (file: File) => Promise<void>
   onAddNote: (text: string) => void
@@ -416,19 +418,30 @@ export function SettingsSheet({
           >
             <div className="flex flex-col gap-5">
               <div className="rounded-xl bg-muted/60 p-3">
-                <p className="text-sm font-medium">Kept on this machine</p>
+                <p className="text-sm font-medium">Saved on this device</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {storedCount} messages, {notes.length} notes,{" "}
                   {conversations.filter((item) => item.messages.length).length}{" "}
-                  conversations. Refresh does not reset her. Export a file to
-                  take the same Maya to another computer.
+                  conversations. She writes herself to{" "}
+                  <span className="font-medium text-foreground">
+                    data/maya-memory.json
+                  </span>{" "}
+                  in the project folder, and to this browser. You do not need
+                  to export for her to remember. Refresh does not reset her.
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {deviceSave === "saving"
+                    ? "Writing to disk…"
+                    : deviceSave === "error"
+                      ? "Browser copy is saved. Disk write failed — keep the app folder writable."
+                      : "On this computer."}
                 </p>
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <Button type="button" size="sm" onClick={onExport}>
+                <Button type="button" size="sm" variant="outline" onClick={onExport}>
                   <Download />
-                  Export memory
+                  Spare copy
                 </Button>
                 <Button
                   type="button"

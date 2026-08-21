@@ -41,5 +41,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# packaged download (generated; do not commit)
-/public/maya.zip
+# local Maya memory (auto-saved on this device)
+/data/maya-memory.json
+

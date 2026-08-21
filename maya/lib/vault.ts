@@ -177,6 +177,15 @@ function migrateLegacyVault(): MemoryVault | null {
   }
 }
 
+export function hasStoredVault() {
+  if (typeof window === "undefined") return false
+  try {
+    return Boolean(window.localStorage.getItem(VAULT_KEY))
+  } catch {
+    return false
+  }
+}
+
 export function loadVault(): MemoryVault {
   const stored = normalizeVault(readRaw(VAULT_KEY))
   if (stored) return stored

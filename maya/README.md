@@ -91,7 +91,9 @@ Chrome or Edge. Click the mic, allow the site, speak, then send. Words appear as
 
 ### Memory
 
-Refresh does not reset her. **Export** downloads `maya-memory.json`. Import that file on another machine to take the same Maya with you. **New** archives a thread; it does not erase her.
+She stores herself automatically. Chat, notes, and how she talks are written to this browser **and** to `data/maya-memory.json` in the project folder. You do not export for her to remember. Refresh does not reset her. **New** archives a thread; it does not erase her.
+
+Customize → Memory → **Spare copy** is only if you want a backup or to take her to another computer. Import that file there.
 
 If you ask “what are my skills?” she only answers from what you stored. Tell her, or write it under Customize → Memory. She will not invent a CV, and she will not Google your private life.
 
