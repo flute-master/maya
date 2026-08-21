@@ -322,7 +322,7 @@ export function MayaApp() {
         return
       }
 
-      if (sendingLock.current) return
+      abortRef.current?.abort()
       sendingLock.current = true
       const gen = ++sendGen.current
 
@@ -634,11 +634,9 @@ export function MayaApp() {
           playVoice(acc, assistantMessage.id)
         }
       } catch (caught) {
-        if (gen === sendGen.current) {
-          setMessages((latest) =>
-            latest.filter((message) => message.id !== assistantMessage.id)
-          )
-        }
+        setMessages((latest) =>
+          latest.filter((message) => message.id !== assistantMessage.id)
+        )
         if ((caught as Error).name === "AbortError") return
         setError(
           caught instanceof Error

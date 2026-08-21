@@ -1,11 +1,30 @@
 "use client"
 
-import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react"
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from "react"
 import { ArrowUp, Mic, Monitor, Paperclip, Square } from "lucide-react"
 
 import { Button, buttonVariants } from "@/components/ui/button"
 import { canListen, startListening, type ListenHandle } from "@/lib/listen"
 import { cn } from "@/lib/utils"
+
+function isEnterKey(event: {
+  key?: string
+  code?: string
+  keyCode?: number
+  which?: number
+}) {
+  const key = event.key
+  const code = event.code
+  const keyCode = event.keyCode ?? event.which
+  return (
+    key === "Enter" ||
+    key === "NumpadEnter" ||
+    key === "\n" ||
+    code === "Enter" ||
+    code === "NumpadEnter" ||
+    keyCode === 13
+  )
+}
 
 export function Composer({
   name,
@@ -32,55 +51,110 @@ export function Composer({
   onAttach?: (files: File[]) => void
   onShareScreen?: () => void
 }) {
-  const [value, setValue] = useState("")
   const [listening, setListening] = useState(false)
   const [listenHint, setListenHint] = useState<string | null>(null)
   const [level, setLevel] = useState(0)
+  const [filled, setFilled] = useState(false)
   const recRef = useRef<ListenHandle | null>(null)
   const committedRef = useRef("")
   const boxRef = useRef<HTMLTextAreaElement>(null)
-  const fileRef = useRef<HTMLInputElement>(null)
+  const formRef = useRef<HTMLFormElement>(null)
   const onSendRef = useRef(onSend)
   const busyRef = useRef(busy)
-  const submittingRef = useRef(false)
+  const shiftHeld = useRef(false)
   onSendRef.current = onSend
   busyRef.current = busy
 
   function readBox() {
-    return (boxRef.current?.value ?? value).trim()
+    return (boxRef.current?.value ?? "").trim()
   }
 
-  function submit() {
-    if (submittingRef.current || busyRef.current) return
-    const text = readBox()
-    if (!text) return
-    submittingRef.current = true
-    stopMic()
-    onSendRef.current(text)
-    setValue("")
+  function markFilled() {
+    setFilled(Boolean(boxRef.current?.value.trim()))
+  }
+
+  function clearBox() {
     committedRef.current = ""
     if (boxRef.current) boxRef.current.value = ""
-    window.setTimeout(() => {
-      submittingRef.current = false
-    }, 400)
+    setFilled(false)
   }
 
-  function onBoxKeyDown(
-    event: KeyboardEvent | ReactKeyboardEvent<HTMLTextAreaElement>
-  ) {
-    if (event.key !== "Enter" || event.shiftKey || event.isComposing) return
-    event.preventDefault()
-    event.stopPropagation()
-    submit()
+  const flushSend = () => {
+    const text = readBox()
+    if (!text) return false
+    stopMic()
+    onSendRef.current(text)
+    clearBox()
+    return true
   }
 
   useEffect(() => {
     const box = boxRef.current
     if (!box) return
-    const onKey = (event: KeyboardEvent) => onBoxKeyDown(event)
+
+    function onKey(event: KeyboardEvent) {
+      if (event.target !== box && event.target !== boxRef.current) return
+      if (event.key === "Shift") shiftHeld.current = true
+      if (event.isComposing || event.keyCode === 229) return
+      if (!isEnterKey(event) || event.shiftKey) return
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      if (busyRef.current) return
+      flushSend()
+    }
+
+    function onKeyUp(event: KeyboardEvent) {
+      if (event.key === "Shift") shiftHeld.current = false
+    }
+
+    function onBefore(event: InputEvent) {
+      if (event.inputType !== "insertLineBreak" && event.inputType !== "insertParagraph") {
+        return
+      }
+      if (shiftHeld.current) return
+      event.preventDefault()
+      if (busyRef.current) return
+      flushSend()
+    }
+
     box.addEventListener("keydown", onKey, true)
+    box.addEventListener("keyup", onKeyUp, true)
+    box.addEventListener("beforeinput", onBefore, true)
     return () => {
       box.removeEventListener("keydown", onKey, true)
+      box.removeEventListener("keyup", onKeyUp, true)
+      box.removeEventListener("beforeinput", onBefore, true)
+      recRef.current?.abort()
+    }
+  }, [])
+
+  function onBoxKeyDown(event: ReactKeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === "Shift") shiftHeld.current = true
+    if (event.nativeEvent.isComposing || event.keyCode === 229) return
+    if (!isEnterKey(event) || event.shiftKey) return
+    event.preventDefault()
+    event.stopPropagation()
+    if (busyRef.current) return
+    flushSend()
+  }
+
+  function onBoxKeyUp(event: ReactKeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === "Shift") shiftHeld.current = false
+  }
+
+  function onBoxBeforeInput(event: FormEvent<HTMLTextAreaElement>) {
+    const inputType = (event.nativeEvent as InputEvent).inputType
+    if (inputType !== "insertLineBreak" && inputType !== "insertParagraph") {
+      return
+    }
+    if (shiftHeld.current) return
+    event.preventDefault()
+    if (busyRef.current) return
+    flushSend()
+  }
+
+  useEffect(() => {
+    return () => {
       recRef.current?.abort()
     }
   }, [])
@@ -111,8 +185,8 @@ export function Composer({
         onUpdate: ({ transcript, interim }) => {
           if (transcript) committedRef.current += `${transcript} `
           const next = `${committedRef.current}${interim}`.replace(/\s+/g, " ")
-          setValue(next)
           if (boxRef.current) boxRef.current.value = next
+          setFilled(Boolean(next.trim()))
         },
         onEnd: () => {
           recRef.current = null
@@ -155,10 +229,13 @@ export function Composer({
 
   return (
     <form
-      className="relative z-10 mx-auto flex w-full max-w-2xl flex-col gap-1 bg-background px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2"
+      ref={formRef}
+      className="relative z-20 mx-auto flex w-full max-w-2xl flex-col gap-1 bg-background px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2"
       onSubmit={(event) => {
         event.preventDefault()
-        submit()
+        event.stopPropagation()
+        if (busyRef.current) return
+        flushSend()
       }}
     >
       {banner ? (
@@ -221,7 +298,6 @@ export function Composer({
             )}
           >
             <input
-              ref={fileRef}
               type="file"
               className="sr-only"
               multiple
@@ -250,10 +326,16 @@ export function Composer({
         ) : null}
         <textarea
           ref={boxRef}
+          name="message"
           rows={1}
-          value={value}
-          onChange={(event) => setValue(event.target.value)}
+          defaultValue=""
+          onInput={markFilled}
           onKeyDown={onBoxKeyDown}
+          onKeyUp={onBoxKeyUp}
+          onBlur={() => {
+            shiftHeld.current = false
+          }}
+          onBeforeInput={onBoxBeforeInput}
           enterKeyHint="send"
           placeholder={listening ? "Listening…" : `Message ${name}…`}
           aria-label={`Message ${name}`}
@@ -273,14 +355,13 @@ export function Composer({
           </button>
         ) : (
           <button
-            type="button"
+            type="submit"
             aria-label="Send"
-            disabled={!value.trim()}
             className={cn(
               buttonVariants({ size: "icon-lg" }),
-              "rounded-full disabled:pointer-events-none disabled:opacity-50"
+              "rounded-full",
+              !filled && "opacity-60"
             )}
-            onClick={submit}
           >
             <ArrowUp />
           </button>

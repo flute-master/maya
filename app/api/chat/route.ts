@@ -6,7 +6,7 @@ import { confirmCopy, formatToolContext, runSage } from "@/lib/sage/run"
 import { modelNeedsWeb } from "@/lib/search"
 import { hometownFromNotes } from "@/lib/skills"
 import { readPublicIdentity } from "@/lib/identity"
-import { replyWithTrained, trainedReady } from "@/lib/trained"
+import { replyWithTrained, skipTinyNet, trainedReady } from "@/lib/trained"
 import type {
   ChatMessage,
   ChatRequestBody,
@@ -177,9 +177,20 @@ export async function POST(request: Request) {
       item.name
     )
   )
+  const localOnly =
+    skipTinyNet(last.content) &&
+    !toolHeavy &&
+    !sage.results.length &&
+    hits.length === 0
 
   let trainedText: string | null = null
-  if (!toolHeavy && body.useTrained !== false && (await trainedReady())) {
+  if (
+    !localOnly &&
+    !toolHeavy &&
+    !skipTinyNet(last.content) &&
+    body.useTrained !== false &&
+    (await trainedReady())
+  ) {
     trainedText = await replyWithTrained({
       messages: history,
       personality,
@@ -188,16 +199,17 @@ export async function POST(request: Request) {
     })
   }
 
-  let ollamaText = trainedText
-    ? null
-    : await replyWithOllama({
-        messages: history,
-        personality,
-        memory,
-        learned,
-        hits,
-        toolContext,
-      })
+  let ollamaText =
+    localOnly || trainedText
+      ? null
+      : await replyWithOllama({
+          messages: history,
+          personality,
+          memory,
+          learned,
+          hits,
+          toolContext,
+        })
 
   if (
     ollamaText &&

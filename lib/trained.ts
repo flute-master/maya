@@ -14,6 +14,30 @@ const ROOT = process.cwd()
 export const TRAINED_CKPT = join(ROOT, "data", "maya-gpt.pt")
 export const TRAIN_STATUS = join(ROOT, "data", "train-status.json")
 
+export function trainedReplyUsable(text: string) {
+  const t = text.replace(/\s+/g, " ").trim()
+  if (t.length < 16) return false
+  const words = t.toLowerCase().match(/[a-z']+/g) ?? []
+  if (words.length < 5) return false
+  for (let i = 1; i < words.length; i += 1) {
+    if (words[i] === words[i - 1] && (words[i]?.length ?? 0) > 2) return false
+  }
+  const unique = new Set(words)
+  if (unique.size < Math.min(6, Math.ceil(words.length * 0.4))) return false
+  return true
+}
+
+export function skipTinyNet(text: string) {
+  const t = text.trim().toLowerCase()
+  if (t.length < 24) return true
+  return (
+    /^(hi|hey|hello|yo|hola|namaste|thanks|thank you|bye|goodbye)\b/.test(t) ||
+    /what can you (actually )?do|who are you|what are you|tell me about yourself/.test(
+      t
+    )
+  )
+}
+
 export async function trainedReady() {
   try {
     await access(TRAINED_CKPT)
@@ -103,7 +127,7 @@ export async function replyWithTrained(input: {
         return
       }
       void err
-      resolve(text.slice(0, 1200))
+      resolve(trainedReplyUsable(text) ? text.slice(0, 1200) : null)
     })
   })
 }
