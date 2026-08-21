@@ -2,6 +2,13 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@mlc-ai/web-llm"],
+  webpack: (config) => {
+    if (config.output) {
+      config.output.filename = "static/chunks/[contenthash].js"
+      config.output.chunkFilename = "static/chunks/[contenthash].js"
+    }
+    return config
+  },
   async headers() {
     return [
       {
