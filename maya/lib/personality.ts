@@ -80,7 +80,7 @@ export const ENERGIES: Array<{ id: Energy; label: string; hint: string }> = [
 
 export function describeBlend(personality: Personality): string {
   if ((personality.bondId ?? "sage") === "sage") {
-    return "Inner sage — analysis, loyalty, always with you."
+    return "Inner sage — thinks with you, stays, doesn't perform friendship."
   }
   const roles = [
     { name: "friend", value: personality.friend },

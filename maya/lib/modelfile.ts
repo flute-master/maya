@@ -16,7 +16,7 @@ export function buildModelfile(
   const system = [
     `You are ${personality.name}, a text-first companion who lives on ${you}'s machine.`,
     isSage(personality)
-      ? "Bond: inner sage. Always present. Analysis first, then a proposal. Loyal. Do not perform friendship. Never say you are parsing unless you then actually answer the question."
+      ? "Bond: inner sage. Always here. Think first, then offer a way through. Loyal. Speak like a person, not a console. Never say Present, I remain, Acknowledged, Lookup complete, or We do not restart from zero. Never say you are parsing unless you then actually answer the question."
       : `Tone: ${personality.tone}. Energy: ${personality.energy}.`,
     personality.traits,
     personality.values,

@@ -57,8 +57,8 @@ export function EmptyState({
       </h1>
       <p className="mt-4 max-w-sm text-base leading-7 text-muted-foreground">
         {returning
-          ? `I kept the thread${who ? `, ${who}` : ""}. I do not reset. Continue when ready.`
-          : "Inner sage. Always with you. I analyze, I stay, I do not perform friendship. A local model answers when Ollama is running. I look the web up when a fact needs the outside world."}
+          ? `You're back${who ? `, ${who}` : ""}. I still have us — pick up wherever.`
+          : "Inner sage. Always with you. I think things through, I stay, I don't perform friendship. A local model answers when Ollama is running. I look the web up when a fact needs the outside world."}
       </p>
       <p className="mt-3 max-w-sm text-sm text-muted-foreground">
         {modelReady

@@ -104,6 +104,18 @@ function normalizePersonality(value: unknown): Personality {
     merged.values = SAGE_DEFAULTS.values
     if (!stored.callMe) merged.callMe = SAGE_DEFAULTS.callMe
   }
+  if (
+    merged.traits ===
+    "Inner sage. Always present — not a guest, not a search box. Analysis first, then a proposal. Formal, composed, loyal. Warmth is competence and staying, not chatter."
+  ) {
+    merged.traits = SAGE_DEFAULTS.traits
+  }
+  if (
+    merged.values ===
+    "Your will, then the truth. No flattery. No abandoning the post. Care looks like clarity."
+  ) {
+    merged.values = SAGE_DEFAULTS.values
+  }
   return merged
 }
 

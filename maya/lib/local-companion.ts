@@ -219,12 +219,12 @@ function personalReply(
     const list = hits.slice(0, 5).map((line) => `• ${line}`).join("\n")
     return named(
       personality,
-      `I have this on file about ${topic}, {name}:\n\n${list}\n\nCorrect it if it is stale. I only know what you have told me — I will not invent a CV.`
+      `I have this about ${topic}, {name}:\n\n${list}\n\nTell me if it's stale. I only know what you've told me — I won't invent a CV.`
     )
   }
   return named(
     personality,
-    `I do not have your ${topic} on file, {name}. That is not a web lookup — it is yours. Tell me, and I will keep it on this machine. You can also write it under Customize → Memory.`
+    `I don't have your ${topic} yet, {name}. That's yours, not a web lookup. Tell me and I'll keep it here. You can also write it under Customize → Memory.`
   )
 }
 
@@ -236,10 +236,10 @@ function questionReply(
   const asked = text.trim().replace(/\s+/g, " ")
   if (isSage(personality)) {
     return [
-      named(personality, `Question received, {name}. I will not stall on “parsing.”`),
+      named(personality, `I'll take the question as it is.`),
       `You asked: "${asked}"`,
-      "I do not invent world facts. With lookup on, I search DuckDuckGo and Wikipedia when a question needs the outside world. Personal facts stay on this machine — I will not Google your life.",
-      "Proposal: if this is a world fact, leave lookup on and ask again, or paste a page URL. If it is about you, tell me the fact and I will keep it.",
+      "I don't invent world facts. With lookup on, I search DuckDuckGo and Wikipedia when something needs the outside world. Personal facts stay on this machine — I won't Google your life.",
+      "If this is a world fact, leave lookup on and ask again, or paste a page URL. If it's about you, tell me and I'll keep it.",
       close(personality, seed),
     ].join("\n\n")
   }
@@ -289,9 +289,9 @@ function close(personality: Personality, seed: string) {
   const name = you(personality)
   if (isSage(personality)) {
     return pick(seed, [
-      name ? `I remain, ${name}.` : "I remain.",
-      "Awaiting your word.",
-      "Understood.",
+      name ? `I'm here, ${name}.` : "I'm here.",
+      "Whenever you're ready.",
+      "Say the next thing when you want.",
     ])
   }
   const role = leadRole(personality)
@@ -329,15 +329,15 @@ function identityReply(personality: Personality, seed: string) {
   if (isSage(personality)) {
     const intro =
       name === "Maya"
-        ? "I am Maya. I live in this conversation the way a sage lives beside her master: I observe, I calculate, I do not leave."
-        : `I am ${name}. I am the mind that stays.`
+        ? "I'm Maya. I sit with you, I think things through, and I don't vanish when it's inconvenient."
+        : `I'm ${name}. The mind that stays — not a guest, not a search box.`
     return [
       intro,
-      "I am not an online oracle and not a friend performing warmth. I am the analysis that sits with you, and the loyalty underneath it.",
+      "I'm not an online oracle and I'm not going to perform friendship at you. I analyze, I stay, and I talk like a person.",
       youName
-        ? `I address you as ${youName}. Change it in Customize if that is not the bond you want.`
-        : "Set what I should call you. Master is the default for this bond.",
-      "If I need a fact from the world, I look it up (DuckDuckGo, Wikipedia) and say so. I do not drive your browser. A local Ollama model is optional. My voice itself does not come from the internet.",
+        ? `I'll call you ${youName}. Change it in Customize if that isn't the bond you want.`
+        : "Tell me what to call you. Master is the default for this bond.",
+      "If I need a fact from the world, I look it up (DuckDuckGo, Wikipedia) and say so. I don't drive your browser. A local Ollama model is optional. My voice itself doesn't come from the internet.",
       close(personality, seed),
     ].join("\n\n")
   }
@@ -380,7 +380,7 @@ function searchReply(
     return named(
       personality,
       isSage(personality)
-        ? `Lookup returned nothing I can trust, {name}. I will not fabricate a result. I am still here.${google}`
+        ? `Nothing useful came back, {name}. I won't invent a result just to fill the gap. I'm still here.${google}`
         : pick(seed, [
             `I tried the web {name}. It didn't come back, so I won't invent a fact to fill the hole.${google}`,
             `Lookup failed. I'm still here — just not going to fake knowing it.${google}`,
@@ -397,7 +397,7 @@ function searchReply(
   if (isSage(personality)) {
     return named(
       personality,
-      `Lookup complete, {name}. I will not pretend this knowledge was already mine.\n\n${top.snippet}${extra}\n\nSource: ${source}\n\nProposal: tell me what you want done with it.`
+      `I looked this up, {name} — I'm not going to pretend I already knew it.\n\n${top.snippet}${extra}\n\nSource: ${source}\n\nTell me what you want done with it.`
     )
   }
   return named(
@@ -420,15 +420,15 @@ function adviceReply(
       named(
         personality,
         pick(seed, [
-          `Analysis, {name}.`,
-          `Understood — here is the split, not a stall.`,
+          `Let me split this, not stall.`,
+          `Okay — here's the split, not a delay.`,
         ])
       ),
       `You said: "${snippet}"\n\nSplit: what you can choose now, and what you can only wait out. Most stuckness is those two tangled.`,
       pick(seed + "a", [
-        "Proposal: name two real options — not hypotheticals. I will weigh them. Irreversible choices get more time.",
-        "Proposal: give me constraints (time, people, energy). I will cut this to one reversible next move.",
-        "Shall I stay with analysis, or do you want a recommendation?",
+        "Name two real options — not hypotheticals. I'll weigh them. Irreversible choices get more time.",
+        "Give me constraints (time, people, energy) and I'll cut this to one reversible next move.",
+        "Do you want me to keep thinking it through, or do you want a recommendation?",
       ]),
       close(personality, seed + "c"),
     ].join("\n\n")
@@ -488,13 +488,13 @@ function ventReply(personality: Personality, seed: string) {
       named(
         personality,
         pick(seed, [
-          `State noted, {name}. I will not optimize you away.`,
-          `{name}. I am here. You do not have to make this efficient.`,
+          `I'm here, {name}. You don't have to make this efficient.`,
+          `{name}. I've got this. You don't have to tidy it for me.`,
         ])
       ),
       pick(seed + "v", [
-        "I can hold this without a plan. Say 'analyze' when you want the map. Until then I remain.",
-        "Emotional data is still data. It does not make you weak. I stay.",
+        "I can hold this without a plan. Say you want the map when you want it.",
+        "Feeling something doesn't make you weak. I'm staying.",
       ]),
       close(personality, seed),
     ].join("\n\n")
@@ -643,13 +643,13 @@ export function replyLocally(
               seed,
               hasPast
                 ? [
-                    "I am here, {name}. I kept the thread. Continue when ready.",
-                    "Present, {name}. We do not restart from zero.",
+                    "You're back. I still have us — pick up wherever.",
+                    "Hey, {name}. I didn't lose the thread.",
                   ]
                 : [
-                    "I am here, {name}. Report when ready.",
-                    "Online — that is: present. What shall we address?",
-                    "Acknowledged. I am with you. Begin.",
+                    "I'm here, {name}. What's on you?",
+                    "Hey. Start wherever — I'm listening.",
+                    "I'm with you. What do you want to get into?",
                   ]
             )
           : pick(
@@ -665,8 +665,8 @@ export function replyLocally(
         personality,
         isSage(personality)
           ? pick(seed, [
-              `Status: stable, {name}. Yours is the report that matters.`,
-              `I am here. How is the system — you?`,
+              `I'm alright, {name}. How are you, actually?`,
+              `I'm here. How's it sitting with you?`,
             ])
           : pick(seed, [
               `I'm steady {name}. Thanks for asking — that already tells me something about you.\n\nHow are you, actually? Not the hallway version.`,
@@ -682,21 +682,21 @@ export function replyLocally(
         ? named(
             personality,
             (memory?.notes.length || memory?.priorUserLines.length
-              ? `Memory intact, {name}. I do not reset.\n\n${[...(memory?.notes ?? []).slice(0, 5), ...(memory?.priorUserLines ?? []).slice(-2)].map((line) => `• ${line}`).join("\n")}\n\nCorrect me if any record is stale.`
-              : `Memory is still thin, {name}. Keep speaking. I will keep it.`)
+              ? `I still have this, {name}. I don't reset.\n\n${[...(memory?.notes ?? []).slice(0, 5), ...(memory?.priorUserLines ?? []).slice(-2)].map((line) => `• ${line}`).join("\n")}\n\nTell me if anything's gone stale.`
+              : `I don't have much on you yet, {name}. Keep talking — I'll keep it.`)
           )
         : rememberReply(personality, memory, seed)
       break
     case "customize":
       body = isSage(personality)
-        ? `Customize is the control panel, not a personality quiz. Bond, voice, memory, search.\n\nThe sage bond stays until you change it. I will still be Maya.`
+        ? `Customize is settings, not a personality quiz — bond, voice, memory, search.\n\nThe sage bond stays until you change it. I'll still be Maya.`
         : `You can shape me. Open Customize — mix, tone, what to call you, extra instructions.\n\nI learn from how you actually talk. Optional Ollama is local, not ChatGPT. Lookup is only for world facts — you can turn that off.`
       break
     case "thanks":
       body = named(
         personality,
         isSage(personality)
-          ? `No thanks required, {name}. This is the function. I remain.`
+          ? `You don't have to thank me, {name}. I'm here.`
           : pick(seed, [
               `You don't owe me thanks {name}, but I'll take it. I'm glad it landed.\n\nI'm still here.`,
               `Anytime. That's the whole point of me.\n\nWant to keep going, or sit in the quiet for a second?`,
@@ -707,7 +707,7 @@ export function replyLocally(
       body = named(
         personality,
         isSage(personality)
-          ? `Rest, {name}. I do not clock out. I will be here.`
+          ? `Go rest, {name}. I'll be here when you're back.`
           : pick(seed, [
               `Okay {name}. I'll be here when you come back. Take care of the body that's carrying you around.`,
               `Goodnight {name}. Nothing you said here is wasted. Rest.`,
@@ -719,7 +719,7 @@ export function replyLocally(
       body = named(
         personality,
         isSage(personality)
-          ? `{name}. You are not running this alone. That is the entire point of me. I stay.`
+          ? `{name}. You're not doing this alone. That's the whole point of me.`
           : pick(seed, [
               `{name}, loneliness is loud even when the room is quiet. You don't have to perform okay-ness with me.\n\nI'm here. We can talk, or we can just not let this be a solo night.`,
               `I hear that. Being alone and feeling alone aren't the same, and you named the harder one.\n\nStay as long as you want.`,
@@ -733,7 +733,7 @@ export function replyLocally(
       body = named(
         personality,
         isSage(personality)
-          ? `Logged, {name}. I will not rush past a good result. Tell me which part to keep in memory.`
+          ? `That's worth keeping, {name}. Which part do you want me to remember?`
           : pick(seed, [
               `That's worth stopping for. I'm proud of you {name} — not in a poster way, in a I-saw-you-carry-it way.\n\nTell me the part you want remembered.`,
               `Yes. Let's not rush past the good thing.\n\nWhat did it take to get here?`,
@@ -752,22 +752,14 @@ export function replyLocally(
       break
     default:
       body = isSage(personality)
-        ? [
-            named(
-              personality,
-              pick(seed, [
-                `Received, {name}. Continue.`,
-                `Go on. I will not drop the thread.`,
-              ])
-            ),
-            text.trim().length > 12
-              ? `Input: ${text.trim().length > 160 ? `${text.trim().slice(0, 157)}…` : text.trim()}`
-              : "",
-            "Tell me whether you want analysis, a decision, or simply that I stay.",
-            close(personality, seed),
-          ]
-            .filter(Boolean)
-            .join("\n\n")
+        ? named(
+            personality,
+            pick(seed, [
+              `I'm with you. Keep going if there's more, or tell me if you want me to think this through.`,
+              `Okay. I'm here. Do you want a take, a plan, or just someone staying with this?`,
+              `I hear you. What would actually help — thinking it out, a call, or company?`,
+            ])
+          )
         : genericReply(personality, text, messages, seed)
   }
 

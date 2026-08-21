@@ -69,7 +69,7 @@ export const MAYA_VOICES: MayaVoice[] = [
       "Hi {name}. No circling. What's the real sentence?",
     ],
     returns: [
-      "{name}. Still here. We don't restart from zero.",
+      "{name}. Still here. I kept the thread.",
       "You're back. Good. I kept the thread.",
     ],
     tone: "direct",
