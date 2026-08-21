@@ -50,6 +50,7 @@ export type Prefs = {
   allowSearch: boolean
   spokenVoiceURI: string
   speakReplies: boolean
+  onDeviceModel: boolean
 }
 
 export type Conversation = {

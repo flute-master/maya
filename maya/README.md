@@ -1,8 +1,8 @@
 # Maya
 
-A text-first inner sage who lives on your machine. Analysis, loyalty, a voice that stays. She learns your shape from how you actually talk.
+A text-first inner sage who lives on your machine. Analysis, loyalty, a voice that stays. She learns from what you tell her (memory on disk), talks with a **free local model**, and looks the web up only when a fact needs it. No paid APIs.
 
-She talks with a built-in companion engine on your machine. If **Ollama** is running locally, she will use that model instead. The only other network use is optional web lookup when a fact needs searching.
+**Deploy (computer, phone PWA, optional tunnel):** see [DEPLOY.md](./DEPLOY.md).
 
 This is **not** Raphael / Great Sage from *That Time I Got Reincarnated as a Slime*. That performance cannot be cloned. The clips are an original Indian-English inner-sage register.
 

@@ -10,10 +10,14 @@ const FACT_PATTERNS: Array<RegExp> = [
   /(?:my name is|i'm called|i am called|call me)\s+([A-Za-z][A-Za-z' -]{1,40})/i,
   /i live in ([^.,!?\n]{2,60})/i,
   /i(?:'m| am) based in ([^.,!?\n]{2,60})/i,
+  /i(?:'m| am) from ([^.,!?\n]{2,60})/i,
   /i work (?:as|at|in) ([^.,!?\n]{2,60})/i,
-  /i study ([^.,!?\n]{2,60})/i,
+  /i study ([^.,!?\n]{2,80})/i,
+  /i (?:go to|graduated from|studied at) ([^.,!?\n]{2,80})/i,
   /my skills? (?:are|is|:)\s*([^.,!?\n]{2,80})/i,
   /i(?:'m| am) good at ([^.,!?\n]{2,80})/i,
+  /i (?:prefer|like|love|hate|don't like|do not like) ([^.,!?\n]{2,80})/i,
+  /i speak ([^.,!?\n]{2,60})/i,
   /i(?:'m| am) (?:a|an) ([^.,!?\n]{2,50})/i,
   /i have a (?:partner|wife|husband|boyfriend|girlfriend|kid|son|daughter|dog|cat)(?: named ([A-Za-z][A-Za-z'-]{1,30}))?/i,
 ]
@@ -175,4 +179,25 @@ export function relevantMemories(
 
   const picked = scored.slice(0, limit).map((item) => item.line)
   return picked
+}
+
+export const DIGEST_ID = "maya-digest"
+
+export function upsertDigest(
+  notes: MemoryNote[],
+  messages: ChatMessage[]
+): MemoryNote[] {
+  const users = messages
+    .filter((message) => message.role === "user")
+    .map((message) => clip(message.content, 90))
+  const rest = notes.filter((note) => note.id !== DIGEST_ID)
+  if (users.length < 4) return rest
+  return [
+    {
+      id: DIGEST_ID,
+      text: `Recent thread: ${users.slice(-6).join(" · ")}`,
+      createdAt: Date.now(),
+    },
+    ...rest,
+  ].slice(0, 100)
 }

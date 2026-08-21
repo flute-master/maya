@@ -1,20 +1,12 @@
 import { overlayPersonality, DEFAULT_LEARNED } from "@/lib/adapt"
 import { replyLocally } from "@/lib/local-companion"
+import { hitsForModel, lookupWeb, type Lookup } from "@/lib/lookup"
 import { ollamaReady, replyWithOllama } from "@/lib/ollama"
-import {
-  extractHttpUrl,
-  fallbackSearchQuery,
-  googleSearchUrl,
-  modelNeedsWeb,
-  searchQueryFor,
-  searchWeb,
-  readWebPage,
-} from "@/lib/search"
+import { modelNeedsWeb } from "@/lib/search"
 import type {
   ChatMessage,
   ChatRequestBody,
   Personality,
-  SearchHit,
 } from "@/lib/types"
 
 export const runtime = "nodejs"
@@ -64,72 +56,6 @@ function isPersonality(value: unknown): value is Personality {
   if (!value || typeof value !== "object") return false
   const p = value as Personality
   return typeof p.name === "string" && typeof p.tone === "string"
-}
-
-function uniqueBySnippet(hits: SearchHit[]): SearchHit[] {
-  const seen = new Set<string>()
-  return hits.filter((hit) => {
-    const key = hit.snippet.slice(0, 80)
-    if (!hit.snippet.trim() || seen.has(key)) return false
-    seen.add(key)
-    return true
-  })
-}
-
-type Lookup = {
-  hits: SearchHit[]
-  searched: boolean
-  searchFailed: boolean
-  googleUrl?: string
-}
-
-async function lookupWeb(text: string, force: boolean): Promise<Lookup> {
-  const pageUrl = extractHttpUrl(text)
-  const query = force ? fallbackSearchQuery(text) : searchQueryFor(text)
-  let hits: SearchHit[] = []
-  let searched = false
-  let searchFailed = false
-  let googleUrl: string | undefined
-
-  if (pageUrl) {
-    searched = true
-    try {
-      const page = await readWebPage(pageUrl)
-      if (page) hits.push(page)
-      else searchFailed = true
-    } catch {
-      searchFailed = true
-    }
-  }
-
-  if (query && !/^https?:\/\//i.test(query)) {
-    searched = true
-    googleUrl = googleSearchUrl(query)
-    try {
-      const web = await searchWeb(query)
-      hits = uniqueBySnippet([...hits, ...web])
-      if (!hits.length) searchFailed = true
-    } catch {
-      searchFailed = true
-    }
-  }
-
-  return { hits, searched, searchFailed, googleUrl }
-}
-
-function hitsForModel(lookup: Lookup): SearchHit[] {
-  if (lookup.hits.length) return lookup.hits
-  if (lookup.searchFailed && lookup.googleUrl) {
-    return [
-      {
-        title: "Google",
-        snippet: `Lookup did not return a snippet. Open this search: ${lookup.googleUrl}`,
-        source: "Google",
-        url: lookup.googleUrl,
-      },
-    ]
-  }
-  return []
 }
 
 export async function GET() {

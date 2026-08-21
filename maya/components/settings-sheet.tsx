@@ -47,6 +47,8 @@ export function SettingsSheet({
   activeId,
   storedCount,
   deviceSave,
+  deviceHint,
+  onLoadDevice,
   onExport,
   onImportFile,
   onAddNote,
@@ -67,6 +69,8 @@ export function SettingsSheet({
   activeId: string
   storedCount: number
   deviceSave?: "saving" | "saved" | "error"
+  deviceHint?: string | null
+  onLoadDevice?: () => void
   onExport: () => void
   onImportFile: (file: File) => Promise<void>
   onAddNote: (text: string) => void
@@ -80,6 +84,7 @@ export function SettingsSheet({
   const fileRef = useRef<HTMLInputElement>(null)
   const [noteDraft, setNoteDraft] = useState("")
   const [importError, setImportError] = useState<string | null>(null)
+  const [lanUrls, setLanUrls] = useState<string[]>([])
   const [modelHint, setModelHint] = useState("Checking for a local model…")
   const [modelReady, setModelReady] = useState(false)
   const [modelBusy, setModelBusy] = useState(false)
@@ -108,6 +113,14 @@ export function SettingsSheet({
         if (cancelled) return
         setModelReady(false)
         setModelHint("Could not reach the local model endpoint.")
+      })
+    fetch("/api/runtime")
+      .then(async (response) => {
+        const data = (await response.json()) as { lan?: string[] }
+        if (!cancelled) setLanUrls(data.lan ?? [])
+      })
+      .catch(() => {
+        if (!cancelled) setLanUrls([])
       })
     return () => {
       cancelled = true
@@ -643,6 +656,60 @@ export function SettingsSheet({
                   {modelBusy ? "Building…" : "Download Modelfile"}
                 </Button>
               </div>
+
+              <div className="rounded-xl bg-card p-3 ring-1 ring-foreground/8">
+                <p className="text-sm font-medium">On-device model (phones)</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Free. Runs in Chrome/Edge with WebGPU. First load downloads
+                  about 0.9 GB once, then works offline. No paid API.
+                </p>
+                {deviceHint ? (
+                  <p className="mt-2 text-sm whitespace-pre-wrap">{deviceHint}</p>
+                ) : null}
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <p className="text-xs text-muted-foreground">
+                    Prefer this when Ollama is not running
+                  </p>
+                  <Switch
+                    checked={prefs.onDeviceModel !== false}
+                    onCheckedChange={(onDeviceModel) =>
+                      onPrefsChange({ ...prefs, onDeviceModel })
+                    }
+                  />
+                </div>
+                {onLoadDevice ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="mt-3"
+                    onClick={onLoadDevice}
+                  >
+                    Load on-device brain
+                  </Button>
+                ) : null}
+              </div>
+
+              {lanUrls.length ? (
+                <div className="rounded-xl bg-card p-3 ring-1 ring-foreground/8">
+                  <p className="text-sm font-medium">Open on your phone</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Same Wi‑Fi. Chrome or Safari, then Add to Home Screen.
+                  </p>
+                  <ul className="mt-2 space-y-1 text-sm">
+                    {lanUrls.map((url) => (
+                      <li key={url}>
+                        <a
+                          href={url}
+                          className="break-all underline underline-offset-2"
+                        >
+                          {url}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
 
               <div className="rounded-xl bg-card p-3 ring-1 ring-foreground/8">
                 <p className="text-sm font-medium">How she&apos;s adapting</p>

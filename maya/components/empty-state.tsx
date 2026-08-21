@@ -30,6 +30,7 @@ export function EmptyState({
   onStart,
   modelReady,
   modelName,
+  onLoadDevice,
 }: {
   name: string
   callMe: string
@@ -39,6 +40,7 @@ export function EmptyState({
   onStart: (text: string) => void
   modelReady?: boolean
   modelName?: string | null
+  onLoadDevice?: () => void
 }) {
   const who = callMe.trim()
 
@@ -60,9 +62,19 @@ export function EmptyState({
       </p>
       <p className="mt-3 max-w-sm text-sm text-muted-foreground">
         {modelReady
-          ? `Local model live${modelName ? `: ${modelName}` : ""}. World facts still get a lookup when I need one.`
-          : "No local model yet — I still answer, but install Ollama for a real LLM. Customize → Lookup, or run scripts/setup-model.sh"}
+          ? `Local model live${modelName ? `: ${modelName}` : ""}. World facts still get a lookup when the network is on.`
+          : "No computer model yet. Load the free on-device brain (Chrome/Edge, ~0.9 GB once) or install Ollama. She still answers either way."}
       </p>
+      {onLoadDevice ? (
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-3"
+          onClick={onLoadDevice}
+        >
+          Load on-device brain
+        </Button>
+      ) : null}
       <div className="mt-6 w-full">
         <ClipPlayer
           featured

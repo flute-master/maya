@@ -1,0 +1,18 @@
+{
+  "name": "Maya",
+  "short_name": "Maya",
+  "description": "A local inner sage. Free on-device model, optional web lookup, no paid APIs.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1c1612",
+  "theme_color": "#1c1612",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

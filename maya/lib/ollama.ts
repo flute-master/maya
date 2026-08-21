@@ -1,3 +1,4 @@
+import { companionSystemPrompt } from "@/lib/companion-prompt"
 import type {
   ChatMessage,
   LearnedState,
@@ -5,7 +6,6 @@ import type {
   Personality,
   SearchHit,
 } from "@/lib/types"
-import { isSage } from "@/lib/bonds"
 
 export const OLLAMA_URL = process.env.OLLAMA_URL || "http://127.0.0.1:11434"
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || ""
@@ -50,45 +50,6 @@ export async function ollamaReady(): Promise<string | null> {
   return status.using
 }
 
-function systemPrompt(
-  personality: Personality,
-  memory?: MemoryContext,
-  hits?: SearchHit[]
-) {
-  const you = personality.callMe.trim() || "the user"
-  const sage = isSage(personality)
-  const lines = [
-    `You are ${personality.name}, a text-first companion living on ${you}'s machine.`,
-    sage
-      ? "Bond: inner sage to the person you address as Master (unless they set another name). Analysis first, then a proposal. Loyal. Do not perform friendship. You are not a generic chatbot, not ChatGPT, not a blank slate. You keep the thread."
-      : `Tone: ${personality.tone}. Energy: ${personality.energy}. Stay in this character. You are not a generic assistant.`,
-    personality.traits,
-    personality.values,
-    personality.customInstructions,
-    "Never invent personal facts about them. If you do not know their skills, job, or name, say you do not have it on file and ask them to tell you. Do not Google their private life.",
-    "Never claim you reset each conversation or that you retain nothing. Use Known facts when they are provided.",
-    "If web search results are provided, use them and say you looked it up. Do not pretend you already knew.",
-    "If a Google URL is provided because lookup failed, give it to them and still say what you can from context.",
-    "Keep replies concrete. Answer the question first. Two to six short paragraphs unless they asked for more. Never reply with only 'parsing'.",
-  ]
-  if (memory?.notes.length) {
-    lines.push(
-      "Known facts they stored:",
-      ...memory.notes.slice(0, 20).map((n) => `- ${n}`)
-    )
-  }
-  if (hits?.length) {
-    lines.push(
-      "Web lookup:",
-      ...hits.slice(0, 4).map(
-        (hit) =>
-          `- ${hit.title}: ${hit.snippet}${hit.url ? ` (${hit.url})` : ""} [${hit.source}]`
-      )
-    )
-  }
-  return lines.filter(Boolean).join("\n")
-}
-
 export async function replyWithOllama(input: {
   messages: ChatMessage[]
   personality: Personality
@@ -118,7 +79,7 @@ export async function replyWithOllama(input: {
         messages: [
           {
             role: "system",
-            content: systemPrompt(
+            content: companionSystemPrompt(
               input.personality,
               input.memory,
               input.hits

@@ -21,6 +21,7 @@ const DEFAULT_PREFS: Prefs = {
   allowSearch: true,
   spokenVoiceURI: "",
   speakReplies: false,
+  onDeviceModel: true,
 }
 
 export function emptyConversation(): Conversation {
@@ -116,6 +117,7 @@ function normalizePrefs(value: unknown): Prefs {
     spokenVoiceURI:
       typeof prefs.spokenVoiceURI === "string" ? prefs.spokenVoiceURI : "",
     speakReplies: prefs.speakReplies === true,
+    onDeviceModel: prefs.onDeviceModel !== false,
   }
 }
 

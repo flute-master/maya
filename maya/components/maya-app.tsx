@@ -14,7 +14,18 @@ import { DEFAULT_LEARNED, updateLearned } from "@/lib/adapt"
 import { isSage } from "@/lib/bonds"
 import { newId } from "@/lib/id"
 import { describePresence } from "@/lib/personality"
-import { buildMemoryContext, extractFacts, mergeFacts } from "@/lib/recall"
+import {
+  buildMemoryContext,
+  extractFacts,
+  mergeFacts,
+  upsertDigest,
+} from "@/lib/recall"
+import {
+  canRunOnDevice,
+  loadOnDeviceModel,
+  onDeviceReady,
+  replyOnDevice,
+} from "@/lib/on-device"
 import {
   isSpeakCommand,
   restoreSample,
@@ -43,7 +54,11 @@ export function MayaApp() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [mode, setMode] = useState<"offline" | "search" | "model">("offline")
+  const [mode, setMode] = useState<"offline" | "search" | "model" | "device">(
+    "offline"
+  )
+  const [online, setOnline] = useState(true)
+  const [deviceHint, setDeviceHint] = useState<string | null>(null)
   const [modelReady, setModelReady] = useState(false)
   const [modelName, setModelName] = useState<string | null>(null)
   const [follow, setFollow] = useState<FollowAlong | null>(null)
@@ -70,6 +85,20 @@ export function MayaApp() {
     })
     return () => {
       cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      void navigator.serviceWorker.register("/sw.js")
+    }
+    const sync = () => setOnline(navigator.onLine)
+    sync()
+    window.addEventListener("online", sync)
+    window.addEventListener("offline", sync)
+    return () => {
+      window.removeEventListener("online", sync)
+      window.removeEventListener("offline", sync)
     }
   }, [])
 
@@ -253,62 +282,117 @@ export function MayaApp() {
         ])
         return {
           ...withMessages,
-          notes: mergeFacts(withMessages.notes, facts),
+          notes: upsertDigest(mergeFacts(withMessages.notes, facts), [
+            ...nextMessages,
+            assistantMessage,
+          ]),
           learned,
         }
       })
       setIsSending(true)
 
       try {
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          signal: abort.signal,
-          body: JSON.stringify({
-            messages: nextMessages.map((message) => ({
-              role: message.role,
-              content: message.content,
-            })),
-            personality,
-            memory,
-            learned,
-            allowSearch: vault.prefs.allowSearch,
-          }),
-        })
-
-        if (!response.ok) {
-          const payload = (await response.json().catch(() => null)) as {
-            error?: string
-          } | null
-          throw new Error(payload?.error || "Maya couldn't answer just then.")
-        }
-
-        const reported = response.headers.get("X-Maya-Mode")
-        if (
-          reported === "offline" ||
-          reported === "search" ||
-          reported === "model"
-        ) {
-          setMode(reported)
-        }
-
-        const reader = response.body?.getReader()
-        if (!reader) throw new Error("Maya's reply didn't come through.")
-        const decoder = new TextDecoder()
         let acc = ""
+        const useDevice =
+          !modelReady &&
+          vault.prefs.onDeviceModel !== false &&
+          Boolean(onDeviceReady())
 
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-          acc += decoder.decode(value, { stream: true })
-          const snapshot = acc
-          setMessages((current) =>
-            current.map((message) =>
-              message.id === assistantMessage.id
-                ? { ...message, content: snapshot }
-                : message
+        if (useDevice) {
+          try {
+            let hits: import("@/lib/types").SearchHit[] = []
+            let searched = false
+            if (vault.prefs.allowSearch && online) {
+              const looked = await fetch("/api/lookup", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                signal: abort.signal,
+                body: JSON.stringify({ text: trimmed }),
+              })
+              if (looked.ok) {
+                const data = (await looked.json()) as {
+                  hits?: import("@/lib/types").SearchHit[]
+                  searched?: boolean
+                }
+                hits = data.hits ?? []
+                searched = Boolean(data.searched && hits.length)
+              }
+            }
+            const deviceText = await replyOnDevice({
+              messages: nextMessages,
+              personality,
+              memory,
+              hits,
+              onToken: (text) => {
+                acc = text
+                setMessages((current) =>
+                  current.map((message) =>
+                    message.id === assistantMessage.id
+                      ? { ...message, content: text }
+                      : message
+                  )
+                )
+              },
+            })
+            if (deviceText) {
+              acc = deviceText
+              setMode(searched ? "search" : "device")
+            }
+          } catch {
+            acc = ""
+          }
+        }
+
+        if (!acc) {
+          const response = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: abort.signal,
+            body: JSON.stringify({
+              messages: nextMessages.map((message) => ({
+                role: message.role,
+                content: message.content,
+              })),
+              personality,
+              memory,
+              learned,
+              allowSearch: vault.prefs.allowSearch && online,
+            }),
+          })
+
+          if (!response.ok) {
+            const payload = (await response.json().catch(() => null)) as {
+              error?: string
+            } | null
+            throw new Error(payload?.error || "Maya couldn't answer just then.")
+          }
+
+          const reported = response.headers.get("X-Maya-Mode")
+          if (
+            reported === "offline" ||
+            reported === "search" ||
+            reported === "model"
+          ) {
+            setMode(reported)
+          }
+
+          const reader = response.body?.getReader()
+          if (!reader) throw new Error("Maya's reply didn't come through.")
+          const decoder = new TextDecoder()
+
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            acc += decoder.decode(value, { stream: true })
+            const snapshot = acc
+            setMessages((current) =>
+              current.map((message) =>
+                message.id === assistantMessage.id
+                  ? { ...message, content: snapshot }
+                  : message
+              )
             )
-          )
+          }
         }
 
         if (vault.prefs.speakReplies && acc.trim()) {
@@ -328,8 +412,26 @@ export function MayaApp() {
         setIsSending(false)
       }
     },
-    [messages, personality, playVoice, haltVoice, setMessages, vault]
+    [messages, personality, playVoice, haltVoice, setMessages, vault, modelReady, online]
   )
+
+  const loadDevice = useCallback(async () => {
+    setDeviceHint("Preparing the on-device model…")
+    try {
+      const id = await loadOnDeviceModel(setDeviceHint)
+      setDeviceHint(
+        id
+          ? `Ready on this device: ${id}`
+          : "This browser has no WebGPU. Use Ollama on a computer, or Chrome/Edge on a recent phone."
+      )
+    } catch (caught) {
+      setDeviceHint(
+        caught instanceof Error
+          ? caught.message
+          : "Could not load the on-device model."
+      )
+    }
+  }, [])
 
   function startOver() {
     abortRef.current?.abort()
@@ -364,11 +466,15 @@ export function MayaApp() {
               {personality.name}
             </h1>
             <Badge variant="outline" className="hidden sm:inline-flex">
-              {mode === "search"
-                ? "Looked up"
-                : mode === "model"
-                  ? "Local model"
-                  : "On this machine"}
+              {!online
+                ? "Offline"
+                : mode === "search"
+                  ? "Looked up"
+                  : mode === "model"
+                    ? "Local model"
+                    : mode === "device"
+                      ? "On-device"
+                      : "On this machine"}
             </Badge>
           </div>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
@@ -404,7 +510,10 @@ export function MayaApp() {
           callMe={personality.callMe}
           returning={returning}
           modelReady={modelReady}
-          modelName={modelName}
+          modelName={modelName || onDeviceReady()}
+          onLoadDevice={
+            !modelReady && canRunOnDevice() ? () => void loadDevice() : undefined
+          }
           past={vault.conversations
             .filter((item) => item.messages.length > 0)
             .slice(0, 4)
@@ -481,6 +590,8 @@ export function MayaApp() {
         activeId={vault.activeId}
         storedCount={countStoredMessages(vault)}
         deviceSave={deviceSave}
+        deviceHint={deviceHint}
+        onLoadDevice={() => void loadDevice()}
         onExport={() => downloadVault(vault)}
         onImportFile={importMemory}
         onAddNote={(text) => setVault((current) => addNote(current, text))}
