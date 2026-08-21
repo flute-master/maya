@@ -2,12 +2,21 @@ import {
   extractHttpUrl,
   fallbackSearchQuery,
   googleSearchUrl,
+  isPersonalFactQuery,
   searchQueryFor,
   searchWeb,
   readWebPage,
 } from "@/lib/search"
-import { isMapsQuery, isWeatherQuery, mapsQuery, weatherPlace } from "@/lib/skills"
+import { fetchGithubProfile } from "@/lib/github"
+import {
+  hasSearchableIdentity,
+  isAgeQuery,
+  selfLookupQuery,
+  type PublicIdentity,
+} from "@/lib/identity"
+import { factsFromHits } from "@/lib/learn"
 import { lookupPlace } from "@/lib/maps"
+import { isMapsQuery, isWeatherQuery, mapsQuery, weatherPlace } from "@/lib/skills"
 import { intendedMeaning } from "@/lib/typos"
 import { fetchWeather } from "@/lib/weather"
 import type { SearchHit } from "@/lib/types"
@@ -17,6 +26,7 @@ export type Lookup = {
   searched: boolean
   searchFailed: boolean
   googleUrl?: string
+  learn?: string[]
 }
 
 function uniqueBySnippet(hits: SearchHit[]): SearchHit[] {
@@ -32,19 +42,59 @@ function uniqueBySnippet(hits: SearchHit[]): SearchHit[] {
 export async function lookupWeb(
   text: string,
   force: boolean,
-  hometown?: string
+  hometown?: string,
+  identity: PublicIdentity = {}
 ): Promise<Lookup> {
   const intended = intendedMeaning(text)
+  const placeHint = hometown || identity.city
   const pageUrl = extractHttpUrl(intended)
   const query = force ? fallbackSearchQuery(intended) : searchQueryFor(intended)
   let hits: SearchHit[] = []
   let searched = false
   let searchFailed = false
   let googleUrl: string | undefined
+  const learn: string[] = []
+
+  const wantsSelf =
+    isPersonalFactQuery(intended) && !isAgeQuery(intended)
+
+  if (wantsSelf) {
+    searched = true
+    if (identity.github) {
+      try {
+        const github = await fetchGithubProfile(identity.github)
+        if (github) {
+          hits.push(github.hit)
+          learn.push(...github.facts)
+        }
+      } catch {
+        /* keep going */
+      }
+    }
+    const selfQuery = selfLookupQuery(intended, identity)
+    if (selfQuery) {
+      googleUrl = googleSearchUrl(selfQuery)
+      try {
+        const web = await searchWeb(selfQuery)
+        hits = uniqueBySnippet([...hits, ...web])
+        learn.push(...factsFromHits(web, identity))
+      } catch {
+        if (!hits.length) searchFailed = true
+      }
+    } else if (!hasSearchableIdentity(identity)) {
+      hits.push({
+        title: "Look you up",
+        snippet:
+          "I can search public pages — GitHub, the web — and keep what I find. I need a name or GitHub handle first. Tell me, and I’ll look it up. I still won’t invent a CV from nothing.",
+        source: "Maya",
+        url: "",
+      })
+    }
+  }
 
   if (isWeatherQuery(intended)) {
     searched = true
-    const place = weatherPlace(intended, hometown)
+    const place = weatherPlace(intended, placeHint)
     if (!place) {
       hits.push({
         title: "Weather",
@@ -67,7 +117,7 @@ export async function lookupWeb(
 
   if (isMapsQuery(intended)) {
     searched = true
-    const dest = mapsQuery(intended, hometown)
+    const dest = mapsQuery(intended, placeHint)
     if (dest) {
       googleUrl = googleSearchUrl(`${dest} map`)
       try {
@@ -94,7 +144,13 @@ export async function lookupWeb(
   if (
     query &&
     !/^https?:\/\//i.test(query) &&
-    !hits.some((hit) => hit.source === "Weather" || hit.source === "Maps")
+    !hits.some(
+      (hit) =>
+        hit.source === "Weather" ||
+        hit.source === "Maps" ||
+        hit.source === "GitHub" ||
+        hit.source === "Maya"
+    )
   ) {
     searched = true
     googleUrl = googleSearchUrl(query)
@@ -107,7 +163,16 @@ export async function lookupWeb(
     }
   }
 
-  return { hits, searched, searchFailed, googleUrl }
+  return {
+    hits,
+    searched,
+    searchFailed,
+    googleUrl,
+    learn: [...new Set(learn.map((line) => line.trim()).filter(Boolean))].slice(
+      0,
+      8
+    ),
+  }
 }
 
 export function hitsForModel(lookup: Lookup): SearchHit[] {

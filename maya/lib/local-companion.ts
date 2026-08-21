@@ -189,7 +189,11 @@ function rememberReply(
 function personalReply(
   personality: Personality,
   text: string,
-  memory: MemoryContext | undefined
+  memory: MemoryContext | undefined,
+  extras?: {
+    searchHits?: SearchHit[]
+    googleUrl?: string
+  }
 ) {
   const lower = text.toLowerCase()
   const notes = memory?.notes ?? []
@@ -206,27 +210,50 @@ function personalReply(
           : "that"
   const keys =
     topic === "skills"
-      ? ["skill", "good at", "work as", "study"]
+      ? ["skill", "good at", "work as", "study", "github"]
       : topic === "work"
         ? ["work", "job", "study"]
         : topic === "name"
-          ? ["called", "name is"]
+          ? ["called", "name is", "github name"]
           : topic === "where you live"
-            ? ["live in", "based in"]
+            ? ["live in", "based in", "location"]
             : []
   const hits = pool.filter((line) =>
     keys.some((key) => line.toLowerCase().includes(key))
   )
-  if (hits.length) {
-    const list = hits.slice(0, 5).map((line) => `• ${line}`).join("\n")
+  const stored = hits.length
+    ? hits.slice(0, 5).map((line) => `• ${line}`).join("\n")
+    : ""
+  const looked = (extras?.searchHits ?? [])
+    .filter((hit) => hit.snippet.trim())
+    .slice(0, 3)
+    .map((hit) => `• ${hit.title}: ${hit.snippet}${hit.url ? ` (${hit.url})` : ""}`)
+    .join("\n")
+
+  if (stored && looked) {
     return named(
       personality,
-      `I have this about ${topic}, {name}:\n\n${list}\n\nTell me if it's stale. I only know what you've told me — I won't invent a CV.`
+      `I have this about ${topic} already, {name}:\n\n${stored}\n\nI also looked you up:\n\n${looked}\n\nI’ll keep the public bits. Tell me if anything is wrong.`
     )
   }
+  if (stored) {
+    return named(
+      personality,
+      `I have this about ${topic}, {name}:\n\n${stored}\n\nTell me if it’s stale. I can look up GitHub and public pages to fill gaps.`
+    )
+  }
+  if (looked) {
+    return named(
+      personality,
+      `I didn’t have ${topic} on file, so I looked up what’s public:\n\n${looked}\n\nI’ll keep this. Correct me if the web got you wrong.`
+    )
+  }
+  const google = extras?.googleUrl
+    ? `\n\nYou can also open this search:\n${extras.googleUrl}`
+    : ""
   return named(
     personality,
-    `I don't have your ${topic} yet, {name}. That's yours, not a web lookup. Tell me and I'll keep it here. You can also write it under Customize → Memory.`
+    `I don’t have your ${topic} yet, {name}. Tell me, or give me your name / GitHub handle and I’ll look up public pages and keep what I find. I still won’t invent a CV from thin air.${google}`
   )
 }
 
@@ -240,7 +267,7 @@ function questionReply(
     return [
       named(personality, `I'll take the question as it is.`),
       `You asked: "${asked}"`,
-      "I don't invent world facts. With lookup on, I search DuckDuckGo and Wikipedia when something needs the outside world. Personal facts stay on this machine — I won't Google your life.",
+      "I don't invent world facts. With lookup on, I search DuckDuckGo, Wikipedia, and public GitHub when a question needs the outside world — including your public profile if I have a name or handle. I still won't invent a CV.",
       "If this is a world fact, leave lookup on and ask again, or paste a page URL. If it's about you, tell me and I'll keep it.",
       close(personality, seed),
     ].join("\n\n")
@@ -339,7 +366,7 @@ function identityReply(personality: Personality, seed: string) {
       youName
         ? `I'll call you ${youName}. Change it in Customize if that isn't the bond you want.`
         : "Tell me what to call you. Master is the default for this bond.",
-      "If I need a fact from the world, I look it up live — weather, news, maps — and I say so. I write stories, jokes, puns, satire when you ask. Reminders and alarms live in this app; I’ll ping you here. I cannot log into Gmail, Google Calendar, or Google Clock. I can drop Maps and Calendar links.",
+      "If I need a fact from the world, I look it up live — weather, news, maps, and your public GitHub if I have a handle — and I say so. I write stories, jokes, puns, satire when you ask. Reminders and alarms live in this app; I’ll ping you here. I cannot log into Gmail, Google Calendar, or Google Clock. I can drop Maps and Calendar links.",
       close(personality, seed),
     ].join("\n\n")
   }
@@ -398,6 +425,9 @@ function searchReply(
       personality,
       `${top.snippet}${top.url ? `\n\nFull page: ${top.url}` : ""}`
     )
+  }
+  if (top.source === "GitHub" || top.source === "Maya") {
+    return named(personality, top.snippet + (top.url ? `\n\n${top.url}` : ""))
   }
   if (top.source === "Maps") {
     return named(personality, top.snippet)
@@ -633,7 +663,7 @@ export function replyLocally(
   const hasPast =
     (memory?.notes.length ?? 0) + (memory?.priorUserLines.length ?? 0) > 0
 
-  if (extras?.searched) {
+  if (extras?.searched && intent !== "personal") {
     const looked = searchReply(
       personality,
       extras.searchHits ?? [],
@@ -758,7 +788,7 @@ export function replyLocally(
       )
       break
     case "personal":
-      body = personalReply(personality, text, memory)
+      body = personalReply(personality, text, memory, extras)
       break
     case "stuck":
     case "advice":

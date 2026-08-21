@@ -4,6 +4,7 @@ import { hitsForModel, lookupWeb, type Lookup } from "@/lib/lookup"
 import { ollamaReady, replyWithOllama } from "@/lib/ollama"
 import { modelNeedsWeb } from "@/lib/search"
 import { hometownFromNotes } from "@/lib/skills"
+import { readPublicIdentity } from "@/lib/identity"
 import type {
   ChatMessage,
   ChatRequestBody,
@@ -27,14 +28,19 @@ function asMessages(incoming: ChatRequestBody["messages"]): ChatMessage[] {
   }))
 }
 
-function streamHeaders(mode: string, engine: string) {
-  return {
+function streamHeaders(mode: string, engine: string, learn?: string[]) {
+  const headers: Record<string, string> = {
     "Content-Type": "text/plain; charset=utf-8",
     "Cache-Control": "no-cache, no-transform",
     "X-Maya-Mode": mode,
     "X-Maya-Engine": engine,
     "X-Accel-Buffering": "no",
   }
+  if (learn?.length) {
+    headers["X-Maya-Learn"] = JSON.stringify(learn.slice(0, 8))
+    headers["Access-Control-Expose-Headers"] = "X-Maya-Mode, X-Maya-Engine, X-Maya-Learn"
+  }
+  return headers
 }
 
 function localStream(text: string) {
@@ -91,10 +97,14 @@ export async function POST(request: Request) {
   const personality = overlayPersonality(body.personality, learned)
   const memory = body.memory
   const hometown = hometownFromNotes(memory?.notes)
+  const identity = readPublicIdentity(
+    [...(memory?.notes ?? []), ...(memory?.priorUserLines ?? [])],
+    personality.callMe
+  )
   const allowSearch = body.allowSearch !== false
 
   let lookup: Lookup = allowSearch
-    ? await lookupWeb(last.content, false, hometown)
+    ? await lookupWeb(last.content, false, hometown, identity)
     : { hits: [], searched: false, searchFailed: false }
 
   let ollamaText = await replyWithOllama({
@@ -111,7 +121,7 @@ export async function POST(request: Request) {
     !lookup.hits.length &&
     modelNeedsWeb(ollamaText)
   ) {
-    lookup = await lookupWeb(last.content, true, hometown)
+    lookup = await lookupWeb(last.content, true, hometown, identity)
     const retry = await replyWithOllama({
       messages: history,
       personality,
@@ -141,6 +151,6 @@ export async function POST(request: Request) {
         : "offline"
 
   return new Response(localStream(text), {
-    headers: streamHeaders(mode, ollamaText ? "ollama" : "local"),
+    headers: streamHeaders(mode, ollamaText ? "ollama" : "local", lookup.learn),
   })
 }

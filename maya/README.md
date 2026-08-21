@@ -94,7 +94,7 @@ She stores herself automatically. Chat, notes, and how she talks are written to 
 
 Customize → Memory → **Spare copy** is only if you want a backup or to take her to another computer. Import that file there.
 
-If you ask “what are my skills?” she only answers from what you stored. Tell her, or write it under Customize → Memory. She will not invent a CV, and she will not Google your private life.
+If you ask “what are my skills?” she uses Memory first, then looks up public pages (GitHub, the web) when she has your name or handle, and **keeps what she finds**. Tell her `my github is flute-master` once. She still will not invent a CV if there is nothing to search.
 
 ### Lookup (DuckDuckGo, Wikipedia, Google link)
 
@@ -116,7 +116,7 @@ OLLAMA_MODEL=maya npm run dev
 
 Windows without WSL: install Ollama from the site, then in the project folder run `ollama pull llama3.2` and `ollama create maya -f Modelfile`.
 
-If `http://127.0.0.1:11434` is up, she uses **maya**. If a world fact is missing, she looks it up (DuckDuckGo + Wikipedia) and answers again. Personal facts stay in Memory — she will not Google your life.
+If `http://127.0.0.1:11434` is up, she uses **maya**. If a world fact is missing, she looks it up (DuckDuckGo + Wikipedia) and answers again. If you ask about your skills or job, she searches public GitHub/web when she knows your name, and stores what she learns.
 
 To bake **your** notes into the model: Customize → Lookup → **Download Modelfile**, then `ollama create maya -f Modelfile`.
 
@@ -128,7 +128,7 @@ If Ollama is not running, she falls back to the built-in engine so the app still
 - **Weather** — `weather in Hyderabad`. Live from wttr.in, no API key.
 - **Maps** — `directions to Charminar` or `map of Hitech City`. She drops Google Maps and OpenStreetMap links. She cannot log into your Google account or drive the Maps app.
 - **Reminders and alarms** — `remind me in 10 minutes to drink water`, `set an alarm for 7`. They fire in this tab (notification + her voice) if Maya is open. A Google Calendar link is optional. She cannot set the phone Clock app or Gmail.
-- **Tasks** — `add a task: buy milk`, `what's on my list`, `mark buy milk done`.
+- **Your public profile** — `what are my skills?` uses Memory, then GitHub/the web if she has your name or handle, and stores what she finds. `my github is your-handle` is enough to start.
 
 She does **not** get “all Google app access.” That needs your Google login. Links, yes. Inbox and Calendar takeover, no.
 

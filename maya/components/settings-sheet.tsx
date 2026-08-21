@@ -604,12 +604,11 @@ export function SettingsSheet({
                 <div>
                   <p className="text-sm font-medium">Look up world facts</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    On by default. She searches DuckDuckGo and Wikipedia when
-                    a question needs the outside world, or when you paste a
-                    page URL. She does not drive Chrome. If lookup fails she
-                    gives you a Google link to open yourself. She will not
-                    Google your private facts — skills, job, name live in
-                    Memory.
+                    On by default. She searches DuckDuckGo, Wikipedia, and
+                    public GitHub when a question needs the outside world —
+                    including your public profile if she has a name or
+                    handle. She does not drive Chrome. If lookup fails she
+                    gives you a Google link. She still will not invent a CV.
                   </p>
                 </div>
                 <Switch

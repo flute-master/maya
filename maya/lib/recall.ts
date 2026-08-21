@@ -19,6 +19,7 @@ const FACT_PATTERNS: Array<RegExp> = [
   /i(?:'m| am) good at ([^.,!?\n]{2,80})/i,
   /i (?:prefer|like|love|hate|don't like|do not like) ([^.,!?\n]{2,80})/i,
   /i speak ([^.,!?\n]{2,60})/i,
+  /(?:my github(?: handle)?(?: is|:)|github\.com\/)\s*@?([A-Za-z0-9-]{2,39})/i,
   /i(?:'m| am) (?:a|an) ([^.,!?\n]{2,50})/i,
   /i have a (?:partner|wife|husband|boyfriend|girlfriend|kid|son|daughter|dog|cat)(?: named ([A-Za-z][A-Za-z'-]{1,30}))?/i,
 ]

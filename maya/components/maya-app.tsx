@@ -35,6 +35,7 @@ import {
   stopSpeaking,
 } from "@/lib/speak"
 import { hometownFromNotes } from "@/lib/skills"
+import { readPublicIdentity } from "@/lib/identity"
 import { intendedMeaning } from "@/lib/typos"
 import {
   formatWhen,
@@ -418,6 +419,28 @@ export function MayaApp() {
       })
       setIsSending(true)
 
+      const identity = readPublicIdentity(
+        [
+          ...vault.notes.map((note) => note.text),
+          ...nextMessages
+            .filter((message) => message.role === "user")
+            .map((message) => message.content),
+        ],
+        personality.callMe
+      )
+      const keepLearned = (extra: unknown) => {
+        if (!Array.isArray(extra)) return
+        const lines = extra.filter(
+          (line): line is string =>
+            typeof line === "string" && line.trim().length > 4
+        )
+        if (!lines.length) return
+        setVault((current) => ({
+          ...current,
+          notes: mergeFacts(current.notes, lines),
+        }))
+      }
+
       try {
         let acc = ""
         const useDevice =
@@ -439,15 +462,18 @@ export function MayaApp() {
                   hometown: hometownFromNotes(
                     vault.notes.map((note) => note.text)
                   ),
+                  identity,
                 }),
               })
               if (looked.ok) {
                 const data = (await looked.json()) as {
                   hits?: import("@/lib/types").SearchHit[]
                   searched?: boolean
+                  learn?: string[]
                 }
                 hits = data.hits ?? []
                 searched = Boolean(data.searched && hits.length)
+                keepLearned(data.learn)
               }
             }
             const deviceText = await replyOnDevice({
@@ -506,6 +532,12 @@ export function MayaApp() {
             reported === "model"
           ) {
             setMode(reported)
+          }
+          try {
+            const packed = response.headers.get("X-Maya-Learn")
+            if (packed) keepLearned(JSON.parse(packed) as unknown)
+          } catch {
+            /* ignore bad learn payload */
           }
 
           const reader = response.body?.getReader()
