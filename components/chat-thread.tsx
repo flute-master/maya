@@ -124,7 +124,9 @@ export function ChatThread({
                   Allow once
                 </Button>
                 <p className="self-center text-[11px] text-muted-foreground">
-                  Python and file writes stay in data/workspace.
+                  {message.pending.some((item) => item.name.startsWith("google_"))
+                    ? "This uses the Google account you connected. She still cannot drive Chrome."
+                    : "Python and file writes stay in data/workspace."}
                 </p>
               </div>
             ) : null}

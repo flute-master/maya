@@ -10,6 +10,7 @@
     "build": "next build",
     "start": "next start --port 43217 --hostname 0.0.0.0",
     "lint": "eslint",
+    "smoke": "node scripts/smoke.mjs",
     "train": "python3 train/train.py"
   },
   "dependencies": {

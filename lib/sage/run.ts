@@ -2,6 +2,7 @@ import type { PublicIdentity } from "@/lib/identity"
 import { lookupWeb } from "@/lib/lookup"
 import { readWebPage } from "@/lib/search"
 import type { MemoryContext } from "@/lib/types"
+import { lookupPlace } from "@/lib/maps"
 import { fetchWeather } from "@/lib/weather"
 import {
   listWorkspace,
@@ -79,6 +80,18 @@ async function execute(
       }
       return {
         name: "weather",
+        ok: true,
+        summary: hit.title,
+        detail: hit.snippet,
+      }
+    }
+    if (call.name === "maps") {
+      const hit = await lookupPlace(call.args.query || "")
+      if (!hit) {
+        return { name: "maps", ok: false, summary: "Could not build map links." }
+      }
+      return {
+        name: "maps",
         ok: true,
         summary: hit.title,
         detail: hit.snippet,
@@ -203,8 +216,10 @@ export async function runSage(input: {
   trust: SageTrust
   approved?: ToolApproval[]
 }): Promise<SageRun> {
-  await refreshVectors(input.memory)
   const calls = planTools(input.text, input.hometown)
+  if (calls.some((call) => call.name === "recall")) {
+    await refreshVectors(input.memory)
+  }
   const granted = input.approved ?? []
   const pending: PendingConfirm[] = []
   const runnable: ToolCall[] = []

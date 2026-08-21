@@ -8,6 +8,7 @@ export type ToolName =
   | "files_read"
   | "files_write"
   | "observe"
+  | "maps"
   | "google_calendar"
   | "google_gmail"
   | "google_drive"

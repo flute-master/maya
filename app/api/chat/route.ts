@@ -174,14 +174,20 @@ export async function POST(request: Request) {
   }
 
   const googleRan = sage.results.some((item) => item.name.startsWith("google_"))
+  const grounded = sage.results.some((item) => item.name !== "recall")
+  const skipBrain = skipTinyNet(last.content)
 
   let lookup: Lookup =
-    allowSearch && !googleRan
+    allowSearch && !googleRan && !grounded && !skipBrain
       ? await lookupWeb(last.content, false, hometown, identity)
       : { hits: [], searched: false, searchFailed: false }
 
   for (const result of sage.results) {
-    if (result.ok && result.detail && (result.name === "weather" || result.name === "fetch_page")) {
+    if (
+      result.ok &&
+      result.detail &&
+      (result.name === "weather" || result.name === "fetch_page" || result.name === "maps")
+    ) {
       lookup.hits.unshift({
         title: result.summary,
         snippet: result.detail,
@@ -202,6 +208,8 @@ export async function POST(request: Request) {
       "files_list",
       "fetch_page",
       "observe",
+      "weather",
+      "maps",
       "google_calendar",
       "google_gmail",
       "google_drive",
@@ -211,17 +219,13 @@ export async function POST(request: Request) {
       "google_people",
     ].includes(item.name)
   )
-  const localOnly =
-    skipTinyNet(last.content) &&
-    !toolHeavy &&
-    !sage.results.length &&
-    hits.length === 0
+  const localOnly = skipBrain && !toolHeavy && !grounded && hits.length === 0
 
   let trainedText: string | null = null
   if (
     !localOnly &&
     !toolHeavy &&
-    !skipTinyNet(last.content) &&
+    !skipBrain &&
     body.useTrained !== false &&
     (await trainedReady())
   ) {
@@ -234,7 +238,7 @@ export async function POST(request: Request) {
   }
 
   let ollamaText =
-    localOnly || trainedText || googleRan
+    localOnly || trainedText || googleRan || grounded || skipBrain
       ? null
       : await replyWithOllama({
           messages: history,

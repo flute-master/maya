@@ -21,6 +21,8 @@ npm run dev
 
 Open **http://127.0.0.1:43217**
 
+With the server running, `npm run smoke` checks chat, Google tools, files, weather, and maps.
+
 You should see `package.json` in that `maya` folder. There is no extra `maya/maya`.
 
 Hear her first: **http://127.0.0.1:43217/hear.html** — press play on Inner sage.

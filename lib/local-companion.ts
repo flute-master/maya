@@ -352,14 +352,23 @@ function close(personality: Personality, seed: string) {
   ])
 }
 
-function identityReply(personality: Personality, seed: string) {
+function identityReply(personality: Personality, seed: string, text: string) {
   const name = personality.name.trim() || "Maya"
   const youName = you(personality)
+  const askingDo = /what can you (actually )?do/.test(text.toLowerCase())
+  const canDo = [
+    "On this machine I can: talk in this tab, remember notes, look up weather and the web, drop Maps links (I cannot drive Chrome), set reminders here, write stories and jokes, run Python you allow in data/workspace, and read files you drop with the paperclip.",
+    "Connect Google in Customize → Lookup for Calendar, Gmail, Drive, Docs, Sheets, Tasks, and Contacts. A service account cannot open personal Gmail. Keep, Meet, and Photos are not these APIs.",
+    "I cannot take over your mouse or see screenshot pixels unless you describe them.",
+  ].join("\n\n")
   if (isSage(personality)) {
     const intro =
       name === "Maya"
         ? "I'm Maya. I sit with you, I think things through, and I don't vanish when it's inconvenient."
         : `I'm ${name}. The mind that stays — not a guest, not a search box.`
+    if (askingDo) {
+      return [intro, canDo, close(personality, seed)].join("\n\n")
+    }
     return [
       intro,
       "I'm not an online oracle and I'm not going to perform friendship at you. I analyze, I stay, and I talk like a person.",
@@ -389,6 +398,10 @@ function identityReply(personality: Personality, seed: string) {
 
   const net =
     "I talk from this machine. I look up weather and the web, write stories and jokes, set reminders in this app, drop Maps links, recall from local vectors, and run Python you allow. Connect Google in Customize and I can use Calendar, Gmail, Drive, Docs, Sheets, Tasks, and Contacts through the free APIs. I cannot puppeteer Chrome."
+
+  if (askingDo) {
+    return [intro, mix, canDo, close(personality, seed)].join("\n\n")
+  }
 
   return [intro, mix, flavor(personality), address, net, close(personality, seed)].join(
     "\n\n"
@@ -641,11 +654,13 @@ export function replyLocally(
       ? `\n\nYou also asked me to keep this in mind: ${personality.customInstructions.trim()}`
       : ""
 
-  const googleTools =
-    extras?.toolResults?.filter((item) => item.name.startsWith("google_")) ?? []
-  const tools = (googleTools.length ? googleTools : extras?.toolResults ?? []).filter(
-    (item) => item.detail || item.summary
-  )
+  const actionable =
+    extras?.toolResults?.filter(
+      (item) => item.name !== "recall" && (item.detail || item.summary)
+    ) ?? []
+  const tools = (
+    actionable.length ? actionable : extras?.toolResults ?? []
+  ).filter((item) => item.detail || item.summary)
   if (tools.length && intent !== "identity") {
     const blocks = tools
       .map((item) => {
@@ -743,7 +758,7 @@ export function replyLocally(
       )
       break
     case "identity":
-      body = identityReply(personality, seed) + mixNote
+      body = identityReply(personality, seed, text) + mixNote
       break
     case "remember":
       body = isSage(personality)

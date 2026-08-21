@@ -1,5 +1,6 @@
 import { extractHttpUrl } from "@/lib/search"
-import { isWeatherQuery, weatherPlace } from "@/lib/skills"
+import { isMapsQuery, isWeatherQuery, mapsQuery, weatherPlace } from "@/lib/skills"
+import { skipTinyNet } from "@/lib/trained"
 import { intendedMeaning } from "@/lib/typos"
 import type { ToolCall } from "@/lib/sage/types"
 
@@ -74,7 +75,7 @@ export function planTools(
     /^(hi|hey|hello|thanks|thank you|ok|okay|yo|good night|bye)\b/.test(lower) &&
     text.length < 48
 
-  if (!smallTalk && text.length > 12) {
+  if (!smallTalk && text.length > 12 && !skipTinyNet(text)) {
     add({
       name: "recall",
       args: { query: text.slice(0, 240) },
@@ -150,6 +151,15 @@ export function planTools(
       name: "weather",
       args: { place: weatherPlace(text, hometown) || hometown || "" },
       reason: "Live weather.",
+      risk: "net",
+    })
+  }
+
+  if (isMapsQuery(text)) {
+    add({
+      name: "maps",
+      args: { query: mapsQuery(text, hometown) || text },
+      reason: "Maps links. She cannot drive Chrome.",
       risk: "net",
     })
   }
