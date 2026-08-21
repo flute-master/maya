@@ -83,7 +83,7 @@ pip install -r requirements-voice.txt
 
 Windows: `python` or `py` on PATH. macOS/Linux: `python3`. `ffmpeg` is optional (she still speaks without it).
 
-If Python/`edge-tts` is missing, she falls back to your computer’s speech engine. On Windows, **Heera** (Settings → Time & language → Speech) is the usual Indian English woman’s voice.
+If Python/`edge-tts` is missing, she falls back to your computer’s speech engine. On Windows, **Heera** (Settings → Time & language → Speech) is the usual Indian English woman’s voice. Live speech now uses Microsoft’s **Neerja Expressive** voice at a conversational pace — not the slowed, pitch-shifted reading.
 
 ### Optional: talk into the mic
 

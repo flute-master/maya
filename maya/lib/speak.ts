@@ -1,5 +1,7 @@
 "use client"
 
+import { forSpokenText, spokenChunks } from "@/lib/spoken-text"
+
 export type SpeakOptions = {
   voiceURI?: string
   sage?: boolean
@@ -57,41 +59,67 @@ export function canSpeak() {
   return typeof window !== "undefined" && Boolean(window.speechSynthesis)
 }
 
+let speakGeneration = 0
+
 export function speakLine(text: string, options: SpeakOptions | string = {}) {
   if (typeof window === "undefined" || !window.speechSynthesis) return false
   const opts = typeof options === "string" ? { voiceURI: options } : options
-  const clean = text.trim()
-  if (!clean) return false
+  const chunks = spokenChunks(text)
+  if (!chunks.length) return false
 
   window.dispatchEvent(new CustomEvent("maya-stop-clips"))
   window.speechSynthesis.cancel()
-  const utterance = new SpeechSynthesisUtterance(clean)
+  const generation = ++speakGeneration
   const voice = pickSpokenVoice(opts.voiceURI)
-  if (voice) {
-    utterance.voice = voice
-    utterance.lang = voice.lang
-  } else {
-    utterance.lang = "en-IN"
-  }
-  utterance.rate = opts.sage ? 0.86 : 0.96
-  utterance.pitch = opts.sage ? 0.92 : 1.05
+  const rate = opts.sage ? 0.98 : 1.04
+  const pitch = opts.sage ? 1.0 : 1.03
+  let index = 0
+  let spokenChars = 0
 
-  utterance.onboundary = (event) => {
-    if (typeof event.charIndex === "number") {
-      opts.onBoundary?.(event.charIndex)
+  const speakNext = () => {
+    if (generation !== speakGeneration) return
+    if (index >= chunks.length) {
+      opts.onEnd?.()
+      return
     }
+    const chunk = chunks[index] ?? ""
+    const utterance = new SpeechSynthesisUtterance(chunk)
+    if (voice) {
+      utterance.voice = voice
+      utterance.lang = voice.lang
+    } else {
+      utterance.lang = "en-IN"
+    }
+    utterance.rate = rate
+    utterance.pitch = pitch
+    const startAt = spokenChars
+    utterance.onboundary = (event) => {
+      if (generation !== speakGeneration) return
+      if (typeof event.charIndex === "number") {
+        opts.onBoundary?.(startAt + event.charIndex)
+      }
+    }
+    utterance.onend = () => {
+      if (generation !== speakGeneration) return
+      spokenChars += chunk.length + 1
+      index += 1
+      window.setTimeout(speakNext, opts.sage ? 110 : 70)
+    }
+    utterance.onerror = () => {
+      if (generation !== speakGeneration) return
+      opts.onEnd?.()
+    }
+    window.speechSynthesis.speak(utterance)
+    opts.onBoundary?.(startAt)
   }
-  const finish = () => opts.onEnd?.()
-  utterance.onend = finish
-  utterance.onerror = finish
 
-  window.speechSynthesis.speak(utterance)
-  opts.onBoundary?.(0)
+  speakNext()
   return allVoices().length > 0
 }
 
 export function stopSpeaking() {
   if (typeof window === "undefined") return
+  speakGeneration += 1
   window.dispatchEvent(new CustomEvent("maya-stop-clips"))
   window.speechSynthesis?.cancel()
 }
@@ -106,7 +134,7 @@ export async function speakInto(
   const response = await fetch("/api/speak", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, sage }),
+    body: JSON.stringify({ text: forSpokenText(text), sage }),
   })
   const type = response.headers.get("content-type") || ""
   if (!response.ok || !type.includes("audio")) return false

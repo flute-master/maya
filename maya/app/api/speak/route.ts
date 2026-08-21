@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process"
-import { mkdtemp, readFile, rename, rm } from "node:fs/promises"
+import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -23,9 +23,9 @@ function runWithPython(
   sage: boolean,
   outFile: string
 ) {
-  const voice = "en-IN-NeerjaNeural"
-  const rate = sage ? "-18%" : "-8%"
-  const pitch = sage ? "-10Hz" : "-2Hz"
+  const voice = "en-IN-NeerjaExpressiveNeural"
+  const rate = sage ? "-4%" : "+2%"
+  const pitch = "+0Hz"
   return new Promise<void>((resolve, reject) => {
     const child = spawn(bin, [SCRIPT, voice, rate, pitch, outFile], {
       stdio: ["pipe", "pipe", "pipe"],
@@ -59,25 +59,6 @@ async function runPython(text: string, sage: boolean, outFile: string) {
     : new Error("Python with edge-tts was not found.")
 }
 
-function runFfmpeg(input: string, output: string) {
-  return new Promise<void>((resolve, reject) => {
-    const child = spawn(
-      "ffmpeg",
-      ["-y", "-i", input, "-ar", "44100", "-ac", "2", "-b:a", "128k", output],
-      { stdio: ["ignore", "pipe", "pipe"] }
-    )
-    let stderr = ""
-    child.stderr.on("data", (chunk) => {
-      stderr += String(chunk)
-    })
-    child.on("error", reject)
-    child.on("close", (code) => {
-      if (code === 0) resolve()
-      else reject(new Error(stderr.trim() || `ffmpeg exited ${code}`))
-    })
-  })
-}
-
 export async function POST(request: Request) {
   let body: Body
   try {
@@ -93,15 +74,9 @@ export async function POST(request: Request) {
 
   const dir = await mkdtemp(join(tmpdir(), "maya-speak-"))
   const rawFile = join(dir, "raw.mp3")
-  const outFile = join(dir, "line.mp3")
   try {
     await runPython(text, Boolean(body.sage), rawFile)
-    try {
-      await runFfmpeg(rawFile, outFile)
-    } catch {
-      await rename(rawFile, outFile)
-    }
-    const bytes = await readFile(outFile)
+    const bytes = await readFile(rawFile)
     return new Response(bytes, {
       headers: {
         "Content-Type": "audio/mpeg",
