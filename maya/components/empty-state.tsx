@@ -1,0 +1,95 @@
+"use client"
+
+import { Sparkles } from "lucide-react"
+
+import { ClipPlayer } from "@/components/clip-player"
+import { Button } from "@/components/ui/button"
+import { SAGE_SAMPLE } from "@/lib/speak"
+
+const STARTERS = [
+  {
+    label: "Analyze this with me",
+    text: "I need analysis. I'll tell you the situation — stay with me and parse it.",
+  },
+  {
+    label: "Just stay",
+    text: "You don't have to fix anything. I just need you here.",
+  },
+  {
+    label: "Who are you to me?",
+    text: "Who are you to me? Tell me the bond, plainly.",
+  },
+]
+
+export function EmptyState({
+  name,
+  callMe,
+  returning,
+  past,
+  onOpenPast,
+  onStart,
+}: {
+  name: string
+  callMe: string
+  returning: boolean
+  past: Array<{ id: string; title: string }>
+  onOpenPast: (id: string) => void
+  onStart: (text: string) => void
+}) {
+  const who = callMe.trim()
+
+  return (
+    <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center px-6 py-12 text-center">
+      <div className="relative mb-8">
+        <div className="absolute inset-0 -m-10 rounded-full bg-primary/20 blur-3xl" />
+        <div className="relative flex size-16 items-center justify-center rounded-full bg-card ring-1 ring-foreground/10">
+          <Sparkles className="size-6 text-primary" />
+        </div>
+      </div>
+      <h1 className="font-heading text-4xl font-medium tracking-tight text-foreground sm:text-5xl">
+        {name}
+      </h1>
+      <p className="mt-4 max-w-sm text-base leading-7 text-muted-foreground">
+        {returning
+          ? `I kept the thread${who ? `, ${who}` : ""}. I do not reset. Continue when ready.`
+          : "Inner sage. Always with you. I analyze, I stay, I do not perform friendship. Offline unless a fact must be looked up. Text first — tap the speaker or turn Spoken replies on if you want to hear me."}
+      </p>
+      <div className="mt-6 w-full">
+        <ClipPlayer
+          featured
+          src="/clips/sage.mp3"
+          label="Hear how Maya sounds"
+          quote={SAGE_SAMPLE}
+        />
+      </div>
+      {past.length > 0 ? (
+        <div className="mt-6 flex w-full flex-col gap-2">
+          {past.map((item) => (
+            <Button
+              key={item.id}
+              type="button"
+              variant="ghost"
+              className="h-auto justify-start truncate rounded-xl px-3 py-2 text-left"
+              onClick={() => onOpenPast(item.id)}
+            >
+              Continue: {item.title}
+            </Button>
+          ))}
+        </div>
+      ) : null}
+      <div className="mt-8 flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-center">
+        {STARTERS.map((starter) => (
+          <Button
+            key={starter.label}
+            type="button"
+            variant="outline"
+            className="h-auto rounded-full px-4 py-2.5 text-left whitespace-normal"
+            onClick={() => onStart(starter.text)}
+          >
+            {starter.label}
+          </Button>
+        ))}
+      </div>
+    </div>
+  )
+}
