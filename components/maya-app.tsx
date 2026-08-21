@@ -311,29 +311,27 @@ export function MayaApp() {
         return
       }
 
-      haltVoice()
+      try {
+        haltVoice()
+      } catch {
+        /* sending still works if voice teardown fails */
+      }
 
       abortRef.current?.abort()
       const abort = new AbortController()
       abortRef.current = abort
       retryRef.current = trimmed
       setError(null)
+      setIsSending(true)
 
       const approved =
         typeof retry === "object" ? retry.approved : undefined
-      const userMessage: ChatMessage = retry
-        ? messages.filter((message) => message.role === "user").at(-1) ?? {
-            id: newId(),
-            role: "user",
-            content: trimmed,
-            createdAt: Date.now(),
-          }
-        : {
-            id: newId(),
-            role: "user",
-            content: trimmed,
-            createdAt: Date.now(),
-          }
+      const userMessage: ChatMessage = {
+        id: newId(),
+        role: "user",
+        content: trimmed,
+        createdAt: Date.now(),
+      }
       const assistantMessage: ChatMessage = {
         id: newId(),
         role: "assistant",
@@ -341,16 +339,39 @@ export function MayaApp() {
         createdAt: Date.now(),
       }
 
-      const source =
-        approved && messages.at(-1)?.role === "assistant"
-          ? messages.slice(0, -1)
-          : messages
-      const nextMessages = retry ? source : [...messages, userMessage]
+      let nextMessages: ChatMessage[] = []
+      setVault((current) => {
+        const existing = activeConversation(current).messages
+        const source =
+          approved && existing.at(-1)?.role === "assistant"
+            ? existing.slice(0, -1)
+            : existing
+        nextMessages = retry
+          ? source
+          : [...source.filter((item) => item.id !== assistantMessage.id), userMessage]
+        const facts = retry ? [] : extractFacts(trimmed)
+        const learned = retry
+          ? current.learned
+          : updateLearned(current.learned, trimmed)
+        const withMessages = withActiveMessages(current, [
+          ...nextMessages,
+          assistantMessage,
+        ])
+        return {
+          ...withMessages,
+          notes: upsertDigest(mergeFacts(withMessages.notes, facts), [
+            ...nextMessages,
+            assistantMessage,
+          ]),
+          learned,
+        }
+      })
+      const plan = retry ? null : parsePlan(intendedMeaning(trimmed))
       const facts = retry ? [] : extractFacts(trimmed)
       const learned = retry
         ? vault.learned
         : updateLearned(vault.learned, trimmed)
-      const plan = retry ? null : parsePlan(intendedMeaning(trimmed))
+
       if (plan) {
         if (
           typeof Notification !== "undefined" &&
@@ -413,6 +434,7 @@ export function MayaApp() {
             learned,
           }
         })
+        setIsSending(false)
         if (vault.prefs.speakReplies !== false) {
           playVoice(reply, assistantMessage.id)
         }
@@ -423,22 +445,6 @@ export function MayaApp() {
         { ...vault, notes: mergeFacts(vault.notes, facts), learned },
         nextMessages
       )
-
-      setVault((current) => {
-        const withMessages = withActiveMessages(current, [
-          ...nextMessages,
-          assistantMessage,
-        ])
-        return {
-          ...withMessages,
-          notes: upsertDigest(mergeFacts(withMessages.notes, facts), [
-            ...nextMessages,
-            assistantMessage,
-          ]),
-          learned,
-        }
-      })
-      setIsSending(true)
 
       const identity = readPublicIdentity(
         [

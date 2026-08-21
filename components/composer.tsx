@@ -38,12 +38,10 @@ export function Composer({
   const [level, setLevel] = useState(0)
   const recRef = useRef<ListenHandle | null>(null)
   const committedRef = useRef("")
-  const boxRef = useRef<HTMLInputElement>(null)
+  const boxRef = useRef<HTMLTextAreaElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    return () => recRef.current?.abort()
-  }, [])
+  const onSendRef = useRef(onSend)
+  onSendRef.current = onSend
 
   function readBox() {
     return (boxRef.current?.value ?? value).trim()
@@ -51,13 +49,28 @@ export function Composer({
 
   function submit() {
     const text = readBox()
-    if (!text || busy) return
+    if (!text) return
     stopMic()
-    onSend(text)
+    onSendRef.current(text)
     setValue("")
     committedRef.current = ""
     if (boxRef.current) boxRef.current.value = ""
   }
+
+  useEffect(() => {
+    const box = boxRef.current
+    if (!box) return
+    function onKey(event: KeyboardEvent) {
+      if (event.key !== "Enter" || event.shiftKey || event.isComposing) return
+      event.preventDefault()
+      submit()
+    }
+    box.addEventListener("keydown", onKey)
+    return () => {
+      box.removeEventListener("keydown", onKey)
+      recRef.current?.abort()
+    }
+  }, [])
 
   function stopMic() {
     recRef.current?.stop()
@@ -124,15 +137,11 @@ export function Composer({
 
   const helper = listening
     ? "Listening — speak, then tap the square or Send."
-    : speakReplies
-      ? "Enter sends. Shift is not needed. Mic, paperclip, and monitor sit beside the box."
-      : "Enter sends. Text only. Mic, paperclip, and monitor sit beside the box."
+    : "Enter sends. Shift+Enter makes a new line."
   const banner = error || listenHint
 
   return (
     <form
-      action="#"
-      method="dialog"
       className="relative z-10 mx-auto flex w-full max-w-2xl flex-col gap-1 bg-background px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2"
       onSubmit={(event) => {
         event.preventDefault()
@@ -226,38 +235,39 @@ export function Composer({
             <Monitor />
           </Button>
         ) : null}
-        <input
+        <textarea
           ref={boxRef}
-          type="text"
-          enterKeyHint="send"
-          autoComplete="off"
-          autoCorrect="on"
+          rows={1}
           value={value}
           onChange={(event) => setValue(event.target.value)}
           placeholder={listening ? "Listening…" : `Message ${name}…`}
           aria-label={`Message ${name}`}
-          className="h-11 min-h-11 flex-1 rounded-xl border border-border bg-card px-4 text-base text-foreground shadow-none outline-none placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-0"
+          className="max-h-36 min-h-11 flex-1 resize-none rounded-2xl border border-input bg-card px-4 py-2.5 text-base shadow-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         />
         {busy ? (
-          <Button
+          <button
             type="button"
-            size="icon-lg"
-            variant="secondary"
             aria-label="Stop"
-            className="rounded-full"
+            className={cn(
+              buttonVariants({ variant: "secondary", size: "icon-lg" }),
+              "rounded-full"
+            )}
             onClick={onStop}
           >
             <Square />
-          </Button>
+          </button>
         ) : (
-          <Button
-            type="submit"
-            size="icon-lg"
+          <button
+            type="button"
             aria-label="Send"
-            className="rounded-full"
+            className={cn(
+              buttonVariants({ size: "icon-lg" }),
+              "rounded-full"
+            )}
+            onClick={submit}
           >
             <ArrowUp />
-          </Button>
+          </button>
         )}
       </div>
     </form>

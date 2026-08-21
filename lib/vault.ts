@@ -327,10 +327,28 @@ export function withActiveMessages(
   vault: MemoryVault,
   messages: ChatMessage[]
 ): MemoryVault {
+  const targetId =
+    vault.conversations.find((item) => item.id === vault.activeId)?.id ??
+    vault.conversations[0]?.id
+  if (!targetId) {
+    const conversation = {
+      id: "maya-boot",
+      title: titleFromMessages(messages),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      messages,
+    }
+    return {
+      ...vault,
+      conversations: [conversation],
+      activeId: conversation.id,
+    }
+  }
   return {
     ...vault,
+    activeId: targetId,
     conversations: vault.conversations.map((conversation) => {
-      if (conversation.id !== vault.activeId) return conversation
+      if (conversation.id !== targetId) return conversation
       const title =
         conversation.title === "New conversation"
           ? titleFromMessages(messages)
