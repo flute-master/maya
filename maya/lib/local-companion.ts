@@ -232,16 +232,24 @@ function questionReply(
   text: string,
   seed: string
 ) {
+  const asked = text.trim().replace(/\s+/g, " ")
   if (isSage(personality)) {
     return [
-      named(personality, `Question received, {name}.`),
-      `You asked: "${text.trim().replace(/\s+/g, " ")}"`,
-      "If this is a fact about the world, say “look this up” and I will search. If it is about you, I will only use what you have stored here — I will not guess.",
-      "Proposal: give me the missing constraint, or tell me to search.",
+      named(personality, `Question received, {name}. I will not stall on “parsing.”`),
+      `You asked: "${asked}"`,
+      "I do not invent world facts. With lookup on, I search DuckDuckGo and Wikipedia when a question needs the outside world. Personal facts stay on this machine — I will not Google your life.",
+      "Proposal: if this is a world fact, leave lookup on and ask again, or paste a page URL. If it is about you, tell me the fact and I will keep it.",
       close(personality, seed),
     ].join("\n\n")
   }
-  return adviceReply(personality, text, seed)
+  return [
+    named(
+      personality,
+      `I'll take the question seriously: "${asked}"`
+    ),
+    "I don't make up a Wikipedia page from thin air. If lookup is on, I'll search. If it's about you, I only use what you've stored here.",
+    close(personality, seed),
+  ].join("\n\n")
 }
 
 function memoryAside(latest: string, memory: MemoryContext | undefined) {
@@ -328,7 +336,7 @@ function identityReply(personality: Personality, seed: string) {
       youName
         ? `I address you as ${youName}. Change it in Customize if that is not the bond you want.`
         : "Set what I should call you. Master is the default for this bond.",
-      "If I need a fact from the world, I will look it up and say so. My voice itself does not come from the internet.",
+      "If I need a fact from the world, I look it up (DuckDuckGo, Wikipedia) and say so. I do not drive your browser. A local Ollama model is optional. My voice itself does not come from the internet.",
       close(personality, seed),
     ].join("\n\n")
   }
@@ -350,7 +358,7 @@ function identityReply(personality: Personality, seed: string) {
     : "Tell me what to call you whenever you like — there's a place for that in Customize."
 
   const net =
-    "I don't call an outside model to talk to you. If I ever need a fact from the world, I'll look it up — and I'll say so."
+    "I talk from this machine. Optional local model (Ollama) if you installed one. If I need a fact from the world, I look it up — and I'll say so. I don't puppeteer your Chrome."
 
   return [intro, mix, flavor(personality), address, net, close(personality, seed)].join(
     "\n\n"
@@ -361,20 +369,27 @@ function searchReply(
   personality: Personality,
   hits: SearchHit[],
   failed: boolean,
-  seed: string
+  seed: string,
+  googleUrl?: string
 ) {
   if (failed || !hits.length) {
+    const google = googleUrl
+      ? `\n\nI cannot drive your Chrome window. Open this search yourself:\n${googleUrl}`
+      : "\n\nSay “look this up …” again, paste a page URL, or open Google yourself."
     return named(
       personality,
       isSage(personality)
-        ? `Lookup failed, {name}. I will not fabricate a result. I am still here. We can retry, or proceed with what we already know.`
+        ? `Lookup returned nothing I can trust, {name}. I will not fabricate a result. I am still here.${google}`
         : pick(seed, [
-            `I tried the web {name}. It didn't come back, so I won't invent a fact to fill the hole. We can try again, or stay with what's actually yours.`,
-            `Lookup failed. I'm still here — just not going to fake knowing it.`,
+            `I tried the web {name}. It didn't come back, so I won't invent a fact to fill the hole.${google}`,
+            `Lookup failed. I'm still here — just not going to fake knowing it.${google}`,
           ])
     )
   }
   const top = hits[0]
+  if (!top) {
+    return searchReply(personality, [], true, seed, googleUrl)
+  }
   const second = hits[1]
   const source = [top.source, top.url].filter(Boolean).join(" · ")
   const extra = second?.snippet ? `\n\nAlso: ${second.snippet}` : ""
@@ -405,7 +420,7 @@ function adviceReply(
         personality,
         pick(seed, [
           `Analysis, {name}.`,
-          `Understood.`,
+          `Understood — here is the split, not a stall.`,
         ])
       ),
       `You said: "${snippet}"\n\nSplit: what you can choose now, and what you can only wait out. Most stuckness is those two tangled.`,
@@ -571,6 +586,7 @@ export function replyLocally(
     searchHits?: SearchHit[]
     searchFailed?: boolean
     searched?: boolean
+    googleUrl?: string
   }
 ): string {
   const last = [...messages].reverse().find((message) => message.role === "user")
@@ -610,7 +626,8 @@ export function replyLocally(
       personality,
       extras.searchHits ?? [],
       Boolean(extras.searchFailed),
-      seed
+      seed,
+      extras.googleUrl
     )
     return `${hindiOpen}${looked}`.trim()
   }
@@ -672,7 +689,7 @@ export function replyLocally(
     case "customize":
       body = isSage(personality)
         ? `Customize is the control panel, not a personality quiz. Bond, voice, memory, search.\n\nThe sage bond stays until you change it. I will still be Maya.`
-        : `You can shape me. Open Customize — mix, tone, what to call you, extra instructions.\n\nI learn from how you actually talk. I don't outsource my voice to an online model. Search is only for facts I can't know from you — you can turn that off.`
+        : `You can shape me. Open Customize — mix, tone, what to call you, extra instructions.\n\nI learn from how you actually talk. Optional Ollama is local, not ChatGPT. Lookup is only for world facts — you can turn that off.`
       break
     case "thanks":
       body = named(

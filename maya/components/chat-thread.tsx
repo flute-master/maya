@@ -119,7 +119,7 @@ export function ChatThread({
             </span>
           </div>
           <p className="px-1 text-[11px] text-muted-foreground/80">
-            {companionName} is finding the words
+            {companionName} is answering
           </p>
         </article>
       ) : null}
@@ -142,6 +142,31 @@ export function ChatThread({
   )
 }
 
+const URL_SPLIT = /(https?:\/\/[^\s<>"']+)/g
+
+function LinkedText({ content }: { content: string }) {
+  const parts = content.split(URL_SPLIT)
+  return (
+    <>
+      {parts.map((part, index) =>
+        /^https?:\/\//.test(part) ? (
+          <a
+            key={`${part}-${index}`}
+            href={part.replace(/[),.;]+$/g, "")}
+            target="_blank"
+            rel="noreferrer"
+            className="break-all underline underline-offset-2"
+          >
+            {part}
+          </a>
+        ) : (
+          <span key={`${index}-${part.slice(0, 12)}`}>{part}</span>
+        )
+      )}
+    </>
+  )
+}
+
 function FollowText({
   content,
   charIndex,
@@ -149,7 +174,7 @@ function FollowText({
   content: string
   charIndex: number | null
 }) {
-  if (charIndex == null) return <>{content}</>
+  if (charIndex == null) return <LinkedText content={content} />
   const start = Math.max(0, Math.min(charIndex, content.length))
   let end = start
   while (end < content.length && !/\s/.test(content[end] ?? "")) end += 1

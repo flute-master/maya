@@ -1,7 +1,13 @@
 import { overlayPersonality, DEFAULT_LEARNED } from "@/lib/adapt"
 import { replyLocally } from "@/lib/local-companion"
-import { replyWithOllama } from "@/lib/ollama"
-import { searchQueryFor, searchWeb } from "@/lib/search"
+import { ollamaReady, replyWithOllama } from "@/lib/ollama"
+import {
+  extractHttpUrl,
+  googleSearchUrl,
+  searchQueryFor,
+  searchWeb,
+  readWebPage,
+} from "@/lib/search"
 import type {
   ChatMessage,
   ChatRequestBody,
@@ -26,11 +32,12 @@ function asMessages(incoming: ChatRequestBody["messages"]): ChatMessage[] {
   }))
 }
 
-function streamHeaders(mode: string) {
+function streamHeaders(mode: string, engine: string) {
   return {
     "Content-Type": "text/plain; charset=utf-8",
     "Cache-Control": "no-cache, no-transform",
     "X-Maya-Mode": mode,
+    "X-Maya-Engine": engine,
     "X-Accel-Buffering": "no",
   }
 }
@@ -58,7 +65,13 @@ function isPersonality(value: unknown): value is Personality {
 }
 
 export async function GET() {
-  return Response.json({ offline: true, search: true })
+  const model = await ollamaReady()
+  return Response.json({
+    offline: true,
+    search: true,
+    ollama: Boolean(model),
+    model,
+  })
 }
 
 export async function POST(request: Request) {
@@ -83,38 +96,84 @@ export async function POST(request: Request) {
   const personality = overlayPersonality(body.personality, learned)
   const memory = body.memory
   const allowSearch = body.allowSearch !== false
+  const pageUrl = allowSearch ? extractHttpUrl(last.content) : null
   const query = allowSearch ? searchQueryFor(last.content) : null
 
   let hits: SearchHit[] = []
   let searched = false
   let searchFailed = false
+  let googleUrl: string | undefined
 
-  if (query) {
+  if (pageUrl) {
     searched = true
     try {
-      hits = await searchWeb(query)
+      const page = await readWebPage(pageUrl)
+      if (page) hits.push(page)
+      else searchFailed = true
+    } catch {
+      searchFailed = true
+    }
+  }
+
+  if (query && !/^https?:\/\//i.test(query)) {
+    searched = true
+    googleUrl = googleSearchUrl(query)
+    try {
+      const web = await searchWeb(query)
+      hits = uniqueBySnippet([...hits, ...web])
       if (!hits.length) searchFailed = true
     } catch {
       searchFailed = true
     }
   }
 
+  const usedSearch = searched && hits.length > 0
+  const ollamaText = await replyWithOllama({
+    messages: history,
+    personality,
+    memory,
+    learned,
+    hits: usedSearch
+      ? hits
+      : searchFailed && googleUrl
+        ? [
+            {
+              title: "Google",
+              snippet: `Lookup did not return a snippet. Open this search: ${googleUrl}`,
+              source: "Google",
+              url: googleUrl,
+            },
+          ]
+        : [],
+  })
+
   const text =
-    (await replyWithOllama({
-      messages: history,
-      personality,
-      memory,
-      learned,
-      hits,
-    })) ||
+    ollamaText ||
     replyLocally(history, personality, memory, {
       learned,
       searchHits: hits,
-      searchFailed,
-      searched,
+      searchFailed: searched && !hits.length,
+      searched: usedSearch || (searched && Boolean(query || pageUrl)),
+      googleUrl,
     })
 
+  const mode = usedSearch || (searched && Boolean(query || pageUrl))
+    ? "search"
+    : ollamaText
+      ? "model"
+      : "offline"
+
   return new Response(localStream(text), {
-    headers: streamHeaders(searched ? "search" : "offline"),
+    headers: streamHeaders(mode, ollamaText ? "ollama" : "local"),
+  })
+}
+
+function uniqueBySnippet(hits: SearchHit[]): SearchHit[] {
+  const seen = new Set<string>()
+  return hits.filter((hit) => {
+    const key = hit.snippet.slice(0, 80)
+    if (!hit.snippet.trim() || seen.has(key)) return false
+    seen.add(key)
+    return true
   })
 }

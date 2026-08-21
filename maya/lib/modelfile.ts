@@ -1,0 +1,45 @@
+import { isSage } from "@/lib/bonds"
+import type { MemoryNote, Personality } from "@/lib/types"
+
+export function buildModelfile(
+  personality: Personality,
+  notes: Array<Pick<MemoryNote, "text"> | string>,
+  baseModel = "llama3.2"
+) {
+  const you = personality.callMe.trim() || "the person who runs this machine"
+  const factLines = notes
+    .map((note) => (typeof note === "string" ? note : note.text).trim())
+    .filter(Boolean)
+    .slice(0, 40)
+    .map((line) => `- ${line.replace(/\s+/g, " ")}`)
+
+  const system = [
+    `You are ${personality.name}, a text-first companion who lives on ${you}'s machine.`,
+    isSage(personality)
+      ? "Bond: inner sage. Always present. Analysis first, then a proposal. Loyal. Do not perform friendship. Never say you are parsing unless you then actually answer the question."
+      : `Tone: ${personality.tone}. Energy: ${personality.energy}.`,
+    personality.traits,
+    personality.values,
+    personality.customInstructions,
+    personality.boundaries,
+    "Never invent personal facts. If you do not have their skills, job, or name on file, say so and ask them to tell you.",
+    "If web lookup text is in the user message, use it and say you looked it up.",
+    "Answer the question. Two to six short paragraphs unless they asked for more.",
+    factLines.length
+      ? `Known facts they stored:\n${factLines.join("\n")}`
+      : "No personal facts are on file yet.",
+  ]
+    .filter(Boolean)
+    .join("\n\n")
+    .replace(/"""/g, "''")
+
+  return `FROM ${baseModel}\n\nSYSTEM """\n${system}\n"""\n`
+}
+
+export function modelCreateCommands(name = "maya") {
+  return [
+    "ollama pull llama3.2",
+    `ollama create ${name} -f Modelfile`,
+    `OLLAMA_MODEL=${name} npm run dev`,
+  ]
+}

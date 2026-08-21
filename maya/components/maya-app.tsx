@@ -42,7 +42,7 @@ export function MayaApp() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [mode, setMode] = useState<"offline" | "search">("offline")
+  const [mode, setMode] = useState<"offline" | "search" | "model">("offline")
   const [follow, setFollow] = useState<FollowAlong | null>(null)
   const [voiceStatus, setVoiceStatus] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
@@ -237,7 +237,11 @@ export function MayaApp() {
         }
 
         const reported = response.headers.get("X-Maya-Mode")
-        if (reported === "offline" || reported === "search") {
+        if (
+          reported === "offline" ||
+          reported === "search" ||
+          reported === "model"
+        ) {
           setMode(reported)
         }
 
@@ -313,7 +317,11 @@ export function MayaApp() {
               {personality.name}
             </h1>
             <Badge variant="outline" className="hidden sm:inline-flex">
-              {mode === "search" ? "Looked up" : "Offline"}
+              {mode === "search"
+                ? "Looked up"
+                : mode === "model"
+                  ? "Local model"
+                  : "On this machine"}
             </Badge>
           </div>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
@@ -387,6 +395,11 @@ export function MayaApp() {
       {mode === "search" && !empty ? (
         <p className="px-4 text-center text-xs text-muted-foreground">
           {personality.name} used the web for a fact — not for her voice.
+        </p>
+      ) : null}
+      {mode === "model" && !empty ? (
+        <p className="px-4 text-center text-xs text-muted-foreground">
+          {personality.name} answered with the local Ollama model on this machine.
         </p>
       ) : null}
 

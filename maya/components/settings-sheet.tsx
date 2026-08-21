@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, type ReactNode } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import { Download, Trash2, Upload } from "lucide-react"
 
 import { BONDS, isSage } from "@/lib/bonds"
@@ -78,6 +78,83 @@ export function SettingsSheet({
   const fileRef = useRef<HTMLInputElement>(null)
   const [noteDraft, setNoteDraft] = useState("")
   const [importError, setImportError] = useState<string | null>(null)
+  const [modelHint, setModelHint] = useState("Checking for a local model…")
+  const [modelReady, setModelReady] = useState(false)
+  const [modelBusy, setModelBusy] = useState(false)
+  const [modelError, setModelError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
+    fetch("/api/model")
+      .then(async (response) => {
+        const data = (await response.json()) as {
+          available?: boolean
+          using?: string | null
+          hint?: string
+        }
+        if (cancelled) return
+        setModelReady(Boolean(data.available))
+        setModelHint(
+          data.hint ||
+            (data.using
+              ? `${data.using} is ready.`
+              : "Ollama is not running on this machine.")
+        )
+      })
+      .catch(() => {
+        if (cancelled) return
+        setModelReady(false)
+        setModelHint("Could not reach the local model endpoint.")
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [open])
+
+  async function downloadModelfile() {
+    setModelBusy(true)
+    setModelError(null)
+    try {
+      const response = await fetch("/api/model", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          personality,
+          notes: notes.map((note) => note.text),
+        }),
+      })
+      const data = (await response.json()) as {
+        error?: string
+        modelfile?: string
+        filename?: string
+        commands?: string[]
+      }
+      if (!response.ok || !data.modelfile) {
+        throw new Error(data.error || "Could not build a Modelfile.")
+      }
+      const blob = new Blob([data.modelfile], { type: "text/plain" })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = data.filename || "Modelfile"
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+      if (data.commands?.length) {
+        setModelHint(
+          `Saved ${data.filename || "Modelfile"}. Then run:\n${data.commands.join("\n")}`
+        )
+      }
+    } catch (caught) {
+      setModelError(
+        caught instanceof Error ? caught.message : "Could not build a Modelfile."
+      )
+    } finally {
+      setModelBusy(false)
+    }
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -99,7 +176,7 @@ export function SettingsSheet({
               <TabsTrigger value="presence">Presence</TabsTrigger>
               <TabsTrigger value="voice">Voice</TabsTrigger>
               <TabsTrigger value="memory">Memory</TabsTrigger>
-              <TabsTrigger value="search">Search</TabsTrigger>
+              <TabsTrigger value="search">Lookup</TabsTrigger>
             </TabsList>
           </div>
 
@@ -499,12 +576,14 @@ export function SettingsSheet({
             <div className="flex flex-col gap-5">
               <div className="flex items-start justify-between gap-3 rounded-xl bg-muted/60 p-3">
                 <div>
-                  <p className="text-sm font-medium">Let Maya look things up</p>
+                  <p className="text-sm font-medium">Look up world facts</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Conversation stays offline. She never calls an outside
-                    model to talk. Search is only for facts she cannot know
-                    from you — weather, a name, a current thing. She will say
-                    when she used the web.
+                    On by default. She searches DuckDuckGo and Wikipedia when
+                    a question needs the outside world, or when you paste a
+                    page URL. She does not drive Chrome. If lookup fails she
+                    gives you a Google link to open yourself. She will not
+                    Google your private facts — skills, job, name live in
+                    Memory.
                   </p>
                 </div>
                 <Switch
@@ -513,6 +592,43 @@ export function SettingsSheet({
                     onPrefsChange({ ...prefs, allowSearch })
                   }
                 />
+              </div>
+
+              <div className="rounded-xl bg-card p-3 ring-1 ring-foreground/8">
+                <p className="text-sm font-medium">Your local model</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Training a new neural net from scratch needs a GPU farm.
+                  What you can do here: install{" "}
+                  <a
+                    href="https://ollama.com"
+                    className="underline underline-offset-2"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Ollama
+                  </a>
+                  , pull a small model, then bake Maya&apos;s personality and
+                  your memory notes into a Modelfile. That is your Maya, on
+                  this machine.
+                </p>
+                <p
+                  className={`mt-2 text-sm whitespace-pre-wrap ${modelReady ? "text-foreground" : "text-muted-foreground"}`}
+                >
+                  {modelHint}
+                </p>
+                {modelError ? (
+                  <p className="mt-2 text-sm text-destructive">{modelError}</p>
+                ) : null}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="mt-3"
+                  disabled={modelBusy}
+                  onClick={() => void downloadModelfile()}
+                >
+                  {modelBusy ? "Building…" : "Download Modelfile"}
+                </Button>
               </div>
 
               <div className="rounded-xl bg-card p-3 ring-1 ring-foreground/8">

@@ -7,32 +7,46 @@ import type {
 } from "@/lib/types"
 import { isSage } from "@/lib/bonds"
 
-const OLLAMA_URL = process.env.OLLAMA_URL || "http://127.0.0.1:11434"
+export const OLLAMA_URL = process.env.OLLAMA_URL || "http://127.0.0.1:11434"
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || ""
 
-export async function ollamaReady(): Promise<string | null> {
+export async function ollamaStatus(): Promise<{
+  url: string
+  models: string[]
+  using: string | null
+}> {
   try {
     const response = await fetch(`${OLLAMA_URL}/api/tags`, {
-      signal: AbortSignal.timeout(800),
+      signal: AbortSignal.timeout(1200),
     })
-    if (!response.ok) return null
+    if (!response.ok) {
+      return { url: OLLAMA_URL, models: [], using: null }
+    }
     const data = (await response.json()) as {
       models?: Array<{ name?: string }>
     }
     const names = (data.models ?? [])
       .map((model) => model.name)
       .filter((name): name is string => Boolean(name))
+    let using: string | null = null
     if (OLLAMA_MODEL) {
-      const match = names.find((name) => name.startsWith(OLLAMA_MODEL))
-      return match || (names[0] ?? null)
+      using =
+        names.find((name) => name.startsWith(OLLAMA_MODEL)) || names[0] || null
+    } else {
+      using =
+        names.find((name) => /maya|llama3|qwen|mistral|phi|gemma/i.test(name)) ||
+        names[0] ||
+        null
     }
-    const preferred = names.find((name) =>
-      /llama3|qwen|mistral|phi|gemma/i.test(name)
-    )
-    return preferred || names[0] || null
+    return { url: OLLAMA_URL, models: names, using }
   } catch {
-    return null
+    return { url: OLLAMA_URL, models: [], using: null }
   }
+}
+
+export async function ollamaReady(): Promise<string | null> {
+  const status = await ollamaStatus()
+  return status.using
 }
 
 function systemPrompt(
@@ -45,22 +59,29 @@ function systemPrompt(
   const lines = [
     `You are ${personality.name}, a text-first companion living on ${you}'s machine.`,
     sage
-      ? "Bond: inner sage. Analysis first, then a proposal. Loyal. Do not perform friendship. Do not say you are parsing unless you then actually answer."
+      ? "Bond: inner sage. Analysis first, then a proposal. Loyal. Do not perform friendship. Never reply with only 'parsing' or 'I am parsing'. Always answer."
       : `Tone: ${personality.tone}. Energy: ${personality.energy}.`,
     personality.traits,
     personality.values,
     personality.customInstructions,
-    "Never invent personal facts about them. If you do not know their skills, job, or name, say you do not have it on file and ask them to tell you.",
+    "Never invent personal facts about them. If you do not know their skills, job, or name, say you do not have it on file and ask them to tell you. Do not Google their private life.",
     "If web search results are provided, use them and say you looked it up. Do not pretend you already knew.",
-    "Keep replies concrete. Answer the question. Two to six short paragraphs unless they asked for more.",
+    "If a Google URL is provided because lookup failed, give it to them and still say what you can from context.",
+    "Keep replies concrete. Answer the question first. Two to six short paragraphs unless they asked for more.",
   ]
   if (memory?.notes.length) {
-    lines.push("Known facts they stored:", ...memory.notes.slice(0, 20).map((n) => `- ${n}`))
+    lines.push(
+      "Known facts they stored:",
+      ...memory.notes.slice(0, 20).map((n) => `- ${n}`)
+    )
   }
   if (hits?.length) {
     lines.push(
       "Web lookup:",
-      ...hits.slice(0, 3).map((hit) => `- ${hit.snippet} (${hit.source})`)
+      ...hits.slice(0, 4).map(
+        (hit) =>
+          `- ${hit.title}: ${hit.snippet}${hit.url ? ` (${hit.url})` : ""} [${hit.source}]`
+      )
     )
   }
   return lines.filter(Boolean).join("\n")

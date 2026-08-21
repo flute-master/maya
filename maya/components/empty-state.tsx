@@ -12,8 +12,8 @@ const STARTERS = [
     text: "I need analysis. I'll tell you the situation — stay with me and parse it.",
   },
   {
-    label: "Just stay",
-    text: "You don't have to fix anything. I just need you here.",
+    label: "Look this up",
+    text: "Look this up: what is the capital of India?",
   },
   {
     label: "Who are you to me?",

@@ -93,31 +93,47 @@ Chrome or Edge. Click the mic, allow the site, speak, then send. Words appear as
 
 Refresh does not reset her. **Export** downloads `maya-memory.json`. Import that file on another machine to take the same Maya with you. **New** archives a thread; it does not erase her.
 
-If you ask “what are my skills?” she only answers from what you stored. Tell her, or write it under Customize → Memory. She will not invent a CV.
+If you ask “what are my skills?” she only answers from what you stored. Tell her, or write it under Customize → Memory. She will not invent a CV, and she will not Google your private life.
 
-### Search (browser-like lookup)
+### Lookup (DuckDuckGo, Wikipedia, Google link)
 
-Customize → Search. Off = fully offline. On = she looks up world facts (DuckDuckGo + Wikipedia) and says so.
+Customize → Lookup. Off = fully offline. On = she searches when a **world** question needs an answer, or when you paste a page URL.
 
-Say **look this up** or ask “what is …” / “who is …”. She does not drive your Chrome window. She fetches search results.
+- Ask `what is …` / `who is …`, or say **look this up** / **google**.
+- If search returns nothing, she gives you a **Google link** to open yourself.
+- She does **not** drive Chrome, click around Google, or browse as you.
 
-### Optional: a real local model (Ollama)
+### Your own local model (Ollama)
 
-Maya is not a trained copy of you. Training your own LLM is a separate project.
+She is not a neural net trained from scratch on your chat. That needs a GPU farm. Two practical layers instead:
 
-If [Ollama](https://ollama.com) is installed and a model is pulled, restart Maya and she will use it when `http://127.0.0.1:11434` is up:
+1. **Memory** — facts you tell her stay on this machine (`maya-memory.json`).
+2. **Ollama** — a real local LLM, optionally baked with her personality + your notes.
 
 ```bash
+# Windows / macOS / Linux: https://ollama.com
 ollama pull llama3.2
 ```
 
-Optional: `OLLAMA_MODEL=llama3.2` in the environment. If Ollama is not running, she uses the built-in engine.
+Restart Maya. If `http://127.0.0.1:11434` is up, she uses that model.
+
+To make **your** Maya (personality + Memory notes):
+
+1. Customize → Lookup → **Download Modelfile**
+2. Put that file in the project folder, then:
+
+```bash
+ollama create maya -f Modelfile
+OLLAMA_MODEL=maya npm run dev
+```
+
+If Ollama is not running, she uses the built-in engine. She should never answer with only “parsing.”
 
 ## How she works
 
 - Enter sends, Shift+Enter is a new line.
 - **Customize** shapes presence (inner sage / friend / companion), tone, and instructions.
-- She **adapts** from how you write. Reset that under Customize → Search.
+- She **adapts** from how you write. Reset that under Customize → Lookup.
 - **Customize → Voice** picks a writing style (Ananya, Diya, Meera, Kavya, Isha, Simran) and Hear this plays that clip.
 
 ## What this is not
