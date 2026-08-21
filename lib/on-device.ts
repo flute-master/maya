@@ -2,12 +2,15 @@
 
 import { companionSystemPrompt } from "@/lib/companion-prompt"
 import { interpretLastUser } from "@/lib/typos"
+import { canRunOnDevice } from "@/lib/webgpu"
 import type {
   ChatMessage,
   MemoryContext,
   Personality,
   SearchHit,
 } from "@/lib/types"
+
+export { canRunOnDevice }
 
 export const PHONE_MODEL = "Llama-3.2-1B-Instruct-q4f16_1-MLC"
 export const DESKTOP_MODEL = "Llama-3.2-3B-Instruct-q4f16_1-MLC"
@@ -32,11 +35,6 @@ type Engine = {
 let engine: Engine | null = null
 let loading: Promise<string> | null = null
 let loadedId: string | null = null
-
-export function canRunOnDevice() {
-  if (typeof navigator === "undefined") return false
-  return Boolean((navigator as Navigator & { gpu?: unknown }).gpu)
-}
 
 export function pickOnDeviceModel() {
   if (typeof navigator === "undefined") return PHONE_MODEL

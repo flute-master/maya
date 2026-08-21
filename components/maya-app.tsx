@@ -22,12 +22,6 @@ import {
   upsertDigest,
 } from "@/lib/recall"
 import {
-  canRunOnDevice,
-  loadOnDeviceModel,
-  onDeviceReady,
-  replyOnDevice,
-} from "@/lib/on-device"
-import {
   isSpeakCommand,
   restoreSample,
   speakInto,
@@ -37,6 +31,7 @@ import {
 import { hometownFromNotes } from "@/lib/skills"
 import { readPublicIdentity } from "@/lib/identity"
 import { intendedMeaning } from "@/lib/typos"
+import { canRunOnDevice } from "@/lib/webgpu"
 import {
   formatWhen,
   googleCalendarUrl,
@@ -50,6 +45,7 @@ import {
   addNote,
   countStoredMessages,
   downloadVault,
+  emptyVault,
   loadVault,
   parseImport,
   patchReminder,
@@ -65,7 +61,8 @@ import {
 import { hydrateVault, writeDeviceMemory } from "@/lib/persist"
 
 export function MayaApp() {
-  const [vault, setVault] = useState(loadVault)
+  const [vault, setVault] = useState(emptyVault)
+  const [bootReady, setBootReady] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -78,6 +75,7 @@ export function MayaApp() {
   const [deviceHint, setDeviceHint] = useState<string | null>(null)
   const [modelReady, setModelReady] = useState(false)
   const [modelName, setModelName] = useState<string | null>(null)
+  const [deviceId, setDeviceId] = useState<string | null>(null)
   const [follow, setFollow] = useState<FollowAlong | null>(null)
   const [voiceStatus, setVoiceStatus] = useState<string | null>(null)
   const [deviceSave, setDeviceSave] = useState<"saving" | "saved" | "error">(
@@ -94,6 +92,8 @@ export function MayaApp() {
   const sage = isSage(personality)
 
   useEffect(() => {
+    setVault(loadVault())
+    setBootReady(true)
     let cancelled = false
     void hydrateVault().then((next) => {
       if (cancelled) return
@@ -120,6 +120,7 @@ export function MayaApp() {
   }, [])
 
   useEffect(() => {
+    if (!bootReady) return
     saveVault(vault)
     if (!hydratedRef.current) return
     setDeviceSave("saving")
@@ -129,7 +130,7 @@ export function MayaApp() {
       })
     }, 700)
     return () => window.clearTimeout(timer)
-  }, [vault])
+  }, [vault, bootReady])
 
   useEffect(() => {
     let cancelled = false
@@ -458,7 +459,7 @@ export function MayaApp() {
           !online &&
           !modelReady &&
           vault.prefs.onDeviceModel !== false &&
-          Boolean(onDeviceReady())
+          Boolean(deviceId)
 
         if (useDevice) {
           try {
@@ -488,6 +489,7 @@ export function MayaApp() {
                 keepLearned(data.learn)
               }
             }
+            const { replyOnDevice } = await import("@/lib/on-device")
             const deviceText = await replyOnDevice({
               messages: nextMessages,
               personality,
@@ -612,13 +614,15 @@ export function MayaApp() {
         setIsSending(false)
       }
     },
-    [messages, personality, playVoice, haltVoice, setMessages, vault, modelReady, online]
+    [messages, personality, playVoice, haltVoice, setMessages, vault, modelReady, online, deviceId]
   )
 
   const loadDevice = useCallback(async () => {
     setDeviceHint("Preparing the on-device model…")
     try {
+      const { loadOnDeviceModel } = await import("@/lib/on-device")
       const id = await loadOnDeviceModel(setDeviceHint)
+      setDeviceId(id)
       setDeviceHint(
         id
           ? `Ready on this device: ${id}`
@@ -795,7 +799,7 @@ export function MayaApp() {
           callMe={personality.callMe}
           returning={returning}
           modelReady={modelReady}
-          modelName={modelName || onDeviceReady()}
+          modelName={modelName || deviceId}
           onLoadDevice={
             !modelReady && canRunOnDevice() ? () => void loadDevice() : undefined
           }
