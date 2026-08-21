@@ -2,7 +2,6 @@
 
 import { Sparkles } from "lucide-react"
 
-import { ClipPlayer } from "@/components/clip-player"
 import { Button } from "@/components/ui/button"
 import { SAGE_SAMPLE } from "@/lib/speak"
 
@@ -79,14 +78,13 @@ export function EmptyState({
           Load on-device brain
         </Button>
       ) : null}
-      <div className="mt-6 w-full">
-        <ClipPlayer
-          featured
-          src="/clips/sage.mp3"
-          label="Hear how Maya sounds"
-          quote={SAGE_SAMPLE}
-        />
-      </div>
+      <p className="font-heading mt-6 max-w-sm text-sm leading-6 text-foreground/90">
+        “{SAGE_SAMPLE}”
+      </p>
+      <p className="mt-2 max-w-sm text-xs text-muted-foreground">
+        Press play on Maya&apos;s voice below to hear her. Inner sage, Indian
+        English — not the anime character.
+      </p>
       {past.length > 0 ? (
         <div className="mt-6 flex w-full flex-col gap-2">
           {past.map((item) => (

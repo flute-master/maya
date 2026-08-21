@@ -16,13 +16,9 @@ export function stopClips(except?: HTMLAudioElement) {
 export function ClipPlayer({
   src,
   label,
-  quote,
-  featured = false,
 }: {
   src: string
   label: string
-  quote?: string
-  featured?: boolean
 }) {
   const innerRef = useRef<HTMLAudioElement | null>(null)
   const [playing, setPlaying] = useState(false)
@@ -59,64 +55,10 @@ export function ClipPlayer({
       await audio.play()
       setPlaying(true)
       setError(null)
-    } catch (caught) {
+    } catch {
       setPlaying(false)
-      setError(
-        caught instanceof Error
-          ? "Press the play bar below if the button is blocked."
-          : "Could not start audio."
-      )
+      setError("Press play on the bar if the button is blocked.")
     }
-  }
-
-  const player = (
-    <audio
-      ref={innerRef}
-      src={src}
-      controls
-      preload="auto"
-      playsInline
-      className="w-full"
-      onPlay={() => {
-        setPlaying(true)
-        setError(null)
-      }}
-      onPause={() => setPlaying(false)}
-      onEnded={() => setPlaying(false)}
-      onError={() =>
-        setError("This browser could not play the clip. Try the download link.")
-      }
-    />
-  )
-
-  if (featured) {
-    return (
-      <div className="mx-auto w-full max-w-sm rounded-2xl bg-neutral-100 px-4 py-3 text-left text-neutral-900 ring-1 ring-black/10">
-        <p className="font-heading text-sm leading-6">“{quote}”</p>
-        <Button
-          type="button"
-          className="mt-3 w-full rounded-full"
-          variant={playing ? "secondary" : "default"}
-          onClick={() => void toggle()}
-          aria-pressed={playing}
-        >
-          {playing ? <Pause /> : <Volume2 />}
-          {playing ? "Playing — tap to stop" : label}
-        </Button>
-        <div className="mt-3">{player}</div>
-        {error ? (
-          <p className="mt-2 text-xs text-red-700">{error}</p>
-        ) : (
-          <p className="mt-2 text-[11px] leading-4 text-neutral-600">
-            Press play on the bar if you hear nothing. Inner sage, Indian
-            English — not the anime voice.{" "}
-            <a href={src} download className="underline underline-offset-2">
-              Download clip
-            </a>
-          </p>
-        )}
-      </div>
-    )
   }
 
   return (
@@ -134,7 +76,27 @@ export function ClipPlayer({
           {playing ? "Playing" : label}
         </Button>
       </div>
-      <div className="rounded-lg bg-neutral-100 p-1">{player}</div>
+      <div className="rounded-lg bg-neutral-100 p-1">
+        <audio
+          ref={innerRef}
+          src={src}
+          controls
+          preload="auto"
+          playsInline
+          className="w-full"
+          onPlay={() => {
+            setPlaying(true)
+            setError(null)
+          }}
+          onPause={() => setPlaying(false)}
+          onEnded={() => setPlaying(false)}
+          onError={() =>
+            setError(
+              "This browser could not play the clip. Try Customize → Voice."
+            )
+          }
+        />
+      </div>
       {error ? <p className="text-[11px] text-destructive">{error}</p> : null}
     </div>
   )
