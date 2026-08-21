@@ -17,7 +17,7 @@ export async function ollamaStatus(): Promise<{
 }> {
   try {
     const response = await fetch(`${OLLAMA_URL}/api/tags`, {
-      signal: AbortSignal.timeout(1200),
+      signal: AbortSignal.timeout(2500),
     })
     if (!response.ok) {
       return { url: OLLAMA_URL, models: [], using: null }
@@ -104,10 +104,15 @@ export async function replyWithOllama(input: {
     const response = await fetch(`${OLLAMA_URL}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      signal: AbortSignal.timeout(25000),
+      signal: AbortSignal.timeout(45000),
       body: JSON.stringify({
         model,
         stream: false,
+        options: {
+          temperature: 0.55,
+          top_p: 0.9,
+          num_ctx: 8192,
+        },
         messages: [
           {
             role: "system",

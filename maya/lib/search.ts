@@ -34,6 +34,23 @@ export function isPersonalFactQuery(text: string): boolean {
   )
 }
 
+export function fallbackSearchQuery(text: string): string | null {
+  const direct = searchQueryFor(text)
+  if (direct) return direct
+  const t = text.trim()
+  if (t.length < 10) return null
+  if (isPersonalFactQuery(t)) return null
+  const lower = t.toLowerCase()
+  if (NOT_SEARCH.some((pattern) => pattern.test(lower))) return null
+  return t.replace(/[?.!]+$/g, "").trim()
+}
+
+export function modelNeedsWeb(reply: string): boolean {
+  return /\b(i (do not|don't|do not currently|cannot|can't) (know|verify|confirm|access)|not (enough|sure|certain)|no (current|live|recent) (data|information)|beyond my (knowledge|training)|as of my (last|training)|would need to (search|look|browse)|look( it)? up (online|on the web|for you)|i don't have access to (the )?(internet|web|browser)|i cannot browse)\b/i.test(
+    reply
+  )
+}
+
 export function googleSearchUrl(query: string): string {
   return `https://www.google.com/search?q=${encodeURIComponent(query.trim())}`
 }

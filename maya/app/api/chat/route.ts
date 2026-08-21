@@ -3,7 +3,9 @@ import { replyLocally } from "@/lib/local-companion"
 import { ollamaReady, replyWithOllama } from "@/lib/ollama"
 import {
   extractHttpUrl,
+  fallbackSearchQuery,
   googleSearchUrl,
+  modelNeedsWeb,
   searchQueryFor,
   searchWeb,
   readWebPage,
@@ -64,6 +66,72 @@ function isPersonality(value: unknown): value is Personality {
   return typeof p.name === "string" && typeof p.tone === "string"
 }
 
+function uniqueBySnippet(hits: SearchHit[]): SearchHit[] {
+  const seen = new Set<string>()
+  return hits.filter((hit) => {
+    const key = hit.snippet.slice(0, 80)
+    if (!hit.snippet.trim() || seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
+type Lookup = {
+  hits: SearchHit[]
+  searched: boolean
+  searchFailed: boolean
+  googleUrl?: string
+}
+
+async function lookupWeb(text: string, force: boolean): Promise<Lookup> {
+  const pageUrl = extractHttpUrl(text)
+  const query = force ? fallbackSearchQuery(text) : searchQueryFor(text)
+  let hits: SearchHit[] = []
+  let searched = false
+  let searchFailed = false
+  let googleUrl: string | undefined
+
+  if (pageUrl) {
+    searched = true
+    try {
+      const page = await readWebPage(pageUrl)
+      if (page) hits.push(page)
+      else searchFailed = true
+    } catch {
+      searchFailed = true
+    }
+  }
+
+  if (query && !/^https?:\/\//i.test(query)) {
+    searched = true
+    googleUrl = googleSearchUrl(query)
+    try {
+      const web = await searchWeb(query)
+      hits = uniqueBySnippet([...hits, ...web])
+      if (!hits.length) searchFailed = true
+    } catch {
+      searchFailed = true
+    }
+  }
+
+  return { hits, searched, searchFailed, googleUrl }
+}
+
+function hitsForModel(lookup: Lookup): SearchHit[] {
+  if (lookup.hits.length) return lookup.hits
+  if (lookup.searchFailed && lookup.googleUrl) {
+    return [
+      {
+        title: "Google",
+        snippet: `Lookup did not return a snippet. Open this search: ${lookup.googleUrl}`,
+        source: "Google",
+        url: lookup.googleUrl,
+      },
+    ]
+  }
+  return []
+}
+
 export async function GET() {
   const model = await ollamaReady()
   return Response.json({
@@ -96,84 +164,55 @@ export async function POST(request: Request) {
   const personality = overlayPersonality(body.personality, learned)
   const memory = body.memory
   const allowSearch = body.allowSearch !== false
-  const pageUrl = allowSearch ? extractHttpUrl(last.content) : null
-  const query = allowSearch ? searchQueryFor(last.content) : null
 
-  let hits: SearchHit[] = []
-  let searched = false
-  let searchFailed = false
-  let googleUrl: string | undefined
+  let lookup: Lookup = allowSearch
+    ? await lookupWeb(last.content, false)
+    : { hits: [], searched: false, searchFailed: false }
 
-  if (pageUrl) {
-    searched = true
-    try {
-      const page = await readWebPage(pageUrl)
-      if (page) hits.push(page)
-      else searchFailed = true
-    } catch {
-      searchFailed = true
-    }
-  }
-
-  if (query && !/^https?:\/\//i.test(query)) {
-    searched = true
-    googleUrl = googleSearchUrl(query)
-    try {
-      const web = await searchWeb(query)
-      hits = uniqueBySnippet([...hits, ...web])
-      if (!hits.length) searchFailed = true
-    } catch {
-      searchFailed = true
-    }
-  }
-
-  const usedSearch = searched && hits.length > 0
-  const ollamaText = await replyWithOllama({
+  let ollamaText = await replyWithOllama({
     messages: history,
     personality,
     memory,
     learned,
-    hits: usedSearch
-      ? hits
-      : searchFailed && googleUrl
-        ? [
-            {
-              title: "Google",
-              snippet: `Lookup did not return a snippet. Open this search: ${googleUrl}`,
-              source: "Google",
-              url: googleUrl,
-            },
-          ]
-        : [],
+    hits: hitsForModel(lookup),
   })
 
+  if (
+    ollamaText &&
+    allowSearch &&
+    !lookup.hits.length &&
+    modelNeedsWeb(ollamaText)
+  ) {
+    lookup = await lookupWeb(last.content, true)
+    const retry = await replyWithOllama({
+      messages: history,
+      personality,
+      memory,
+      learned,
+      hits: hitsForModel(lookup),
+    })
+    if (retry) ollamaText = retry
+  }
+
+  const usedSearch = lookup.searched && lookup.hits.length > 0
   const text =
     ollamaText ||
     replyLocally(history, personality, memory, {
       learned,
-      searchHits: hits,
-      searchFailed: searched && !hits.length,
-      searched: usedSearch || (searched && Boolean(query || pageUrl)),
-      googleUrl,
+      searchHits: lookup.hits,
+      searchFailed: lookup.searched && !lookup.hits.length,
+      searched: usedSearch || lookup.searched,
+      googleUrl: lookup.googleUrl,
     })
 
-  const mode = usedSearch || (searched && Boolean(query || pageUrl))
-    ? "search"
-    : ollamaText
-      ? "model"
-      : "offline"
+  const mode =
+    usedSearch || lookup.searched
+      ? "search"
+      : ollamaText
+        ? "model"
+        : "offline"
 
   return new Response(localStream(text), {
     headers: streamHeaders(mode, ollamaText ? "ollama" : "local"),
-  })
-}
-
-function uniqueBySnippet(hits: SearchHit[]): SearchHit[] {
-  const seen = new Set<string>()
-  return hits.filter((hit) => {
-    const key = hit.snippet.slice(0, 80)
-    if (!hit.snippet.trim() || seen.has(key)) return false
-    seen.add(key)
-    return true
   })
 }

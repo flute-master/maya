@@ -112,7 +112,8 @@ She is not a neural net trained from scratch on your chat. That needs a GPU farm
 
 ```bash
 # Windows / macOS / Linux: https://ollama.com
-ollama pull llama3.2
+# or from this repo on WSL/Linux:
+bash scripts/setup-model.sh
 ```
 
 Restart Maya. If `http://127.0.0.1:11434` is up, she uses that model.

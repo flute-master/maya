@@ -43,6 +43,8 @@ export function MayaApp() {
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [mode, setMode] = useState<"offline" | "search" | "model">("offline")
+  const [modelReady, setModelReady] = useState(false)
+  const [modelName, setModelName] = useState<string | null>(null)
   const [follow, setFollow] = useState<FollowAlong | null>(null)
   const [voiceStatus, setVoiceStatus] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
@@ -57,6 +59,26 @@ export function MayaApp() {
   useEffect(() => {
     saveVault(vault)
   }, [vault])
+
+  useEffect(() => {
+    let cancelled = false
+    fetch("/api/model")
+      .then(async (response) => {
+        const data = (await response.json()) as {
+          available?: boolean
+          using?: string | null
+        }
+        if (cancelled) return
+        setModelReady(Boolean(data.available))
+        setModelName(data.using ?? null)
+      })
+      .catch(() => {
+        if (!cancelled) setModelReady(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     return () => stopSpeaking()
@@ -365,6 +387,8 @@ export function MayaApp() {
           name={personality.name}
           callMe={personality.callMe}
           returning={returning}
+          modelReady={modelReady}
+          modelName={modelName}
           past={vault.conversations
             .filter((item) => item.messages.length > 0)
             .slice(0, 4)

@@ -28,6 +28,8 @@ export function EmptyState({
   past,
   onOpenPast,
   onStart,
+  modelReady,
+  modelName,
 }: {
   name: string
   callMe: string
@@ -35,6 +37,8 @@ export function EmptyState({
   past: Array<{ id: string; title: string }>
   onOpenPast: (id: string) => void
   onStart: (text: string) => void
+  modelReady?: boolean
+  modelName?: string | null
 }) {
   const who = callMe.trim()
 
@@ -52,7 +56,12 @@ export function EmptyState({
       <p className="mt-4 max-w-sm text-base leading-7 text-muted-foreground">
         {returning
           ? `I kept the thread${who ? `, ${who}` : ""}. I do not reset. Continue when ready.`
-          : "Inner sage. Always with you. I analyze, I stay, I do not perform friendship. Offline unless a fact must be looked up. Text first — tap the speaker or turn Spoken replies on if you want to hear me."}
+          : "Inner sage. Always with you. I analyze, I stay, I do not perform friendship. A local model answers when Ollama is running. I look the web up when a fact needs the outside world."}
+      </p>
+      <p className="mt-3 max-w-sm text-sm text-muted-foreground">
+        {modelReady
+          ? `Local model live${modelName ? `: ${modelName}` : ""}. World facts still get a lookup when I need one.`
+          : "No local model yet — I still answer, but install Ollama for a real LLM. Customize → Lookup, or run scripts/setup-model.sh"}
       </p>
       <div className="mt-6 w-full">
         <ClipPlayer
