@@ -5,6 +5,7 @@ import { ollamaReady, replyWithOllama } from "@/lib/ollama"
 import { modelNeedsWeb } from "@/lib/search"
 import { hometownFromNotes } from "@/lib/skills"
 import { readPublicIdentity } from "@/lib/identity"
+import { replyWithTrained, trainedReady } from "@/lib/trained"
 import type {
   ChatMessage,
   ChatRequestBody,
@@ -107,13 +108,26 @@ export async function POST(request: Request) {
     ? await lookupWeb(last.content, false, hometown, identity)
     : { hits: [], searched: false, searchFailed: false }
 
-  let ollamaText = await replyWithOllama({
-    messages: history,
-    personality,
-    memory,
-    learned,
-    hits: hitsForModel(lookup),
-  })
+  const hits = hitsForModel(lookup)
+  let trainedText: string | null = null
+  if (body.useTrained !== false && (await trainedReady())) {
+    trainedText = await replyWithTrained({
+      messages: history,
+      personality,
+      memory,
+      hits,
+    })
+  }
+
+  let ollamaText = trainedText
+    ? null
+    : await replyWithOllama({
+        messages: history,
+        personality,
+        memory,
+        learned,
+        hits,
+      })
 
   if (
     ollamaText &&
@@ -134,6 +148,7 @@ export async function POST(request: Request) {
 
   const usedSearch = lookup.searched && lookup.hits.length > 0
   const text =
+    trainedText ||
     ollamaText ||
     replyLocally(history, personality, memory, {
       learned,
@@ -143,14 +158,17 @@ export async function POST(request: Request) {
       googleUrl: lookup.googleUrl,
     })
 
+  const engine = trainedText ? "trained" : ollamaText ? "ollama" : "local"
   const mode =
     usedSearch || lookup.searched
       ? "search"
-      : ollamaText
-        ? "model"
-        : "offline"
+      : trainedText
+        ? "trained"
+        : ollamaText
+          ? "model"
+          : "offline"
 
   return new Response(localStream(text), {
-    headers: streamHeaders(mode, ollamaText ? "ollama" : "local", lookup.learn),
+    headers: streamHeaders(mode, engine, lookup.learn),
   })
 }

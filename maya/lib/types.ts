@@ -67,6 +67,7 @@ export type Prefs = {
   spokenVoiceURI: string
   speakReplies: boolean
   onDeviceModel: boolean
+  useTrainedBrain: boolean
 }
 
 export type Conversation = {
@@ -116,6 +117,7 @@ export type ChatRequestBody = {
   memory?: MemoryContext
   learned?: LearnedState
   allowSearch?: boolean
+  useTrained?: boolean
 }
 
 export type MayaExport = {

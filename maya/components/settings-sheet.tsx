@@ -89,6 +89,10 @@ export function SettingsSheet({
   const [modelReady, setModelReady] = useState(false)
   const [modelBusy, setModelBusy] = useState(false)
   const [modelError, setModelError] = useState<string | null>(null)
+  const [trainHint, setTrainHint] = useState("Checking the trained net…")
+  const [trainReady, setTrainReady] = useState(false)
+  const [trainBusy, setTrainBusy] = useState(false)
+  const [trainError, setTrainError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open) return
@@ -114,6 +118,41 @@ export function SettingsSheet({
         setModelReady(false)
         setModelHint("Could not reach the local model endpoint.")
       })
+    fetch("/api/train")
+      .then(async (response) => {
+        const data = (await response.json()) as {
+          ready?: boolean
+          running?: boolean
+          step?: number
+          steps?: number
+          loss?: number | null
+          error?: string | null
+        }
+        if (cancelled) return
+        setTrainReady(Boolean(data.ready))
+        setTrainBusy(Boolean(data.running))
+        if (data.running) {
+          setTrainHint(
+            `Training from scratch… step ${data.step ?? 0}/${data.steps ?? 0}${
+              data.loss != null ? ` · loss ${data.loss}` : ""
+            }`
+          )
+        } else if (data.ready) {
+          setTrainHint(
+            data.loss != null
+              ? `Checkpoint ready. Last loss ${data.loss}. Chat uses this net first.`
+              : "Checkpoint ready. Chat uses this net first."
+          )
+        } else {
+          setTrainHint(
+            "No checkpoint yet. Train from chats starts a real transformer at random weights."
+          )
+        }
+        if (data.error) setTrainError(data.error)
+      })
+      .catch(() => {
+        if (!cancelled) setTrainHint("Could not reach the trainer.")
+      })
     fetch("/api/runtime")
       .then(async (response) => {
         const data = (await response.json()) as { lan?: string[] }
@@ -126,6 +165,41 @@ export function SettingsSheet({
       cancelled = true
     }
   }, [open])
+
+  useEffect(() => {
+    if (!open || !trainBusy) return
+    const timer = window.setInterval(() => {
+      void fetch("/api/train")
+        .then(async (response) => {
+          const data = (await response.json()) as {
+            ready?: boolean
+            running?: boolean
+            step?: number
+            steps?: number
+            loss?: number | null
+            error?: string | null
+          }
+          setTrainReady(Boolean(data.ready))
+          setTrainBusy(Boolean(data.running))
+          if (data.running) {
+            setTrainHint(
+              `Training from scratch… step ${data.step ?? 0}/${data.steps ?? 0}${
+                data.loss != null ? ` · loss ${data.loss}` : ""
+              }`
+            )
+          } else if (data.ready) {
+            setTrainHint(
+              data.loss != null
+                ? `Checkpoint ready. Last loss ${data.loss}. Chat uses this net first.`
+                : "Checkpoint ready. Chat uses this net first."
+            )
+          }
+          if (data.error) setTrainError(data.error)
+        })
+        .catch(() => undefined)
+    }, 2000)
+    return () => window.clearInterval(timer)
+  }, [open, trainBusy])
 
   async function downloadModelfile() {
     setModelBusy(true)
@@ -620,10 +694,76 @@ export function SettingsSheet({
               </div>
 
               <div className="rounded-xl bg-card p-3 ring-1 ring-foreground/8">
-                <p className="text-sm font-medium">Your local model</p>
+                <p className="text-sm font-medium">Train from scratch</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Training a new neural net from scratch needs a GPU farm.
-                  What you can do here: install{" "}
+                  A real transformer, random weights, trained on the seed
+                  dialogues plus your chats. About two minutes on a laptop
+                  CPU. It will not become Llama. A giant model from zero
+                  still needs a GPU farm. This one is yours.
+                </p>
+                <p className="mt-2 text-sm whitespace-pre-wrap">{trainHint}</p>
+                {trainError ? (
+                  <p className="mt-2 text-sm text-destructive">{trainError}</p>
+                ) : null}
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={trainBusy}
+                    onClick={() => {
+                      setTrainBusy(true)
+                      setTrainError(null)
+                      setTrainHint("Starting trainer…")
+                      void fetch("/api/train", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ steps: 1200 }),
+                      })
+                        .then(async (response) => {
+                          const data = (await response.json()) as {
+                            error?: string
+                          }
+                          if (!response.ok) {
+                            throw new Error(data.error || "Train failed to start.")
+                          }
+                          setTrainHint("Training from random weights. Keep this tab open.")
+                        })
+                        .catch((caught: unknown) => {
+                          setTrainBusy(false)
+                          setTrainError(
+                            caught instanceof Error
+                              ? caught.message
+                              : "Train failed to start."
+                          )
+                        })
+                    }}
+                  >
+                    {trainBusy ? "Training…" : trainReady ? "Train again" : "Train from chats"}
+                  </Button>
+                  <div className="ml-auto flex items-center gap-2">
+                    <Label htmlFor="use-trained" className="text-xs">
+                      Use trained net
+                    </Label>
+                    <Switch
+                      id="use-trained"
+                      checked={prefs.useTrainedBrain !== false}
+                      onCheckedChange={(useTrainedBrain) =>
+                        onPrefsChange({ ...prefs, useTrainedBrain })
+                      }
+                    />
+                  </div>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  CLI: pip install -r requirements-train.txt && python3
+                  train/train.py
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-card p-3 ring-1 ring-foreground/8">
+                <p className="text-sm font-medium">Ollama (smarter backup)</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  If the trained net is off or missing, she can still use{" "}
                   <a
                     href="https://ollama.com"
                     className="underline underline-offset-2"
@@ -632,9 +772,7 @@ export function SettingsSheet({
                   >
                     Ollama
                   </a>
-                  , pull a small model, then bake Maya&apos;s personality and
-                  your memory notes into a Modelfile. That is your Maya, on
-                  this machine.
+                  . Pull llama3.2, then bake personality into a Modelfile.
                 </p>
                 <p
                   className={`mt-2 text-sm whitespace-pre-wrap ${modelReady ? "text-foreground" : "text-muted-foreground"}`}

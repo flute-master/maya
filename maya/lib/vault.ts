@@ -27,6 +27,7 @@ const DEFAULT_PREFS: Prefs = {
   spokenVoiceURI: "",
   speakReplies: true,
   onDeviceModel: true,
+  useTrainedBrain: true,
 }
 
 export function emptyConversation(): Conversation {
@@ -155,6 +156,7 @@ function normalizePrefs(value: unknown, vaultVersion: number): Prefs {
     speakReplies:
       vaultVersion < 2 ? true : prefs.speakReplies !== false,
     onDeviceModel: prefs.onDeviceModel !== false,
+    useTrainedBrain: prefs.useTrainedBrain !== false,
   }
 }
 

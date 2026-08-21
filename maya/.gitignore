@@ -43,4 +43,12 @@ next-env.d.ts
 
 # local Maya memory (auto-saved on this device)
 /data/maya-memory.json
+/data/maya-gpt.pt
+/data/maya-gpt-meta.json
+/data/train-corpus.txt
+/data/train-status.json
+/data/train.log
+__pycache__/
+*.pyc
+/public/maya.zip
 

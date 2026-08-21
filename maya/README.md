@@ -106,13 +106,16 @@ Customize → Lookup. Off = fully offline. On = she searches when a **world** qu
 
 ### Your local model (this is the brain)
 
-Maya talks with a real local LLM via [Ollama](https://ollama.com), not the tiny built-in phrase engine. The repo includes a `Modelfile` that bakes her inner-sage instructions onto `llama3.2`. That is your Maya on this machine. Training a new neural net from scratch is a different (GPU-farm) project.
+Maya talks with a real local LLM via [Ollama](https://ollama.com), and you can also **train a small transformer from scratch** on her seed dialogues plus your chats (`python3 train/train.py` or Customize → Lookup → Train from chats). That net starts at random weights. It will not become Llama. A giant model from zero is still a GPU-farm project. This one runs on the laptop.
 
 ```bash
 # from the project folder (WSL / Linux)
-bash scripts/setup-model.sh
-OLLAMA_MODEL=maya npm run dev
+pip install -r requirements-train.txt
+python3 train/train.py
+# default is 1200 steps, ~1–2 minutes on a laptop CPU
 ```
+
+Then chat. Customize → Lookup → **Use trained net** should be on. The first train copies her seed voice; later trains also read `data/maya-memory.json`. Ollama remains the smarter backup if the checkpoint is missing.
 
 Windows without WSL: install Ollama from the site, then in the project folder run `ollama pull llama3.2` and `ollama create maya -f Modelfile`.
 

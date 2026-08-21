@@ -69,7 +69,9 @@ export function MayaApp() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [mode, setMode] = useState<"offline" | "search" | "model" | "device">(
+  const [mode, setMode] = useState<
+    "offline" | "search" | "model" | "device" | "trained"
+  >(
     "offline"
   )
   const [online, setOnline] = useState(true)
@@ -515,6 +517,7 @@ export function MayaApp() {
               memory,
               learned,
               allowSearch: vault.prefs.allowSearch && online,
+              useTrained: vault.prefs.useTrainedBrain !== false,
             }),
           })
 
@@ -529,7 +532,8 @@ export function MayaApp() {
           if (
             reported === "offline" ||
             reported === "search" ||
-            reported === "model"
+            reported === "model" ||
+            reported === "trained"
           ) {
             setMode(reported)
           }
@@ -634,11 +638,13 @@ export function MayaApp() {
                 ? "Offline"
                 : mode === "search"
                   ? "Looked up"
-                  : mode === "model"
-                    ? "Local model"
-                    : mode === "device"
-                      ? "On-device"
-                      : "On this machine"}
+                  : mode === "trained"
+                    ? "Trained net"
+                    : mode === "model"
+                      ? "Local model"
+                      : mode === "device"
+                        ? "On-device"
+                        : "On this machine"}
             </Badge>
           </div>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
@@ -708,6 +714,12 @@ export function MayaApp() {
       {mode === "search" && !empty ? (
         <p className="px-4 text-center text-xs text-muted-foreground">
           {personality.name} used the web for a fact — not for her voice.
+        </p>
+      ) : null}
+      {mode === "trained" && !empty ? (
+        <p className="px-4 text-center text-xs text-muted-foreground">
+          {personality.name} answered with the transformer you trained from
+          scratch on this machine.
         </p>
       ) : null}
       {mode === "model" && !empty ? (

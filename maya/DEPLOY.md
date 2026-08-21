@@ -6,7 +6,7 @@ No paid APIs. No Google login.
 
 | Device | How you open her | Who answers |
 | --- | --- | --- |
-| Laptop | Browser at `http://127.0.0.1:43217` | Ollama model `maya` (best) |
+| Laptop | Browser at `http://127.0.0.1:43217` | Tiny GPT you train from scratch, else Ollama `maya` |
 | Phone, same Wi‑Fi | Laptop’s LAN URL, then Add to Home Screen | Laptop’s Ollama, **or** an on-device model in Chrome |
 | Phone, away from home | Cloudflare tunnel URL | Laptop must stay on, **or** on-device model already loaded |
 
@@ -21,8 +21,8 @@ The GitHub repo is nested. After `git clone` you must `cd maya/maya`.
 - **Git**
 - **Node.js 20 or newer** — https://nodejs.org (LTS)
 - **Chrome or Edge** (Firefox works for text; voice and the on-device model prefer Chrome/Edge)
-- **Ollama** — https://ollama.com (this is the laptop brain)
-- Optional for her spoken Indian-English voice: **Python 3** and `pip install -r requirements-voice.txt`
+- **Ollama** — https://ollama.com (smarter backup brain)
+- **Python 3** — for the from-scratch trainer (`pip install -r requirements-train.txt`) and optional spoken voice (`pip install -r requirements-voice.txt`)
 
 ### Phone
 
@@ -325,7 +325,8 @@ Phone (same Wi‑Fi):
 | --- | --- |
 | `cd maya` then nothing / no `package.json` | You are one folder too high. `cd maya` again (path should end in `maya/maya`) |
 | `The application path is not writable` | Do not run create-next-app on `/`. This repo is already scaffolded. |
-| Site loads, answers are thin / “parsing” | Ollama not running. `ollama serve` or start the Ollama app, then `ollama create maya -f Modelfile` |
+| Site loads, answers are thin / “parsing” | No trained checkpoint and Ollama not running. Train from chats, or `ollama serve` then `ollama create maya -f Modelfile` |
+| Train from chats fails | `pip install -r requirements-train.txt` then `python3 train/train.py`. Needs a few GB of RAM |
 | `EADDRINUSE :43217` | Something already serves Maya. Use that, or `kill` the old Node process |
 | Phone never loads | Same Wi‑Fi, Windows firewall, WSL portproxy, use the **Wi‑Fi IPv4**, not 127.0.0.1 |
 | Voice is robotic | `pip install -r requirements-voice.txt` on the laptop; unmute the tab |
@@ -337,6 +338,7 @@ Phone (same Wi‑Fi):
 ## 9. What you are not deploying
 
 - Not a Play Store / App Store binary
-- Not a trained-from-scratch neural net
+- Not a Llama-scale model trained from random weights (that is still a GPU-farm project)
+- You **are** deploying a **small** transformer you can train on the laptop: Customize → Lookup → Train from chats, or `python3 train/train.py`
 - Not a Google account integration
 - Not a public server unless you add the Cloudflare tunnel or Vercel yourself
