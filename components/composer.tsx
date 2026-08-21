@@ -5,7 +5,7 @@ import { ArrowUp, Mic, Monitor, Paperclip, Square } from "lucide-react"
 
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { canListen, startListening } from "@/lib/listen"
+import { canListen, startListening, type ListenHandle } from "@/lib/listen"
 import { cn } from "@/lib/utils"
 
 export function Composer({
@@ -36,7 +36,8 @@ export function Composer({
   const [value, setValue] = useState("")
   const [listening, setListening] = useState(false)
   const [listenHint, setListenHint] = useState<string | null>(null)
-  const recRef = useRef<ReturnType<typeof startListening>>(null)
+  const [level, setLevel] = useState(0)
+  const recRef = useRef<ListenHandle | null>(null)
   const committedRef = useRef("")
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -57,6 +58,7 @@ export function Composer({
     recRef.current?.stop()
     recRef.current = null
     setListening(false)
+    setLevel(0)
   }
 
   function toggleMic() {
@@ -65,33 +67,60 @@ export function Composer({
       return
     }
     if (!canListen()) {
-      setListenHint("This browser cannot listen. Type instead.")
+      setListenHint(
+        "This browser cannot listen. Use Chrome or Edge, or type instead."
+      )
       return
     }
+    onStopSpeak()
     setListenHint(null)
     committedRef.current = value.trim() ? `${value.trim()} ` : ""
-    const rec = startListening({
-      onUpdate: ({ transcript, interim }) => {
-        if (transcript) committedRef.current += `${transcript} `
-        setValue(`${committedRef.current}${interim}`.replace(/\s+/g, " "))
-      },
-      onEnd: () => setListening(false),
-      onError: (message) => {
-        setListenHint(message)
-        setListening(false)
-      },
-    })
-    recRef.current = rec
-    setListening(Boolean(rec))
+    try {
+      const rec = startListening({
+        onUpdate: ({ transcript, interim }) => {
+          if (transcript) committedRef.current += `${transcript} `
+          setValue(`${committedRef.current}${interim}`.replace(/\s+/g, " "))
+        },
+        onEnd: () => {
+          recRef.current = null
+          setListening(false)
+          setLevel(0)
+        },
+        onError: (message, fatal = true) => {
+          setListenHint(message)
+          if (fatal) {
+            recRef.current = null
+            setListening(false)
+            setLevel(0)
+          }
+        },
+        onLevel: setLevel,
+      })
+      recRef.current = rec
+      setListening(Boolean(rec))
+      if (!rec) {
+        setListenHint(
+          (current) =>
+            current ||
+            "Could not start the microphone. Allow it for this site, or type."
+        )
+      }
+    } catch (caught) {
+      setListening(false)
+      setListenHint(
+        caught instanceof Error
+          ? caught.message
+          : "Could not start the microphone."
+      )
+    }
   }
 
-  const hint = listenHint
-    ? listenHint
-    : listening
-      ? "Listening — words appear as text. Send when you are ready."
-      : speakReplies
-        ? "She speaks each reply. Paperclip adds files. Monitor saves a screen still."
-        : "Text only. Paperclip adds files. Monitor saves a screen still."
+  const helper = listening
+    ? "Listening — speak, then tap the square or Send."
+    : speakReplies
+      ? "She speaks each reply. Mic turns speech into text. Paperclip adds files."
+      : "Text only. Mic turns speech into text. Paperclip adds files."
+  const banner = error || listenHint
 
   return (
     <form
@@ -101,13 +130,13 @@ export function Composer({
         submit()
       }}
     >
-      {error ? (
+      {banner ? (
         <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error}
+          {banner}
         </p>
       ) : null}
       <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-        <p className="text-xs text-muted-foreground">{hint}</p>
+        <p className="text-xs text-muted-foreground">{helper}</p>
         <div className="ml-auto flex items-center gap-2">
           {speaking ? (
             <Button
@@ -137,9 +166,20 @@ export function Composer({
           size="icon-lg"
           variant={listening ? "default" : "outline"}
           aria-label={listening ? "Stop listening" : "Speak to Maya"}
-          className="rounded-full"
+          aria-pressed={listening}
+          className={cn(
+            "relative overflow-hidden rounded-full",
+            listening && "ring-2 ring-primary/70"
+          )}
           onClick={toggleMic}
         >
+          {listening ? (
+            <span
+              aria-hidden
+              className="absolute inset-1 rounded-full bg-primary-foreground/25"
+              style={{ transform: `scale(${0.45 + level * 0.7})` }}
+            />
+          ) : null}
           {listening ? <Square /> : <Mic />}
         </Button>
         {onAttach ? (
@@ -187,7 +227,9 @@ export function Composer({
               submit()
             }
           }}
-          placeholder={`Message ${name}…`}
+          placeholder={
+            listening ? "Listening…" : `Message ${name}…`
+          }
           aria-label={`Message ${name}`}
           className="max-h-36 min-h-11 flex-1 resize-none rounded-2xl bg-card px-4 py-2.5 shadow-sm"
         />
