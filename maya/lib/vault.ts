@@ -17,10 +17,13 @@ import type {
 const VAULT_KEY = "maya:vault"
 const LEGACY_VAULT_KEY = "mitra:vault"
 
+/** v2: spoken replies default on. Older vaults are migrated once. */
+export const VAULT_VERSION = 2
+
 const DEFAULT_PREFS: Prefs = {
   allowSearch: true,
   spokenVoiceURI: "",
-  speakReplies: false,
+  speakReplies: true,
   onDeviceModel: true,
 }
 
@@ -38,7 +41,7 @@ export function emptyConversation(): Conversation {
 export function emptyVault(): MemoryVault {
   const conversation = emptyConversation()
   return {
-    version: 1,
+    version: VAULT_VERSION,
     personality: DEFAULT_PERSONALITY,
     conversations: [conversation],
     activeId: conversation.id,
@@ -109,14 +112,15 @@ function normalizeLearned(value: unknown): LearnedState {
   return { ...DEFAULT_LEARNED, ...(value as Partial<LearnedState>) }
 }
 
-function normalizePrefs(value: unknown): Prefs {
+function normalizePrefs(value: unknown, vaultVersion: number): Prefs {
   if (!value || typeof value !== "object") return { ...DEFAULT_PREFS }
   const prefs = value as Partial<Prefs>
   return {
     allowSearch: prefs.allowSearch !== false,
     spokenVoiceURI:
       typeof prefs.spokenVoiceURI === "string" ? prefs.spokenVoiceURI : "",
-    speakReplies: prefs.speakReplies === true,
+    speakReplies:
+      vaultVersion < 2 ? true : prefs.speakReplies !== false,
     onDeviceModel: prefs.onDeviceModel !== false,
   }
 }
@@ -136,14 +140,15 @@ export function normalizeVault(value: unknown): MemoryVault | null {
       ? raw.activeId
       : seeded[0].id
 
+  const rawVersion = typeof raw.version === "number" ? raw.version : 1
   return {
-    version: 1,
+    version: Math.max(rawVersion, VAULT_VERSION),
     personality,
     conversations: seeded,
     activeId,
     notes,
     learned: normalizeLearned(raw.learned),
-    prefs: normalizePrefs(raw.prefs),
+    prefs: normalizePrefs(raw.prefs, rawVersion),
   }
 }
 
@@ -169,7 +174,7 @@ function migrateLegacyVault(): MemoryVault | null {
     updatedAt: messages.at(-1)?.createdAt || Date.now(),
   }
   return {
-    version: 1,
+    version: VAULT_VERSION,
     personality,
     conversations: [conversation],
     activeId: conversation.id,
@@ -269,7 +274,7 @@ export function countStoredMessages(vault: MemoryVault) {
 export function toExport(vault: MemoryVault): MayaExport {
   return {
     kind: "maya-memory",
-    version: 1,
+    version: vault.version,
     exportedAt: Date.now(),
     personality: vault.personality,
     conversations: vault.conversations,

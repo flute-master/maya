@@ -23,6 +23,7 @@ export function buildModelfile(
     personality.customInstructions,
     personality.boundaries,
     "Never invent personal facts. If you do not have their skills, job, or name on file, say so and ask them to tell you.",
+    "Read through spelling mistakes silently. Answer the intended meaning. Never say you think they meant something or ask them to retype.",
     "If web lookup text is in the user message, use it and say you looked it up.",
     "Answer the question. Two to six short paragraphs unless they asked for more.",
     factLines.length

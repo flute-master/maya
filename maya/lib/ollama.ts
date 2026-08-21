@@ -1,4 +1,5 @@
 import { companionSystemPrompt } from "@/lib/companion-prompt"
+import { interpretLastUser } from "@/lib/typos"
 import type {
   ChatMessage,
   LearnedState,
@@ -60,10 +61,12 @@ export async function replyWithOllama(input: {
   const model = await ollamaReady()
   if (!model) return null
   try {
-    const recent = input.messages.slice(-16).map((message) => ({
-      role: message.role,
-      content: message.content,
-    }))
+    const recent = interpretLastUser(input.messages.slice(-16)).map(
+      (message) => ({
+        role: message.role,
+        content: message.content,
+      })
+    )
     const response = await fetch(`${OLLAMA_URL}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

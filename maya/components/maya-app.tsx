@@ -395,7 +395,7 @@ export function MayaApp() {
           }
         }
 
-        if (vault.prefs.speakReplies && acc.trim()) {
+        if (vault.prefs.speakReplies !== false && acc.trim()) {
           playVoice(acc, assistantMessage.id)
         }
       } catch (caught) {
@@ -558,7 +558,7 @@ export function MayaApp() {
         name={personality.name}
         disabled={isSending}
         onSend={send}
-        speakReplies={vault.prefs.speakReplies === true}
+        speakReplies={vault.prefs.speakReplies !== false}
         speaking={Boolean(follow)}
         onStopSpeak={haltVoice}
         onSpeakRepliesChange={(speakReplies) => {

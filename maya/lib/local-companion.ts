@@ -8,6 +8,7 @@ import type {
 import { isSage } from "@/lib/bonds"
 import { prefersBrief } from "@/lib/adapt"
 import { relevantMemories } from "@/lib/recall"
+import { intendedMeaning } from "@/lib/typos"
 import { voiceById } from "@/lib/voices"
 
 type Intent =
@@ -590,7 +591,7 @@ export function replyLocally(
   }
 ): string {
   const last = [...messages].reverse().find((message) => message.role === "user")
-  const text = last?.content.trim() || ""
+  const text = intendedMeaning(last?.content.trim() || "")
   const seed = `${text}|${personality.name}|${personality.tone}|${messages.length}`
   const intent = detectIntent(text)
   const mixNote =

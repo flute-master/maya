@@ -299,9 +299,9 @@ export function SettingsSheet({
           >
             <div className="flex flex-col gap-5">
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Chat stays text. Maya never reads a reply aloud unless you ask
-                — the speaker on her message, type “speak that”, or turn Spoken
-                replies on.
+                She speaks each reply by default. Switch to text only if you
+                want silence, then use the speaker on a message when you want
+                that line voiced.
               </p>
               <div className="flex items-start justify-between gap-4 rounded-xl bg-muted/60 px-4 py-3">
                 <div className="space-y-1 pr-2">
@@ -309,14 +309,14 @@ export function SettingsSheet({
                     Spoken replies
                   </Label>
                   <p className="text-xs leading-relaxed text-muted-foreground">
-                    Off by default. When on, each of her lines is also spoken
-                    after it appears, and the text follows along. Use the mic
-                    if you want to talk; you still send the transcript.
+                    On by default. After her line appears, she reads it aloud
+                    and the text follows along. Turn this off for text only —
+                    the speaker on each message still works.
                   </p>
                 </div>
                 <Switch
                   id="speak-replies"
-                  checked={prefs.speakReplies === true}
+                  checked={prefs.speakReplies !== false}
                   onCheckedChange={(speakReplies) => {
                     if (!speakReplies) stopSpeaking()
                     onPrefsChange({ ...prefs, speakReplies })

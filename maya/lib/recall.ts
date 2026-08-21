@@ -1,4 +1,5 @@
 import { newId } from "@/lib/id"
+import { intendedMeaning } from "@/lib/typos"
 import type {
   ChatMessage,
   MemoryContext,
@@ -78,9 +79,10 @@ function meaningfulWords(text: string) {
 }
 
 export function extractFacts(text: string): string[] {
+  const source = intendedMeaning(text)
   const facts: string[] = []
   for (const pattern of FACT_PATTERNS) {
-    const match = text.match(pattern)
+    const match = source.match(pattern)
     if (!match) continue
     const captured = (match[1] || match[0]).trim()
     if (captured.length < 2) continue
@@ -168,7 +170,7 @@ export function relevantMemories(
   latest: string,
   limit = 3
 ): string[] {
-  const words = new Set(meaningfulWords(latest))
+  const words = new Set(meaningfulWords(intendedMeaning(latest)))
   const scored = [...memory.notes, ...memory.priorUserLines]
     .map((line) => {
       const hits = meaningfulWords(line).filter((word) => words.has(word)).length
@@ -189,7 +191,7 @@ export function upsertDigest(
 ): MemoryNote[] {
   const users = messages
     .filter((message) => message.role === "user")
-    .map((message) => clip(message.content, 90))
+    .map((message) => clip(intendedMeaning(message.content), 90))
   const rest = notes.filter((note) => note.id !== DIGEST_ID)
   if (users.length < 4) return rest
   return [

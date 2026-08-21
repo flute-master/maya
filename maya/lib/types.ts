@@ -68,7 +68,7 @@ export type MemoryNote = {
 }
 
 export type MemoryVault = {
-  version: 1
+  version: number
   personality: Personality
   conversations: Conversation[]
   activeId: string
@@ -100,7 +100,7 @@ export type ChatRequestBody = {
 
 export type MayaExport = {
   kind: "maya-memory" | "mitra-memory"
-  version: 1
+  version: number
   exportedAt: number
   personality: Personality
   conversations: Conversation[]

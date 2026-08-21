@@ -64,14 +64,13 @@ Direct files (right-click → Save if you want them on disk):
 
 On the main app, the light **Maya's voice** bar under the chat is the same sage clip. Use the browser’s play triangle on that bar.
 
-### Test chat (text is the default)
+### Test chat (she speaks replies by default)
 
 1. Open http://127.0.0.1:43217
-2. Leave **Spoken replies** off.
-3. Send something like: `Who are you to me?`
-4. She answers in text. She should not speak unless you ask.
-5. Tap the speaker on her message, or type `speak that`, if you want that line voiced.
-6. Optional: turn **Spoken replies** on to hear each reply. The transcript still leads.
+2. Send something like: `Who are you to me?`
+3. She answers in text, then reads the reply aloud. The transcript still leads and follows along.
+4. If you want silence, press **Text only**. The speaker on her message, or `speak that`, still voices that one line.
+5. Typos are fine. `weathere in hyderbad` is treated as weather in Hyderabad. Your bubble stays as you typed it.
 
 ### Optional: same voice as the clips for live replies
 

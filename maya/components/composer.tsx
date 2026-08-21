@@ -92,12 +92,12 @@ export function Composer({
           </p>
         ) : speakReplies ? (
           <p className="text-xs text-muted-foreground">
-            Talk mode: she speaks replies; the transcript still leads and
-            follows along.
+            She speaks each reply. Switch to text only if you want silence.
           </p>
         ) : (
           <p className="text-xs text-muted-foreground">
-            Text first. Mic is optional. She stays silent unless you ask.
+            Text only. Tap the speaker on a message if you want that line
+            voiced.
           </p>
         )}
         <div className="ml-auto flex items-center gap-2">
@@ -119,7 +119,7 @@ export function Composer({
             aria-pressed={speakReplies}
             onClick={() => onSpeakRepliesChange(!speakReplies)}
           >
-            {speakReplies ? "Spoken replies on" : "Spoken replies off"}
+            {speakReplies ? "Spoken replies on" : "Text only"}
           </Button>
         </div>
       </div>

@@ -1,6 +1,7 @@
 "use client"
 
 import { companionSystemPrompt } from "@/lib/companion-prompt"
+import { interpretLastUser } from "@/lib/typos"
 import type {
   ChatMessage,
   MemoryContext,
@@ -88,10 +89,12 @@ export async function replyOnDevice(input: {
   onToken?: (text: string) => void
 }): Promise<string | null> {
   if (!engine) return null
-  const recent = input.messages.slice(-12).map((message) => ({
-    role: message.role,
-    content: message.content,
-  }))
+  const recent = interpretLastUser(input.messages.slice(-12)).map(
+    (message) => ({
+      role: message.role,
+      content: message.content,
+    })
+  )
   const created = await engine.chat.completions.create({
     messages: [
       {

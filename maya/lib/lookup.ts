@@ -6,6 +6,7 @@ import {
   searchWeb,
   readWebPage,
 } from "@/lib/search"
+import { intendedMeaning } from "@/lib/typos"
 import type { SearchHit } from "@/lib/types"
 
 export type Lookup = {
@@ -26,8 +27,9 @@ function uniqueBySnippet(hits: SearchHit[]): SearchHit[] {
 }
 
 export async function lookupWeb(text: string, force: boolean): Promise<Lookup> {
-  const pageUrl = extractHttpUrl(text)
-  const query = force ? fallbackSearchQuery(text) : searchQueryFor(text)
+  const intended = intendedMeaning(text)
+  const pageUrl = extractHttpUrl(intended)
+  const query = force ? fallbackSearchQuery(intended) : searchQueryFor(intended)
   let hits: SearchHit[] = []
   let searched = false
   let searchFailed = false
