@@ -125,6 +125,19 @@ To bake **your** notes into the model: Customize → Lookup → **Download Model
 
 If Ollama is not running, she falls back to the built-in engine so the app still opens. She should never answer with only “parsing.”
 
+### Body around the model (sage core)
+
+You do **not** need to train a GPT-class model from zero for Maya to have a body. Ollama (or the small net you trained) is the brain. Around it:
+
+- **Tools** — weather, lookup, files, Python, fetch a page, recall from local vectors
+- **Memory** — structured vault + hashed vectors in `data/maya-vectors.json`
+- **Files** — paperclip drops into `data/workspace` (sandboxed)
+- **Python** — `Run python: print(2+2)` asks first unless you always-allow it
+- **Screen** — monitor button saves a still; she cannot see pixels without a vision model
+- **Safety** — Python and file writes confirm. She cannot drive your desktop mouse
+
+Customize → Lookup shows the full layer list (live / partial / not this app).
+
 ## What she can do from chat
 
 - **Stories, jokes, puns, satire** — ask. The local model writes them when it’s running; otherwise she still has a built-in writer.

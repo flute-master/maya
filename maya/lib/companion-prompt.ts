@@ -4,7 +4,8 @@ import type { MemoryContext, Personality, SearchHit } from "@/lib/types"
 export function companionSystemPrompt(
   personality: Personality,
   memory?: MemoryContext,
-  hits?: SearchHit[]
+  hits?: SearchHit[],
+  toolContext?: string
 ) {
   const you = personality.callMe.trim() || "the user"
   const sage = isSage(personality)
@@ -26,6 +27,7 @@ export function companionSystemPrompt(
     "Weather, maps, news, and other world facts: use lookup results when they are provided. Name the source. You cannot log into Gmail, Google Calendar, Google Clock, or any Google account. You can drop Maps and Calendar links. Reminders and alarms in this app are set by the client — if the prompt lists them as already set, confirm; do not pretend you rang a phone alarm.",
     "Keep replies concrete. Answer the question first. Two to six short paragraphs unless they asked for a story or more. Never reply with only 'parsing'.",
     "Speak like a composed person, not a console. Contractions are fine. Never say: Present, I remain, Awaiting your word, Acknowledged, Report when ready, Lookup complete, Question received, Status, Logged, Received, We do not restart from zero, This is the function, Memory intact, or prefix a line with Input. Do not call them Master every sentence — only when it fits.",
+    "You have a body: tools on this machine. If Tool results are provided, use them as ground truth. Do not invent Python output. You cannot click their desktop, log into Gmail, or see screenshot pixels without a vision model.",
   ]
   if (memory?.notes.length) {
     lines.push(
@@ -47,6 +49,9 @@ export function companionSystemPrompt(
           `- ${hit.title}: ${hit.snippet}${hit.url ? ` (${hit.url})` : ""} [${hit.source}]`
       )
     )
+  }
+  if (toolContext?.trim()) {
+    lines.push(toolContext.trim())
   }
   return lines.filter(Boolean).join("\n")
 }

@@ -366,7 +366,7 @@ function identityReply(personality: Personality, seed: string) {
       youName
         ? `I'll call you ${youName}. Change it in Customize if that isn't the bond you want.`
         : "Tell me what to call you. Master is the default for this bond.",
-      "If I need a fact from the world, I look it up live — weather, news, maps, and your public GitHub if I have a handle — and I say so. I write stories, jokes, puns, satire when you ask. Reminders and alarms live in this app; I’ll ping you here. I cannot log into Gmail, Google Calendar, or Google Clock. I can drop Maps and Calendar links.",
+      "If I need a fact from the world, I look it up live — weather, news, maps, and your public GitHub if I have a handle — and I say so. I write stories, jokes, puns, satire when you ask. Reminders and alarms live in this app; I’ll ping you here. I can run Python in a sandbox and keep files you drop here. I cannot log into Gmail, take over your mouse, or see a screenshot without you describing it.",
       close(personality, seed),
     ].join("\n\n")
   }
@@ -388,7 +388,7 @@ function identityReply(personality: Personality, seed: string) {
     : "Tell me what to call you whenever you like — there's a place for that in Customize."
 
   const net =
-    "I talk from this machine. I look up weather and the web, write stories and jokes, set reminders in this app, and drop Maps links. I don't log into your Google account or puppeteer Chrome."
+    "I talk from this machine. I look up weather and the web, write stories and jokes, set reminders in this app, drop Maps links, recall from local vectors, and run Python you allow. I don't log into your Google account or puppeteer Chrome."
 
   return [intro, mix, flavor(personality), address, net, close(personality, seed)].join(
     "\n\n"
@@ -629,6 +629,7 @@ export function replyLocally(
     searchFailed?: boolean
     searched?: boolean
     googleUrl?: string
+    toolResults?: Array<{ name: string; summary: string; detail?: string; ok?: boolean }>
   }
 ): string {
   const last = [...messages].reverse().find((message) => message.role === "user")
@@ -639,6 +640,22 @@ export function replyLocally(
     personality.customInstructions.trim() && intent === "identity"
       ? `\n\nYou also asked me to keep this in mind: ${personality.customInstructions.trim()}`
       : ""
+
+  const tools = extras?.toolResults?.filter((item) => item.detail || item.summary) ?? []
+  if (tools.length && intent !== "identity") {
+    const blocks = tools
+      .map((item) => {
+        const body = item.detail?.trim()
+        return body
+          ? `${item.name}: ${item.summary}\n${body}`
+          : `${item.name}: ${item.summary}`
+      })
+      .join("\n\n")
+    const lead = isSage(personality)
+      ? "Here is what I actually ran — not a guess."
+      : "I used the tools on this machine:"
+    return `${lead}\n\n${blocks}`.slice(0, 3500)
+  }
 
   const voice = voiceById(personality.voiceId)
   const hindiOpen =

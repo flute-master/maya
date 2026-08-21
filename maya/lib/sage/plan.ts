@@ -1,0 +1,186 @@
+import { extractHttpUrl } from "@/lib/search"
+import { isWeatherQuery, weatherPlace } from "@/lib/skills"
+import { intendedMeaning } from "@/lib/typos"
+import type { ToolCall } from "@/lib/sage/types"
+
+function pythonBlock(text: string): string | null {
+  const fence = text.match(/```(?:python|py)\s*([\s\S]*?)```/i)
+  if (fence?.[1]?.trim()) return fence[1].trim()
+  const run = text.match(
+    /\b(?:run|execute|eval)\s+(?:this\s+)?(?:python|code)\s*:?\s*([\s\S]+)$/i
+  )
+  if (run?.[1]?.trim() && run[1].trim().length < 4000) {
+    return run[1].replace(/^```|```$/g, "").trim()
+  }
+  const print = text.match(/\bpython3?\s+-c\s+['"]([\s\S]+?)['"]\s*$/i)
+  if (print?.[1]) return print[1]
+  return null
+}
+
+function wantsPython(text: string) {
+  const lower = text.toLowerCase()
+  if (pythonBlock(text)) return true
+  return (
+    /\b(run python|execute python|in python|python sandbox)\b/.test(lower) ||
+    /\b(analyze|plot|mean|average|sum of|count rows)\b.{0,40}\b(csv|tsv|json|data|file)\b/.test(
+      lower
+    ) ||
+    /\bcalculate\b/.test(lower) ||
+    /\bwhat(?:'s| is) \d[\d\s+\-*/().%]{2,}\d/.test(lower)
+  )
+}
+
+function mathAsPython(text: string): string | null {
+  const expr = text.match(
+    /(?:calculate|compute|what(?:'s| is))\s+([\d\s+\-*/().%]+)\??$/i
+  )
+  if (!expr?.[1]) return null
+  const clean = expr[1].replace(/[^0-9+\-*/().% ]/g, "").trim()
+  if (clean.length < 3) return null
+  return `print(${clean})`
+}
+
+function writeTarget(text: string): { name: string; body: string } | null {
+  const named = text.match(
+    /\b(?:save|write|put)\s+(?:this|it|that)?\s*(?:as|to|into)\s+([A-Za-z0-9._\- ]+\.[A-Za-z0-9]+)\s*:?\s*([\s\S]+)$/i
+  )
+  if (named?.[1] && named[2] && named[2].trim().length > 0) {
+    return { name: named[1].trim(), body: named[2].trim() }
+  }
+  return null
+}
+
+function readTarget(text: string): string | null {
+  const match = text.match(
+    /\b(?:read|open|show|cat|what's in|whats in)\s+(?:the\s+)?(?:file\s+)?([A-Za-z0-9._\- ]+\.[A-Za-z0-9]+)/i
+  )
+  return match?.[1]?.trim() || null
+}
+
+export function planTools(
+  raw: string,
+  hometown?: string
+): ToolCall[] {
+  const text = intendedMeaning(raw)
+  const lower = text.toLowerCase()
+  const calls: ToolCall[] = []
+  const add = (call: ToolCall) => {
+    if (!calls.some((item) => item.name === call.name && item.args.path === call.args.path && item.args.code === call.args.code && item.args.url === call.args.url)) {
+      calls.push(call)
+    }
+  }
+
+  const smallTalk =
+    /^(hi|hey|hello|thanks|thank you|ok|okay|yo|good night|bye)\b/.test(lower) &&
+    text.length < 48
+
+  if (!smallTalk && text.length > 12) {
+    add({
+      name: "recall",
+      args: { query: text.slice(0, 240) },
+      reason: "Search memory, chats, and files.",
+      risk: "none",
+    })
+  }
+
+  if (
+    /\b(what(?:'s| is) in your (?:files|workspace)|list (?:your )?files|workspace)\b/.test(
+      lower
+    )
+  ) {
+    add({
+      name: "files_list",
+      args: {},
+      reason: "List the sandbox workspace.",
+      risk: "none",
+    })
+  }
+
+  const read = readTarget(text)
+  if (read) {
+    add({
+      name: "files_read",
+      args: { path: read },
+      reason: `Read ${read}.`,
+      risk: "none",
+    })
+  }
+
+  const write = writeTarget(text)
+  if (write) {
+    add({
+      name: "files_write",
+      args: { path: write.name, text: write.body.slice(0, 8000) },
+      reason: `Write ${write.name} in the sandbox.`,
+      risk: "write",
+    })
+  }
+
+  const py = pythonBlock(text) || (wantsPython(text) ? mathAsPython(text) : null)
+  if (py) {
+    add({
+      name: "python",
+      args: { code: py },
+      reason: "Run Python in the sandbox.",
+      risk: "code",
+    })
+  } else if (
+    /\b(analyze|summarise|summarize)\b.{0,30}\b(csv|tsv|json|file|data)\b/.test(
+      lower
+    )
+  ) {
+    add({
+      name: "files_list",
+      args: {},
+      reason: "See which data files exist before analyzing.",
+      risk: "none",
+    })
+    add({
+      name: "python",
+      args: {
+        code: "import os, pathlib\nprint('files:', [p.name for p in pathlib.Path('.').iterdir() if p.is_file() and not p.name.startswith('.')])",
+      },
+      reason: "Inspect workspace files with Python.",
+      risk: "code",
+    })
+  }
+
+  if (isWeatherQuery(text)) {
+    add({
+      name: "weather",
+      args: { place: weatherPlace(text, hometown) || hometown || "" },
+      reason: "Live weather.",
+      risk: "net",
+    })
+  }
+
+  const url = extractHttpUrl(text)
+  if (
+    url &&
+    /\b(fetch|read (this )?page|open this|summarize this url|what does this (page|site) say)\b/.test(
+      lower
+    )
+  ) {
+    add({
+      name: "fetch_page",
+      args: { url },
+      reason: "Read the page text.",
+      risk: "net",
+    })
+  }
+
+  if (
+    /\b(observe|what do you see|look at (my )?screen|screenshot|environment)\b/.test(
+      lower
+    )
+  ) {
+    add({
+      name: "observe",
+      args: {},
+      reason: "Report files, memory, and any shared screen still.",
+      risk: "none",
+    })
+  }
+
+  return calls.slice(0, 5)
+}

@@ -86,6 +86,7 @@ export async function replyOnDevice(input: {
   personality: Personality
   memory?: MemoryContext
   hits?: SearchHit[]
+  toolContext?: string
   onToken?: (text: string) => void
 }): Promise<string | null> {
   if (!engine) return null
@@ -102,7 +103,8 @@ export async function replyOnDevice(input: {
         content: companionSystemPrompt(
           input.personality,
           input.memory,
-          input.hits
+          input.hits,
+          input.toolContext
         ),
       },
       ...recent,

@@ -6,7 +6,7 @@ No paid APIs. No Google login.
 
 | Device | How you open her | Who answers |
 | --- | --- | --- |
-| Laptop | Browser at `http://127.0.0.1:43217` | Tiny GPT you train from scratch, else Ollama `maya` |
+| Laptop | Browser at `http://127.0.0.1:43217` | Sage tools + Ollama / trained tiny GPT |
 | Phone, same Wi‑Fi | Laptop’s LAN URL, then Add to Home Screen | Laptop’s Ollama, **or** an on-device model in Chrome |
 | Phone, away from home | Cloudflare tunnel URL | Laptop must stay on, **or** on-device model already loaded |
 
@@ -340,5 +340,6 @@ Phone (same Wi‑Fi):
 - Not a Play Store / App Store binary
 - Not a Llama-scale model trained from random weights (that is still a GPU-farm project)
 - You **are** deploying a **small** transformer you can train on the laptop: Customize → Lookup → Train from chats, or `python3 train/train.py`
+- You **are** deploying a sage core (tools, files, Python sandbox, vector recall). Not desktop click-automation
 - Not a Google account integration
 - Not a public server unless you add the Cloudflare tunnel or Vercel yourself

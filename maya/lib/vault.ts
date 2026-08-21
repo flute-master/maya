@@ -28,6 +28,8 @@ const DEFAULT_PREFS: Prefs = {
   speakReplies: true,
   onDeviceModel: true,
   useTrainedBrain: true,
+  allowPython: false,
+  allowFileWrite: false,
 }
 
 export function emptyConversation(): Conversation {
@@ -157,6 +159,8 @@ function normalizePrefs(value: unknown, vaultVersion: number): Prefs {
       vaultVersion < 2 ? true : prefs.speakReplies !== false,
     onDeviceModel: prefs.onDeviceModel !== false,
     useTrainedBrain: prefs.useTrainedBrain !== false,
+    allowPython: prefs.allowPython === true,
+    allowFileWrite: prefs.allowFileWrite === true,
   }
 }
 

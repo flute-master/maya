@@ -70,7 +70,7 @@ export function MayaApp() {
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [mode, setMode] = useState<
-    "offline" | "search" | "model" | "device" | "trained"
+    "offline" | "search" | "model" | "device" | "trained" | "sage"
   >(
     "offline"
   )
@@ -286,7 +286,10 @@ export function MayaApp() {
   )
 
   const send = useCallback(
-    async (text: string, retry = false) => {
+    async (
+      text: string,
+      retry: boolean | { retry?: boolean; approved?: Array<{ name: string; args?: Record<string, string> }> } = false
+    ) => {
       const trimmed = text.trim()
       if (!trimmed) return
 
@@ -306,6 +309,8 @@ export function MayaApp() {
       retryRef.current = trimmed
       setError(null)
 
+      const approved =
+        typeof retry === "object" ? retry.approved : undefined
       const userMessage: ChatMessage = retry
         ? messages.filter((message) => message.role === "user").at(-1) ?? {
             id: newId(),
@@ -326,7 +331,11 @@ export function MayaApp() {
         createdAt: Date.now(),
       }
 
-      const nextMessages = retry ? messages : [...messages, userMessage]
+      const source =
+        approved && messages.at(-1)?.role === "assistant"
+          ? messages.slice(0, -1)
+          : messages
+      const nextMessages = retry ? source : [...messages, userMessage]
       const facts = retry ? [] : extractFacts(trimmed)
       const learned = retry
         ? vault.learned
@@ -446,6 +455,7 @@ export function MayaApp() {
       try {
         let acc = ""
         const useDevice =
+          !online &&
           !modelReady &&
           vault.prefs.onDeviceModel !== false &&
           Boolean(onDeviceReady())
@@ -518,6 +528,9 @@ export function MayaApp() {
               learned,
               allowSearch: vault.prefs.allowSearch && online,
               useTrained: vault.prefs.useTrainedBrain !== false,
+              allowPython: vault.prefs.allowPython === true,
+              allowFileWrite: vault.prefs.allowFileWrite === true,
+              approved,
             }),
           })
 
@@ -533,7 +546,8 @@ export function MayaApp() {
             reported === "offline" ||
             reported === "search" ||
             reported === "model" ||
-            reported === "trained"
+            reported === "trained" ||
+            reported === "sage"
           ) {
             setMode(reported)
           }
@@ -542,6 +556,24 @@ export function MayaApp() {
             if (packed) keepLearned(JSON.parse(packed) as unknown)
           } catch {
             /* ignore bad learn payload */
+          }
+          let tools: ChatMessage["tools"]
+          let pending: ChatMessage["pending"]
+          try {
+            const packed = response.headers.get("X-Maya-Tools")
+            if (packed) {
+              tools = JSON.parse(packed) as ChatMessage["tools"]
+            }
+          } catch {
+            /* ignore */
+          }
+          try {
+            const packed = response.headers.get("X-Maya-Confirm")
+            if (packed) {
+              pending = JSON.parse(packed) as ChatMessage["pending"]
+            }
+          } catch {
+            /* ignore */
           }
 
           const reader = response.body?.getReader()
@@ -556,7 +588,7 @@ export function MayaApp() {
             setMessages((current) =>
               current.map((message) =>
                 message.id === assistantMessage.id
-                  ? { ...message, content: snapshot }
+                  ? { ...message, content: snapshot, tools, pending }
                   : message
               )
             )
@@ -601,6 +633,87 @@ export function MayaApp() {
     }
   }, [])
 
+  async function attachFiles(files: File[]) {
+    const saved: string[] = []
+    for (const file of files.slice(0, 6)) {
+      if (file.size > 2_000_000) {
+        setError(`${file.name} is larger than 2 MB.`)
+        continue
+      }
+      const base64 = await blobToBase64(file)
+      const response = await fetch("/api/files", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: file.name, base64 }),
+      })
+      const data = (await response.json()) as { error?: string; name?: string }
+      if (!response.ok) {
+        setError(data.error || `Could not save ${file.name}.`)
+        continue
+      }
+      if (data.name) saved.push(data.name)
+    }
+    if (saved.length) {
+      void send(
+        `I added ${saved.join(", ")} to your workspace. List your files and tell me what you have.`
+      )
+    }
+  }
+
+  async function shareScreen() {
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+      setError("This browser cannot share a screen still.")
+      return
+    }
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: false,
+      })
+      const track = stream.getVideoTracks()[0]
+      if (!track) return
+      const video = document.createElement("video")
+      video.srcObject = stream
+      video.muted = true
+      await video.play()
+      await new Promise((resolve) => window.setTimeout(resolve, 250))
+      const canvas = document.createElement("canvas")
+      canvas.width = Math.max(1, video.videoWidth)
+      canvas.height = Math.max(1, video.videoHeight)
+      canvas.getContext("2d")?.drawImage(video, 0, 0)
+      track.stop()
+      stream.getTracks().forEach((item) => item.stop())
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, "image/png")
+      )
+      if (!blob) {
+        setError("Could not capture that frame.")
+        return
+      }
+      const name = `screen-${Date.now()}.png`
+      const base64 = await blobToBase64(blob)
+      const response = await fetch("/api/files", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, base64 }),
+      })
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as {
+          error?: string
+        } | null
+        throw new Error(data?.error || "Could not save the still.")
+      }
+      void send(
+        `I shared a screen still as ${name}. Observe the workspace. I know you cannot see the pixels — tell me that honestly.`
+      )
+    } catch (caught) {
+      if ((caught as Error).name === "NotAllowedError") return
+      setError(
+        caught instanceof Error ? caught.message : "Screen share failed."
+      )
+    }
+  }
+
   function startOver() {
     abortRef.current?.abort()
     haltVoice()
@@ -636,15 +749,17 @@ export function MayaApp() {
             <Badge variant="outline" className="hidden sm:inline-flex">
               {!online
                 ? "Offline"
-                : mode === "search"
-                  ? "Looked up"
-                  : mode === "trained"
-                    ? "Trained net"
-                    : mode === "model"
-                      ? "Local model"
-                      : mode === "device"
-                        ? "On-device"
-                        : "On this machine"}
+                : mode === "sage"
+                  ? "Sage core"
+                  : mode === "search"
+                    ? "Looked up"
+                    : mode === "trained"
+                      ? "Trained net"
+                      : mode === "model"
+                        ? "Local model"
+                        : mode === "device"
+                          ? "On-device"
+                          : "On this machine"}
             </Badge>
           </div>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
@@ -707,10 +822,27 @@ export function MayaApp() {
               const last = retryRef.current
               if (last) void send(last, true)
             }}
+            onAllowTools={(pending) => {
+              const last = retryRef.current
+              if (!last) return
+              void send(last, {
+                retry: true,
+                approved: pending.map((item) => ({
+                  name: item.name,
+                  args: item.args,
+                })),
+              })
+            }}
           />
         </div>
       )}
 
+      {mode === "sage" && !empty ? (
+        <p className="px-4 text-center text-xs text-muted-foreground">
+          {personality.name} used tools on this machine — the body around the
+          model.
+        </p>
+      ) : null}
       {mode === "search" && !empty ? (
         <p className="px-4 text-center text-xs text-muted-foreground">
           {personality.name} used the web for a fact — not for her voice.
@@ -759,6 +891,8 @@ export function MayaApp() {
             prefs: { ...current.prefs, speakReplies },
           }))
         }}
+        onAttach={(files) => void attachFiles(files)}
+        onShareScreen={() => void shareScreen()}
       />
 
       <SettingsSheet
@@ -796,4 +930,17 @@ export function MayaApp() {
       />
     </div>
   )
+}
+
+function blobToBase64(blob: Blob) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = String(reader.result || "")
+      const comma = result.indexOf(",")
+      resolve(comma >= 0 ? result.slice(comma + 1) : result)
+    }
+    reader.onerror = () => reject(reader.error)
+    reader.readAsDataURL(blob)
+  })
 }

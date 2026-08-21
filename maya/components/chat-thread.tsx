@@ -29,6 +29,7 @@ export function ChatThread({
   onSpeak,
   onStopSpeak,
   follow,
+  onAllowTools,
 }: {
   messages: ChatMessage[]
   companionName: string
@@ -38,6 +39,9 @@ export function ChatThread({
   onSpeak?: (text: string, messageId: string) => void
   onStopSpeak?: () => void
   follow?: FollowAlong | null
+  onAllowTools?: (
+    pending: NonNullable<ChatMessage["pending"]>
+  ) => void
 }) {
   const endRef = useRef<HTMLDivElement>(null)
 
@@ -105,6 +109,25 @@ export function ChatThread({
                 )
               ) : null}
             </div>
+            {!mine && message.tools?.length ? (
+              <p className="max-w-[min(100%,38rem)] px-1 text-[11px] text-muted-foreground">
+                Used {message.tools.map((tool) => tool.name).join(" · ")}
+              </p>
+            ) : null}
+            {!mine && message.pending?.length && onAllowTools ? (
+              <div className="flex max-w-[min(100%,38rem)] flex-wrap gap-2 px-1">
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => onAllowTools(message.pending ?? [])}
+                >
+                  Allow once
+                </Button>
+                <p className="self-center text-[11px] text-muted-foreground">
+                  Python and file writes stay in data/workspace.
+                </p>
+              </div>
+            ) : null}
           </article>
         )
       })}

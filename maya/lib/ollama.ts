@@ -57,6 +57,7 @@ export async function replyWithOllama(input: {
   memory?: MemoryContext
   learned?: LearnedState
   hits?: SearchHit[]
+  toolContext?: string
 }): Promise<string | null> {
   const model = await ollamaReady()
   if (!model) return null
@@ -85,7 +86,8 @@ export async function replyWithOllama(input: {
             content: companionSystemPrompt(
               input.personality,
               input.memory,
-              input.hits
+              input.hits,
+              input.toolContext
             ),
           },
           ...recent,

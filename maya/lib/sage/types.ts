@@ -1,0 +1,58 @@
+export type ToolName =
+  | "recall"
+  | "lookup"
+  | "weather"
+  | "fetch_page"
+  | "python"
+  | "files_list"
+  | "files_read"
+  | "files_write"
+  | "observe"
+
+export type ToolRisk = "none" | "net" | "write" | "code"
+
+export type ToolCall = {
+  name: ToolName
+  args: Record<string, string>
+  reason: string
+  risk: ToolRisk
+}
+
+export type ToolResult = {
+  name: ToolName
+  ok: boolean
+  summary: string
+  detail?: string
+}
+
+export type PendingConfirm = {
+  name: ToolName
+  args: Record<string, string>
+  reason: string
+  risk: ToolRisk
+}
+
+export type ToolApproval = {
+  name: string
+  args?: Record<string, string>
+}
+
+export type SageTrust = {
+  allowSearch: boolean
+  allowPython: boolean
+  allowFileWrite: boolean
+}
+
+export type SageRun = {
+  calls: ToolCall[]
+  results: ToolResult[]
+  pending: PendingConfirm[]
+  retrieved: string[]
+}
+
+export type SageLayer = {
+  ability: string
+  how: string
+  status: "live" | "partial" | "not-this-app"
+  note: string
+}

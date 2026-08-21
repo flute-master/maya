@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { ArrowUp, Mic, Square } from "lucide-react"
+import { ArrowUp, Mic, Monitor, Paperclip, Square } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -15,6 +15,8 @@ export function Composer({
   onSpeakRepliesChange,
   speaking,
   onStopSpeak,
+  onAttach,
+  onShareScreen,
 }: {
   name: string
   disabled: boolean
@@ -23,12 +25,15 @@ export function Composer({
   onSpeakRepliesChange: (next: boolean) => void
   speaking: boolean
   onStopSpeak: () => void
+  onAttach?: (files: File[]) => void
+  onShareScreen?: () => void
 }) {
   const [value, setValue] = useState("")
   const [listening, setListening] = useState(false)
   const [listenHint, setListenHint] = useState<string | null>(null)
   const recRef = useRef<ReturnType<typeof startListening>>(null)
   const committedRef = useRef("")
+  const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     return () => recRef.current?.abort()
@@ -75,6 +80,14 @@ export function Composer({
     setListening(Boolean(rec))
   }
 
+  const hint = listenHint
+    ? listenHint
+    : listening
+      ? "Listening — words appear as text. Send when you are ready."
+      : speakReplies
+        ? "She speaks each reply. Paperclip adds files. Monitor saves a screen still."
+        : "Text only. Paperclip adds files. Monitor saves a screen still."
+
   return (
     <form
       className="mx-auto flex w-full max-w-2xl flex-col gap-1 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2"
@@ -84,22 +97,7 @@ export function Composer({
       }}
     >
       <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-        {listenHint ? (
-          <p className="text-xs text-muted-foreground">{listenHint}</p>
-        ) : listening ? (
-          <p className="text-xs text-muted-foreground">
-            Listening — words appear as text. Send when you are ready.
-          </p>
-        ) : speakReplies ? (
-          <p className="text-xs text-muted-foreground">
-            She speaks each reply. Switch to text only if you want silence.
-          </p>
-        ) : (
-          <p className="text-xs text-muted-foreground">
-            Text only. Tap the speaker on a message if you want that line
-            voiced.
-          </p>
-        )}
+        <p className="text-xs text-muted-foreground">{hint}</p>
         <div className="ml-auto flex items-center gap-2">
           {speaking ? (
             <Button
@@ -134,6 +132,46 @@ export function Composer({
         >
           {listening ? <Square /> : <Mic />}
         </Button>
+        {onAttach ? (
+          <>
+            <input
+              ref={fileRef}
+              type="file"
+              className="hidden"
+              multiple
+              onChange={(event) => {
+                const list = event.target.files
+                event.target.value = ""
+                if (!list?.length) return
+                onAttach(Array.from(list))
+              }}
+            />
+            <Button
+              type="button"
+              size="icon-lg"
+              variant="outline"
+              aria-label="Add files to Maya's workspace"
+              className="rounded-full"
+              disabled={disabled}
+              onClick={() => fileRef.current?.click()}
+            >
+              <Paperclip />
+            </Button>
+          </>
+        ) : null}
+        {onShareScreen ? (
+          <Button
+            type="button"
+            size="icon-lg"
+            variant="outline"
+            aria-label="Share a screen still"
+            className="rounded-full"
+            disabled={disabled}
+            onClick={onShareScreen}
+          >
+            <Monitor />
+          </Button>
+        ) : null}
         <Textarea
           value={value}
           disabled={disabled}

@@ -9,6 +9,12 @@ export type ChatMessage = {
   role: Role
   content: string
   createdAt: number
+  tools?: Array<{ name: string; summary: string }>
+  pending?: Array<{
+    name: string
+    reason: string
+    args?: Record<string, string>
+  }>
 }
 
 export type Personality = {
@@ -68,6 +74,8 @@ export type Prefs = {
   speakReplies: boolean
   onDeviceModel: boolean
   useTrainedBrain: boolean
+  allowPython: boolean
+  allowFileWrite: boolean
 }
 
 export type Conversation = {
@@ -118,6 +126,9 @@ export type ChatRequestBody = {
   learned?: LearnedState
   allowSearch?: boolean
   useTrained?: boolean
+  allowPython?: boolean
+  allowFileWrite?: boolean
+  approved?: Array<{ name: string; args?: Record<string, string> }>
 }
 
 export type MayaExport = {

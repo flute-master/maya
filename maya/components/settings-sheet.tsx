@@ -32,6 +32,7 @@ import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { VoicePicker } from "@/components/voice-picker"
+import { SageLayers } from "@/components/sage-layers"
 
 export function SettingsSheet({
   open,
@@ -674,6 +675,53 @@ export function SettingsSheet({
             className="min-h-0 overflow-y-auto px-4 py-4"
           >
             <div className="flex flex-col gap-5">
+              <div className="rounded-xl bg-card p-3 ring-1 ring-foreground/8">
+                <p className="text-sm font-medium">Body around the model</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  You do not need to train Llama from scratch for this. Sage
+                  core is the nervous system: tools, memory, Python, files,
+                  confirm-before-act. The brain is Ollama (or the small net
+                  you trained).
+                </p>
+                <div className="mt-3 max-h-64 overflow-y-auto">
+                  <SageLayers compact />
+                </div>
+                <div className="mt-3 flex items-start justify-between gap-3">
+                  <div>
+                    <Label htmlFor="allow-python" className="text-sm">
+                      Always allow Python
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Off = she asks first. Sandbox is data/workspace, 8s cap.
+                    </p>
+                  </div>
+                  <Switch
+                    id="allow-python"
+                    checked={prefs.allowPython === true}
+                    onCheckedChange={(allowPython) =>
+                      onPrefsChange({ ...prefs, allowPython })
+                    }
+                  />
+                </div>
+                <div className="mt-3 flex items-start justify-between gap-3">
+                  <div>
+                    <Label htmlFor="allow-write" className="text-sm">
+                      Always allow file writes
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Reads are always on. Writes stay in data/workspace.
+                    </p>
+                  </div>
+                  <Switch
+                    id="allow-write"
+                    checked={prefs.allowFileWrite === true}
+                    onCheckedChange={(allowFileWrite) =>
+                      onPrefsChange({ ...prefs, allowFileWrite })
+                    }
+                  />
+                </div>
+              </div>
+
               <div className="flex items-start justify-between gap-3 rounded-xl bg-muted/60 p-3">
                 <div>
                   <p className="text-sm font-medium">Look up world facts</p>

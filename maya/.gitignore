@@ -50,5 +50,8 @@ next-env.d.ts
 /data/train.log
 __pycache__/
 *.pyc
+/data/maya-vectors.json
+/data/workspace/**
+!/data/workspace/.gitkeep
 /public/maya.zip
 
