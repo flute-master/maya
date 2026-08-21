@@ -6,7 +6,10 @@ import {
   searchWeb,
   readWebPage,
 } from "@/lib/search"
+import { isMapsQuery, isWeatherQuery, mapsQuery, weatherPlace } from "@/lib/skills"
+import { lookupPlace } from "@/lib/maps"
 import { intendedMeaning } from "@/lib/typos"
+import { fetchWeather } from "@/lib/weather"
 import type { SearchHit } from "@/lib/types"
 
 export type Lookup = {
@@ -26,7 +29,11 @@ function uniqueBySnippet(hits: SearchHit[]): SearchHit[] {
   })
 }
 
-export async function lookupWeb(text: string, force: boolean): Promise<Lookup> {
+export async function lookupWeb(
+  text: string,
+  force: boolean,
+  hometown?: string
+): Promise<Lookup> {
   const intended = intendedMeaning(text)
   const pageUrl = extractHttpUrl(intended)
   const query = force ? fallbackSearchQuery(intended) : searchQueryFor(intended)
@@ -34,6 +41,44 @@ export async function lookupWeb(text: string, force: boolean): Promise<Lookup> {
   let searched = false
   let searchFailed = false
   let googleUrl: string | undefined
+
+  if (isWeatherQuery(intended)) {
+    searched = true
+    const place = weatherPlace(intended, hometown)
+    if (!place) {
+      hits.push({
+        title: "Weather",
+        snippet:
+          "Name a city and I’ll look it up live — try “weather in Hyderabad”. If you tell me where you live, I’ll remember it for next time.",
+        source: "Weather",
+        url: "",
+      })
+    } else {
+      googleUrl = googleSearchUrl(`weather ${place}`)
+      try {
+        const weather = await fetchWeather(place)
+        if (weather) hits.push(weather)
+        else searchFailed = true
+      } catch {
+        searchFailed = true
+      }
+    }
+  }
+
+  if (isMapsQuery(intended)) {
+    searched = true
+    const dest = mapsQuery(intended, hometown)
+    if (dest) {
+      googleUrl = googleSearchUrl(`${dest} map`)
+      try {
+        const maps = await lookupPlace(dest)
+        if (maps) hits.unshift(maps)
+        else searchFailed = true
+      } catch {
+        searchFailed = true
+      }
+    }
+  }
 
   if (pageUrl) {
     searched = true
@@ -46,7 +91,11 @@ export async function lookupWeb(text: string, force: boolean): Promise<Lookup> {
     }
   }
 
-  if (query && !/^https?:\/\//i.test(query)) {
+  if (
+    query &&
+    !/^https?:\/\//i.test(query) &&
+    !hits.some((hit) => hit.source === "Weather" || hit.source === "Maps")
+  ) {
     searched = true
     googleUrl = googleSearchUrl(query)
     try {

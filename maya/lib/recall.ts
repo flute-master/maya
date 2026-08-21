@@ -135,7 +135,19 @@ export function buildMemoryContext(
     }
   }
 
-  return { notes, pastTitles, priorUserLines }
+  const reminders = (vault.reminders ?? [])
+    .filter((item) => !item.done)
+    .slice(0, 8)
+    .map(
+      (item) =>
+        `${item.kind}: ${item.text} at ${new Date(item.at).toLocaleString()}`
+    )
+  const tasks = (vault.tasks ?? [])
+    .filter((item) => !item.done)
+    .slice(0, 8)
+    .map((item) => item.text)
+
+  return { notes, pastTitles, priorUserLines, reminders, tasks }
 }
 
 export function formatMemoryForPrompt(memory: MemoryContext): string {

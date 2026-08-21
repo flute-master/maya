@@ -12,6 +12,8 @@ import type {
   MemoryVault,
   Personality,
   Prefs,
+  Reminder,
+  TaskItem,
 } from "@/lib/types"
 
 const VAULT_KEY = "maya:vault"
@@ -48,6 +50,8 @@ export function emptyVault(): MemoryVault {
     notes: [],
     learned: { ...DEFAULT_LEARNED },
     prefs: { ...DEFAULT_PREFS },
+    reminders: [],
+    tasks: [],
   }
 }
 
@@ -85,6 +89,23 @@ function isNote(value: unknown): value is MemoryNote {
   if (!value || typeof value !== "object") return false
   const note = value as MemoryNote
   return typeof note.id === "string" && typeof note.text === "string"
+}
+
+function isReminder(value: unknown): value is Reminder {
+  if (!value || typeof value !== "object") return false
+  const item = value as Reminder
+  return (
+    typeof item.id === "string" &&
+    typeof item.text === "string" &&
+    typeof item.at === "number" &&
+    (item.kind === "reminder" || item.kind === "alarm")
+  )
+}
+
+function isTask(value: unknown): value is TaskItem {
+  if (!value || typeof value !== "object") return false
+  const item = value as TaskItem
+  return typeof item.id === "string" && typeof item.text === "string"
 }
 
 function normalizePersonality(value: unknown): Personality {
@@ -161,6 +182,19 @@ export function normalizeVault(value: unknown): MemoryVault | null {
     notes,
     learned: normalizeLearned(raw.learned),
     prefs: normalizePrefs(raw.prefs, rawVersion),
+    reminders: Array.isArray(raw.reminders)
+      ? raw.reminders.filter(isReminder).map((item) => ({
+          ...item,
+          done: Boolean(item.done),
+          fired: Boolean(item.fired),
+        }))
+      : [],
+    tasks: Array.isArray(raw.tasks)
+      ? raw.tasks.filter(isTask).map((item) => ({
+          ...item,
+          done: Boolean(item.done),
+        }))
+      : [],
   }
 }
 
@@ -193,6 +227,8 @@ function migrateLegacyVault(): MemoryVault | null {
     notes: [],
     learned: { ...DEFAULT_LEARNED },
     prefs: { ...DEFAULT_PREFS },
+    reminders: [],
+    tasks: [],
   }
 }
 
@@ -293,6 +329,8 @@ export function toExport(vault: MemoryVault): MayaExport {
     notes: vault.notes,
     learned: vault.learned,
     prefs: vault.prefs,
+    reminders: vault.reminders,
+    tasks: vault.tasks,
   }
 }
 
@@ -348,6 +386,54 @@ export function removeNote(vault: MemoryVault, id: string): MemoryVault {
   return {
     ...vault,
     notes: vault.notes.filter((note) => note.id !== id),
+  }
+}
+
+export function upsertReminder(vault: MemoryVault, reminder: Reminder): MemoryVault {
+  return {
+    ...vault,
+    reminders: [reminder, ...vault.reminders.filter((item) => item.id !== reminder.id)].slice(
+      0,
+      40
+    ),
+  }
+}
+
+export function patchReminder(
+  vault: MemoryVault,
+  id: string,
+  patch: Partial<Reminder>
+): MemoryVault {
+  return {
+    ...vault,
+    reminders: vault.reminders.map((item) =>
+      item.id === id ? { ...item, ...patch } : item
+    ),
+  }
+}
+
+export function upsertTask(vault: MemoryVault, task: TaskItem): MemoryVault {
+  return {
+    ...vault,
+    tasks: [task, ...vault.tasks.filter((item) => item.id !== task.id)].slice(0, 40),
+  }
+}
+
+export function patchTask(
+  vault: MemoryVault,
+  id: string,
+  patch: Partial<TaskItem>
+): MemoryVault {
+  return {
+    ...vault,
+    tasks: vault.tasks.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+  }
+}
+
+export function removeTask(vault: MemoryVault, id: string): MemoryVault {
+  return {
+    ...vault,
+    tasks: vault.tasks.filter((item) => item.id !== id),
   }
 }
 

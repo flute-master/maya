@@ -3,7 +3,7 @@ import { lookupWeb } from "@/lib/lookup"
 export const runtime = "nodejs"
 
 export async function POST(request: Request) {
-  let body: { text?: string; force?: boolean }
+  let body: { text?: string; force?: boolean; hometown?: string }
   try {
     body = (await request.json()) as { text?: string; force?: boolean }
   } catch {
@@ -11,6 +11,6 @@ export async function POST(request: Request) {
   }
   const text = String(body.text ?? "").trim()
   if (!text) return Response.json({ hits: [], searched: false })
-  const lookup = await lookupWeb(text, Boolean(body.force))
+  const lookup = await lookupWeb(text, Boolean(body.force), String(body.hometown ?? "").trim() || undefined)
   return Response.json(lookup)
 }

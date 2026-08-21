@@ -6,6 +6,7 @@ import { RotateCcw, SlidersHorizontal } from "lucide-react"
 import { ChatThread, type FollowAlong } from "@/components/chat-thread"
 import { Composer } from "@/components/composer"
 import { EmptyState } from "@/components/empty-state"
+import { PlannerDock } from "@/components/planner-dock"
 import { SettingsSheet } from "@/components/settings-sheet"
 import { VoiceDock } from "@/components/voice-dock"
 import { Badge } from "@/components/ui/badge"
@@ -33,7 +34,16 @@ import {
   speakLine,
   stopSpeaking,
 } from "@/lib/speak"
-import type { ChatMessage, Personality } from "@/lib/types"
+import { hometownFromNotes } from "@/lib/skills"
+import { intendedMeaning } from "@/lib/typos"
+import {
+  formatWhen,
+  googleCalendarUrl,
+  makeReminder,
+  makeTask,
+  parsePlan,
+} from "@/lib/reminders"
+import type { ChatMessage, Personality, Reminder } from "@/lib/types"
 import {
   activeConversation,
   addNote,
@@ -41,10 +51,14 @@ import {
   downloadVault,
   loadVault,
   parseImport,
+  patchReminder,
+  patchTask,
   removeConversation,
   removeNote,
   saveVault,
   startFreshConversation,
+  upsertReminder,
+  upsertTask,
   withActiveMessages,
 } from "@/lib/vault"
 import { hydrateVault, writeDeviceMemory } from "@/lib/persist"
@@ -213,6 +227,50 @@ export function MayaApp() {
     [sage, vault.prefs.spokenVoiceURI]
   )
 
+  const fireReminder = useCallback(
+    (item: Reminder) => {
+      setVault((current) => patchReminder(current, item.id, { fired: true }))
+      if (
+        typeof Notification !== "undefined" &&
+        Notification.permission === "granted"
+      ) {
+        try {
+          new Notification(
+            `Maya · ${item.kind === "alarm" ? "Alarm" : "Reminder"}`,
+            { body: item.text }
+          )
+        } catch {
+          /* ignore */
+        }
+      }
+      void playVoice(
+        `${item.kind === "alarm" ? "Alarm" : "Reminder"}. ${item.text}`,
+        item.id
+      )
+    },
+    [playVoice]
+  )
+
+  useEffect(() => {
+    const timers: number[] = []
+    const now = Date.now()
+    for (const item of vault.reminders ?? []) {
+      if (item.done || item.fired) continue
+      const wait = item.at - now
+      if (wait <= 0) {
+        if (now - item.at < 60 * 60_000) {
+          timers.push(window.setTimeout(() => fireReminder(item), 400))
+        }
+        continue
+      }
+      if (wait > 2_147_000_000) continue
+      timers.push(window.setTimeout(() => fireReminder(item), wait))
+    }
+    return () => {
+      for (const timer of timers) window.clearTimeout(timer)
+    }
+  }, [vault.reminders, fireReminder])
+
   const setMessages = useCallback(
     (updater: ChatMessage[] | ((current: ChatMessage[]) => ChatMessage[])) => {
       setVault((current) => {
@@ -270,6 +328,75 @@ export function MayaApp() {
       const learned = retry
         ? vault.learned
         : updateLearned(vault.learned, trimmed)
+      const plan = retry ? null : parsePlan(intendedMeaning(trimmed))
+      if (plan) {
+        if (
+          typeof Notification !== "undefined" &&
+          Notification.permission === "default" &&
+          (plan.kind === "reminder" || plan.kind === "alarm")
+        ) {
+          void Notification.requestPermission()
+        }
+
+        let reply = ""
+        let apply = (current: typeof vault) => current
+        if (plan.kind === "need-time") {
+          reply =
+            "Tell me when — in 10 minutes, at 7pm, tomorrow at 9. I’ll hold it in this app and ping you here. I can’t set the Clock app on your phone without Google login."
+        } else if (plan.kind === "reminder" || plan.kind === "alarm") {
+          const item = makeReminder(plan)
+          const cal = googleCalendarUrl(item.text, item.at)
+          reply = `Set. ${item.kind === "alarm" ? "Alarm" : "Reminder"} for ${formatWhen(item.at)}: ${item.text}. I’ll speak it here if this tab is open. Optional — add it in Google Calendar:\n${cal}`
+          apply = (current) => upsertReminder(current, item)
+        } else if (plan.kind === "task") {
+          const item = makeTask(plan.label)
+          reply = `On the list: ${item.text}. Say “what’s on my list” anytime, or “mark ${item.text} done”.`
+          apply = (current) => upsertTask(current, item)
+        } else if (plan.kind === "task-done") {
+          const match = (vault.tasks ?? []).find((item) =>
+            item.text.toLowerCase().includes(plan.label.toLowerCase())
+          )
+          if (match) {
+            reply = `Checked off: ${match.text}.`
+            apply = (current) => patchTask(current, match.id, { done: true })
+          } else {
+            reply = `I don’t see “${plan.label}” on the list. Say “add a task: …” first.`
+          }
+        } else {
+          const rems = (vault.reminders ?? []).filter((item) => !item.done)
+          const todos = (vault.tasks ?? []).filter((item) => !item.done)
+          const remLines = rems.length
+            ? rems
+                .map(
+                  (item) =>
+                    `• ${item.kind} · ${formatWhen(item.at)} · ${item.text}`
+                )
+                .join("\n")
+            : "No open reminders."
+          const taskLines = todos.length
+            ? todos.map((item) => `• ${item.text}`).join("\n")
+            : "No open tasks."
+          reply = `Reminders\n${remLines}\n\nTasks\n${taskLines}`
+        }
+
+        const filled: ChatMessage[] = [
+          ...nextMessages,
+          { ...assistantMessage, content: reply },
+        ]
+        setVault((current) => {
+          const withMsgs = withActiveMessages(apply(current), filled)
+          return {
+            ...withMsgs,
+            notes: upsertDigest(mergeFacts(withMsgs.notes, facts), filled),
+            learned,
+          }
+        })
+        if (vault.prefs.speakReplies !== false) {
+          playVoice(reply, assistantMessage.id)
+        }
+        return
+      }
+
       const memory = buildMemoryContext(
         { ...vault, notes: mergeFacts(vault.notes, facts), learned },
         nextMessages
@@ -307,7 +434,12 @@ export function MayaApp() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 signal: abort.signal,
-                body: JSON.stringify({ text: trimmed }),
+                body: JSON.stringify({
+                  text: trimmed,
+                  hometown: hometownFromNotes(
+                    vault.notes.map((note) => note.text)
+                  ),
+                }),
               })
               if (looked.ok) {
                 const data = (await looked.json()) as {
@@ -553,6 +685,21 @@ export function MayaApp() {
       ) : null}
 
       <VoiceDock audioRef={liveRef} status={voiceStatus} />
+
+      <PlannerDock
+        reminders={vault.reminders ?? []}
+        tasks={vault.tasks ?? []}
+        onDismissReminder={(id) =>
+          setVault((current) => patchReminder(current, id, { done: true }))
+        }
+        onToggleTask={(id) =>
+          setVault((current) => {
+            const item = current.tasks?.find((task) => task.id === id)
+            if (!item) return current
+            return patchTask(current, id, { done: !item.done })
+          })
+        }
+      />
 
       <Composer
         name={personality.name}

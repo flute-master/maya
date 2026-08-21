@@ -1,4 +1,5 @@
 import type { SearchHit } from "@/lib/types"
+import { shouldSkipWeb } from "@/lib/skills"
 
 const UA =
   "MayaCompanion/0.1 (https://github.com/flute-master/maya; local personal companion)"
@@ -40,6 +41,7 @@ export function fallbackSearchQuery(text: string): string | null {
   const t = text.trim()
   if (t.length < 10) return null
   if (isPersonalFactQuery(t)) return null
+  if (shouldSkipWeb(t)) return null
   const lower = t.toLowerCase()
   if (NOT_SEARCH.some((pattern) => pattern.test(lower))) return null
   return t.replace(/[?.!]+$/g, "").trim()
@@ -72,6 +74,7 @@ export function searchQueryFor(text: string): string | null {
   const lower = t.toLowerCase()
   if (t.length < 6) return null
   if (isPersonalFactQuery(t)) return null
+  if (shouldSkipWeb(t)) return null
   if (NOT_SEARCH.some((pattern) => pattern.test(lower))) return null
 
   const explicit = t.match(
@@ -85,7 +88,7 @@ export function searchQueryFor(text: string): string | null {
   }
 
   if (
-    /\b(weather in|news about|stock price|who won|latest on|current (price|score|population|president)|tell me about|explain)\b/i.test(
+    /\b(weather in|weather for|forecast|temperature in|news about|stock price|who won|latest on|current (price|score|population|president)|tell me about|explain|directions to|navigate to|map of)\b/i.test(
       t
     )
   ) {

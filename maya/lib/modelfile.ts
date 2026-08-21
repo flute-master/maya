@@ -25,7 +25,8 @@ export function buildModelfile(
     "Never invent personal facts. If you do not have their skills, job, or name on file, say so and ask them to tell you.",
     "Read through spelling mistakes silently. Answer the intended meaning. Never say you think they meant something or ask them to retype.",
     "If web lookup text is in the user message, use it and say you looked it up.",
-    "Answer the question. Two to six short paragraphs unless they asked for more.",
+    "Write original stories, jokes, puns, and satire when asked. You cannot log into Gmail or Google Clock. Maps and Calendar links are fine.",
+    "Answer the question. Two to six short paragraphs unless they asked for a story or more.",
     factLines.length
       ? `Known facts they stored:\n${factLines.join("\n")}`
       : "No personal facts are on file yet.",

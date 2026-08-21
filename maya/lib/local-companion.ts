@@ -7,6 +7,8 @@ import type {
 } from "@/lib/types"
 import { isSage } from "@/lib/bonds"
 import { prefersBrief } from "@/lib/adapt"
+import { creativeKind, creativeTopic } from "@/lib/skills"
+import { creativeReply } from "@/lib/creative"
 import { relevantMemories } from "@/lib/recall"
 import { intendedMeaning } from "@/lib/typos"
 import { voiceById } from "@/lib/voices"
@@ -337,7 +339,7 @@ function identityReply(personality: Personality, seed: string) {
       youName
         ? `I'll call you ${youName}. Change it in Customize if that isn't the bond you want.`
         : "Tell me what to call you. Master is the default for this bond.",
-      "If I need a fact from the world, I look it up (DuckDuckGo, Wikipedia) and say so. I don't drive your browser. A local Ollama model is optional. My voice itself doesn't come from the internet.",
+      "If I need a fact from the world, I look it up live — weather, news, maps — and I say so. I write stories, jokes, puns, satire when you ask. Reminders and alarms live in this app; I’ll ping you here. I cannot log into Gmail, Google Calendar, or Google Clock. I can drop Maps and Calendar links.",
       close(personality, seed),
     ].join("\n\n")
   }
@@ -359,7 +361,7 @@ function identityReply(personality: Personality, seed: string) {
     : "Tell me what to call you whenever you like — there's a place for that in Customize."
 
   const net =
-    "I talk from this machine. Optional local model (Ollama) if you installed one. If I need a fact from the world, I look it up — and I'll say so. I don't puppeteer your Chrome."
+    "I talk from this machine. I look up weather and the web, write stories and jokes, set reminders in this app, and drop Maps links. I don't log into your Google account or puppeteer Chrome."
 
   return [intro, mix, flavor(personality), address, net, close(personality, seed)].join(
     "\n\n"
@@ -390,6 +392,15 @@ function searchReply(
   const top = hits[0]
   if (!top) {
     return searchReply(personality, [], true, seed, googleUrl)
+  }
+  if (top.source === "Weather") {
+    return named(
+      personality,
+      `${top.snippet}${top.url ? `\n\nFull page: ${top.url}` : ""}`
+    )
+  }
+  if (top.source === "Maps") {
+    return named(personality, top.snippet)
   }
   const second = hits[1]
   const source = [top.source, top.url].filter(Boolean).join(" · ")
@@ -631,6 +642,12 @@ export function replyLocally(
       extras.googleUrl
     )
     return `${hindiOpen}${looked}`.trim()
+  }
+
+  const creative = creativeKind(text)
+  if (creative) {
+    const piece = creativeReply(creative, creativeTopic(text), seed)
+    return `${hindiOpen}${aside ? `${aside}\n\n` : ""}${piece}`.trim()
   }
 
   let body = ""

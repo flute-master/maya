@@ -8,16 +8,20 @@ import { SAGE_SAMPLE } from "@/lib/speak"
 
 const STARTERS = [
   {
-    label: "Analyze this with me",
-    text: "I need analysis. I'll tell you the situation — stay with me and parse it.",
+    label: "Tell me a story",
+    text: "Write me a short story about a night bus in Hyderabad.",
   },
   {
-    label: "Look this up",
-    text: "Look this up: what is the capital of India?",
+    label: "Weather",
+    text: "What's the weather in Hyderabad right now?",
   },
   {
-    label: "Who are you to me?",
-    text: "Who are you to me? Tell me the bond, plainly.",
+    label: "Remind me",
+    text: "Remind me in 5 minutes to drink water.",
+  },
+  {
+    label: "Make me laugh",
+    text: "Tell me a joke, then a pun, about internships.",
   },
 ]
 

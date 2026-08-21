@@ -3,6 +3,7 @@ import { replyLocally } from "@/lib/local-companion"
 import { hitsForModel, lookupWeb, type Lookup } from "@/lib/lookup"
 import { ollamaReady, replyWithOllama } from "@/lib/ollama"
 import { modelNeedsWeb } from "@/lib/search"
+import { hometownFromNotes } from "@/lib/skills"
 import type {
   ChatMessage,
   ChatRequestBody,
@@ -89,10 +90,11 @@ export async function POST(request: Request) {
   const learned = body.learned ?? DEFAULT_LEARNED
   const personality = overlayPersonality(body.personality, learned)
   const memory = body.memory
+  const hometown = hometownFromNotes(memory?.notes)
   const allowSearch = body.allowSearch !== false
 
   let lookup: Lookup = allowSearch
-    ? await lookupWeb(last.content, false)
+    ? await lookupWeb(last.content, false, hometown)
     : { hits: [], searched: false, searchFailed: false }
 
   let ollamaText = await replyWithOllama({
@@ -109,7 +111,7 @@ export async function POST(request: Request) {
     !lookup.hits.length &&
     modelNeedsWeb(ollamaText)
   ) {
-    lookup = await lookupWeb(last.content, true)
+    lookup = await lookupWeb(last.content, true, hometown)
     const retry = await replyWithOllama({
       messages: history,
       personality,

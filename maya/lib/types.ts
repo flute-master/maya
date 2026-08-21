@@ -46,6 +46,22 @@ export type LearnedState = {
   lastSeenAt: number
 }
 
+export type Reminder = {
+  id: string
+  kind: "reminder" | "alarm"
+  text: string
+  at: number
+  done: boolean
+  fired: boolean
+  createdAt: number
+}
+
+export type TaskItem = {
+  id: string
+  text: string
+  done: boolean
+  createdAt: number
+}
 export type Prefs = {
   allowSearch: boolean
   spokenVoiceURI: string
@@ -75,12 +91,16 @@ export type MemoryVault = {
   notes: MemoryNote[]
   learned: LearnedState
   prefs: Prefs
+  reminders: Reminder[]
+  tasks: TaskItem[]
 }
 
 export type MemoryContext = {
   notes: string[]
   pastTitles: string[]
   priorUserLines: string[]
+  reminders: string[]
+  tasks: string[]
 }
 
 export type SearchHit = {
@@ -107,4 +127,6 @@ export type MayaExport = {
   notes: MemoryNote[]
   learned?: LearnedState
   prefs?: Prefs
+  reminders?: Reminder[]
+  tasks?: TaskItem[]
 }

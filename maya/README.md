@@ -122,6 +122,16 @@ To bake **your** notes into the model: Customize → Lookup → **Download Model
 
 If Ollama is not running, she falls back to the built-in engine so the app still opens. She should never answer with only “parsing.”
 
+## What she can do from chat
+
+- **Stories, jokes, puns, satire** — ask. The local model writes them when it’s running; otherwise she still has a built-in writer.
+- **Weather** — `weather in Hyderabad`. Live from wttr.in, no API key.
+- **Maps** — `directions to Charminar` or `map of Hitech City`. She drops Google Maps and OpenStreetMap links. She cannot log into your Google account or drive the Maps app.
+- **Reminders and alarms** — `remind me in 10 minutes to drink water`, `set an alarm for 7`. They fire in this tab (notification + her voice) if Maya is open. A Google Calendar link is optional. She cannot set the phone Clock app or Gmail.
+- **Tasks** — `add a task: buy milk`, `what's on my list`, `mark buy milk done`.
+
+She does **not** get “all Google app access.” That needs your Google login. Links, yes. Inbox and Calendar takeover, no.
+
 ## How she works
 
 - Enter sends, Shift+Enter is a new line.
