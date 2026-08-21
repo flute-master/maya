@@ -45,7 +45,7 @@ import {
   addNote,
   countStoredMessages,
   downloadVault,
-  emptyVault,
+  bootVault,
   loadVault,
   parseImport,
   patchReminder,
@@ -61,10 +61,11 @@ import {
 import { hydrateVault, writeDeviceMemory } from "@/lib/persist"
 
 export function MayaApp() {
-  const [vault, setVault] = useState(emptyVault)
+  const [vault, setVault] = useState(bootVault)
   const [bootReady, setBootReady] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [isSending, setIsSending] = useState(false)
+  const [gpuOk, setGpuOk] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [mode, setMode] = useState<
     "offline" | "search" | "model" | "device" | "trained" | "sage"
@@ -92,6 +93,7 @@ export function MayaApp() {
   const sage = isSage(personality)
 
   useEffect(() => {
+    setGpuOk(canRunOnDevice())
     setVault(loadVault())
     setBootReady(true)
     let cancelled = false
@@ -601,14 +603,14 @@ export function MayaApp() {
           playVoice(acc, assistantMessage.id)
         }
       } catch (caught) {
+        setMessages((current) =>
+          current.filter((message) => message.id !== assistantMessage.id)
+        )
         if ((caught as Error).name === "AbortError") return
         setError(
           caught instanceof Error
             ? caught.message
             : "Something went sideways. Try again."
-        )
-        setMessages((current) =>
-          current.filter((message) => message.id !== assistantMessage.id)
         )
       } finally {
         setIsSending(false)
@@ -639,25 +641,35 @@ export function MayaApp() {
 
   async function attachFiles(files: File[]) {
     const saved: string[] = []
-    for (const file of files.slice(0, 6)) {
-      if (file.size > 2_000_000) {
-        setError(`${file.name} is larger than 2 MB.`)
-        continue
+    try {
+      for (const file of files.slice(0, 6)) {
+        if (file.size > 2_000_000) {
+          setError(`${file.name} is larger than 2 MB.`)
+          continue
+        }
+        const base64 = await blobToBase64(file)
+        const response = await fetch("/api/files", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: file.name, base64 }),
+        })
+        const data = (await response.json()) as { error?: string; name?: string }
+        if (!response.ok) {
+          setError(data.error || `Could not save ${file.name}.`)
+          continue
+        }
+        if (data.name) saved.push(data.name)
       }
-      const base64 = await blobToBase64(file)
-      const response = await fetch("/api/files", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: file.name, base64 }),
-      })
-      const data = (await response.json()) as { error?: string; name?: string }
-      if (!response.ok) {
-        setError(data.error || `Could not save ${file.name}.`)
-        continue
-      }
-      if (data.name) saved.push(data.name)
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Could not add that file to the workspace."
+      )
+      return
     }
     if (saved.length) {
+      setError(null)
       void send(
         `I added ${saved.join(", ")} to your workspace. List your files and tell me what you have.`
       )
@@ -666,7 +678,9 @@ export function MayaApp() {
 
   async function shareScreen() {
     if (!navigator.mediaDevices?.getDisplayMedia) {
-      setError("This browser cannot share a screen still.")
+      setError(
+        "This browser cannot capture a screen still. Use the paperclip to attach a screenshot instead."
+      )
       return
     }
     try {
@@ -675,7 +689,10 @@ export function MayaApp() {
         audio: false,
       })
       const track = stream.getVideoTracks()[0]
-      if (!track) return
+      if (!track) {
+        setError("No screen track came through. Try the paperclip with a screenshot.")
+        return
+      }
       const video = document.createElement("video")
       video.srcObject = stream
       video.muted = true
@@ -707,11 +724,18 @@ export function MayaApp() {
         } | null
         throw new Error(data?.error || "Could not save the still.")
       }
+      setError(null)
       void send(
         `I shared a screen still as ${name}. Observe the workspace. I know you cannot see the pixels — tell me that honestly.`
       )
     } catch (caught) {
-      if ((caught as Error).name === "NotAllowedError") return
+      const name = (caught as Error).name
+      if (name === "NotAllowedError" || name === "NotFoundError") {
+        setError(
+          "Screen capture was blocked or cancelled. Allow it in the browser prompt, or attach a screenshot with the paperclip."
+        )
+        return
+      }
       setError(
         caught instanceof Error ? caught.message : "Screen share failed."
       )
@@ -801,7 +825,7 @@ export function MayaApp() {
           modelReady={modelReady}
           modelName={modelName || deviceId}
           onLoadDevice={
-            !modelReady && canRunOnDevice() ? () => void loadDevice() : undefined
+            !modelReady && gpuOk ? () => void loadDevice() : undefined
           }
           past={vault.conversations
             .filter((item) => item.messages.length > 0)
@@ -883,8 +907,13 @@ export function MayaApp() {
 
       <Composer
         name={personality.name}
-        disabled={isSending}
+        busy={isSending}
+        error={empty ? error : null}
         onSend={send}
+        onStop={() => {
+          abortRef.current?.abort()
+          setIsSending(false)
+        }}
         speakReplies={vault.prefs.speakReplies !== false}
         speaking={Boolean(follow)}
         onStopSpeak={haltVoice}

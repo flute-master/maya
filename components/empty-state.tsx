@@ -49,7 +49,7 @@ export function EmptyState({
   const who = callMe.trim()
 
   return (
-    <div className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center px-6 py-12 text-center">
+    <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-12 text-center">
       <div className="relative mb-8">
         <div className="absolute inset-0 -m-10 rounded-full bg-primary/20 blur-3xl" />
         <div className="relative flex size-16 items-center justify-center rounded-full bg-card ring-1 ring-foreground/10">

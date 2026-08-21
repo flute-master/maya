@@ -1,4 +1,4 @@
-const CACHE = "maya-shell-v2"
+const CACHE = "maya-shell-v3"
 const SHELL = ["/manifest.webmanifest", "/favicon.svg", "/clips/sage.mp3"]
 
 self.addEventListener("install", (event) => {

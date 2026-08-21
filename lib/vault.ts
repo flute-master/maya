@@ -32,6 +32,9 @@ const DEFAULT_PREFS: Prefs = {
   allowFileWrite: false,
 }
 
+/** Frozen first-paint vault so SSR HTML matches the client (no random IDs). */
+export const BOOT_CONVERSATION_ID = "maya-boot"
+
 export function emptyConversation(): Conversation {
   const now = Date.now()
   return {
@@ -40,6 +43,28 @@ export function emptyConversation(): Conversation {
     createdAt: now,
     updatedAt: now,
     messages: [],
+  }
+}
+
+export function bootVault(): MemoryVault {
+  return {
+    version: VAULT_VERSION,
+    personality: DEFAULT_PERSONALITY,
+    conversations: [
+      {
+        id: BOOT_CONVERSATION_ID,
+        title: "New conversation",
+        createdAt: 0,
+        updatedAt: 0,
+        messages: [],
+      },
+    ],
+    activeId: BOOT_CONVERSATION_ID,
+    notes: [],
+    learned: { ...DEFAULT_LEARNED },
+    prefs: { ...DEFAULT_PREFS },
+    reminders: [],
+    tasks: [],
   }
 }
 
