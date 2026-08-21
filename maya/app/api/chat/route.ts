@@ -1,5 +1,6 @@
 import { overlayPersonality, DEFAULT_LEARNED } from "@/lib/adapt"
 import { replyLocally } from "@/lib/local-companion"
+import { replyWithOllama } from "@/lib/ollama"
 import { searchQueryFor, searchWeb } from "@/lib/search"
 import type {
   ChatMessage,
@@ -98,12 +99,20 @@ export async function POST(request: Request) {
     }
   }
 
-  const text = replyLocally(history, personality, memory, {
-    learned,
-    searchHits: hits,
-    searchFailed,
-    searched,
-  })
+  const text =
+    (await replyWithOllama({
+      messages: history,
+      personality,
+      memory,
+      learned,
+      hits,
+    })) ||
+    replyLocally(history, personality, memory, {
+      learned,
+      searchHits: hits,
+      searchFailed,
+      searched,
+    })
 
   return new Response(localStream(text), {
     headers: streamHeaders(searched ? "search" : "offline"),

@@ -18,6 +18,10 @@ const NOT_SEARCH = [
   /what do you think about me/,
   /customize/,
   /your name/,
+  /\bmy (skills?|job|name|age|hobbies)\b/,
+  /what (are|is) my\b/,
+  /where do i live/,
+  /who am i/,
 ]
 
 export function searchQueryFor(text: string): string | null {
@@ -27,7 +31,7 @@ export function searchQueryFor(text: string): string | null {
   if (NOT_SEARCH.some((pattern) => pattern.test(lower))) return null
 
   const explicit = t.match(
-    /\b(?:look(?:\s+this)?\s+up|search(?:\s+for)?|google|find out(?:\s+about)?|check(?:\s+the web)?(?:\s+for)?)\s+[:\-]?\s*(.+)$/i
+    /\b(?:look(?:\s+this)?\s+up|search(?:\s+for)?|google|browse|find out(?:\s+about)?|check(?:\s+the web)?(?:\s+for)?)\s+[:\-]?\s*(.+)$/i
   )
   if (explicit?.[1]) {
     const query = explicit[1].replace(/[?.!]+$/g, "").trim()
@@ -35,7 +39,7 @@ export function searchQueryFor(text: string): string | null {
   }
 
   if (
-    /\b(weather in|news about|stock price|who won|latest on|current (price|score|population|president))\b/i.test(
+    /\b(weather in|news about|stock price|who won|latest on|current (price|score|population|president)|tell me about|explain)\b/i.test(
       t
     )
   ) {
@@ -43,12 +47,13 @@ export function searchQueryFor(text: string): string | null {
   }
 
   if (
-    /^(what is|what's|who is|who's|when did|where is|how many|how much)\b/i.test(
+    /^(what is|what's|who is|who's|when did|where is|how many|how much|what are(?! my))\b/i.test(
       lower
     ) &&
-    !/^(what's (wrong|up|going)|what is (wrong|going)|who is she|who are we)\b/i.test(
+    !/^(what's (wrong|up|going)|what is (wrong|going)|who is she|who are we|what are my)\b/i.test(
       lower
     ) &&
+    !/\bmy\b/.test(lower) &&
     t.length < 180
   ) {
     return t.replace(/[?.!]+$/g, "").trim()

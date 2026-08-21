@@ -12,6 +12,8 @@ const FACT_PATTERNS: Array<RegExp> = [
   /i(?:'m| am) based in ([^.,!?\n]{2,60})/i,
   /i work (?:as|at|in) ([^.,!?\n]{2,60})/i,
   /i study ([^.,!?\n]{2,60})/i,
+  /my skills? (?:are|is|:)\s*([^.,!?\n]{2,80})/i,
+  /i(?:'m| am) good at ([^.,!?\n]{2,80})/i,
   /i(?:'m| am) (?:a|an) ([^.,!?\n]{2,50})/i,
   /i have a (?:partner|wife|husband|boyfriend|girlfriend|kid|son|daughter|dog|cat)(?: named ([A-Za-z][A-Za-z'-]{1,30}))?/i,
 ]
@@ -22,10 +24,53 @@ function clip(text: string, max = 160) {
 }
 
 function meaningfulWords(text: string) {
+  const stop = new Set([
+    "that",
+    "this",
+    "with",
+    "from",
+    "have",
+    "just",
+    "want",
+    "need",
+    "about",
+    "what",
+    "when",
+    "where",
+    "which",
+    "your",
+    "youre",
+    "they",
+    "them",
+    "then",
+    "than",
+    "some",
+    "very",
+    "really",
+    "like",
+    "been",
+    "will",
+    "would",
+    "could",
+    "should",
+    "into",
+    "over",
+    "also",
+    "here",
+    "there",
+    "were",
+    "their",
+    "name",
+    "said",
+    "tell",
+    "does",
+    "dont",
+    "didn",
+  ])
   return text
     .toLowerCase()
     .split(/[^a-z0-9]+/)
-    .filter((word) => word.length > 3)
+    .filter((word) => word.length > 3 && !stop.has(word))
 }
 
 export function extractFacts(text: string): string[] {
@@ -125,7 +170,7 @@ export function relevantMemories(
       const hits = meaningfulWords(line).filter((word) => words.has(word)).length
       return { line, hits }
     })
-    .filter((item) => item.hits > 0)
+    .filter((item) => item.hits >= 2)
     .sort((a, b) => b.hits - a.hits)
 
   const picked = scored.slice(0, limit).map((item) => item.line)

@@ -24,6 +24,7 @@ type Intent =
   | "question"
   | "customize"
   | "remember"
+  | "personal"
   | "generic"
 
 function pick<T>(seed: string, options: T[]): T {
@@ -59,6 +60,14 @@ function detectIntent(text: string): Intent {
   const t = text.trim()
   const lower = t.toLowerCase()
 
+  if (
+    /\b(my skills?|my job|my name|my age|my hobbies|where do i live|what do i do|who am i)\b/.test(
+      lower
+    ) ||
+    /what (are|is) my\b/.test(lower)
+  ) {
+    return "personal"
+  }
   if (
     /do you remember|what do you remember|what did i (say|tell)|last time|our (last|earlier) (chat|talk|conversation)|you know me/.test(
       lower
@@ -174,13 +183,75 @@ function rememberReply(
   )
 }
 
+function personalReply(
+  personality: Personality,
+  text: string,
+  memory: MemoryContext | undefined
+) {
+  const lower = text.toLowerCase()
+  const notes = memory?.notes ?? []
+  const prior = memory?.priorUserLines ?? []
+  const pool = [...notes, ...prior]
+  const topic = /\bskills?\b/.test(lower)
+    ? "skills"
+    : /\b(job|work)\b/.test(lower)
+      ? "work"
+      : /\bname\b/.test(lower)
+        ? "name"
+        : /\blive\b/.test(lower)
+          ? "where you live"
+          : "that"
+  const keys =
+    topic === "skills"
+      ? ["skill", "good at", "work as", "study"]
+      : topic === "work"
+        ? ["work", "job", "study"]
+        : topic === "name"
+          ? ["called", "name is"]
+          : topic === "where you live"
+            ? ["live in", "based in"]
+            : []
+  const hits = pool.filter((line) =>
+    keys.some((key) => line.toLowerCase().includes(key))
+  )
+  if (hits.length) {
+    const list = hits.slice(0, 5).map((line) => `• ${line}`).join("\n")
+    return named(
+      personality,
+      `I have this on file about ${topic}, {name}:\n\n${list}\n\nCorrect it if it is stale. I only know what you have told me — I will not invent a CV.`
+    )
+  }
+  return named(
+    personality,
+    `I do not have your ${topic} on file, {name}. That is not a web lookup — it is yours. Tell me, and I will keep it on this machine. You can also write it under Customize → Memory.`
+  )
+}
+
+function questionReply(
+  personality: Personality,
+  text: string,
+  seed: string
+) {
+  if (isSage(personality)) {
+    return [
+      named(personality, `Question received, {name}.`),
+      `You asked: "${text.trim().replace(/\s+/g, " ")}"`,
+      "If this is a fact about the world, say “look this up” and I will search. If it is about you, I will only use what you have stored here — I will not guess.",
+      "Proposal: give me the missing constraint, or tell me to search.",
+      close(personality, seed),
+    ].join("\n\n")
+  }
+  return adviceReply(personality, text, seed)
+}
+
 function memoryAside(latest: string, memory: MemoryContext | undefined) {
   if (!memory) return ""
   const hits = relevantMemories(memory, latest, 2)
   if (!hits.length) return ""
-  if (!memory.notes.length && !memory.priorUserLines.length) return ""
+  if (!memory.notes.length) return ""
   const line = hits[0]
   if (!line) return ""
+  if (!memory.notes.some((note) => note === line)) return ""
   return `I still have this from before: "${line}"`
 }
 
@@ -334,7 +405,7 @@ function adviceReply(
         personality,
         pick(seed, [
           `Analysis, {name}.`,
-          `Understood. Parsing this.`,
+          `Understood.`,
         ])
       ),
       `You said: "${snippet}"\n\nSplit: what you can choose now, and what you can only wait out. Most stuckness is those two tangled.`,
@@ -527,7 +598,10 @@ export function replyLocally(
           ]) + "\n\n"
         : ""
 
-  const aside = intent === "remember" ? "" : memoryAside(text, memory)
+  const aside =
+    intent === "remember" || intent === "personal" || intent === "identity"
+      ? ""
+      : memoryAside(text, memory)
   const hasPast =
     (memory?.notes.length ?? 0) + (memory?.priorUserLines.length ?? 0) > 0
 
@@ -648,12 +722,15 @@ export function replyLocally(
             ])
       )
       break
+    case "personal":
+      body = personalReply(personality, text, memory)
+      break
     case "stuck":
     case "advice":
       body = adviceReply(personality, text, seed)
       break
     case "question":
-      body = adviceReply(personality, text, seed)
+      body = questionReply(personality, text, seed)
       break
     default:
       body = isSage(personality)
@@ -661,7 +738,7 @@ export function replyLocally(
             named(
               personality,
               pick(seed, [
-                `Received, {name}. I am parsing.`,
+                `Received, {name}. Continue.`,
                 `Go on. I will not drop the thread.`,
               ])
             ),

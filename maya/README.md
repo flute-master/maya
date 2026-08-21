@@ -2,7 +2,7 @@
 
 A text-first inner sage who lives on your machine. Analysis, loyalty, a voice that stays. She learns your shape from how you actually talk.
 
-She does **not** call an external language model. Chat is offline. The only network use is optional web lookup when a fact needs searching.
+She talks with a built-in companion engine on your machine. If **Ollama** is running locally, she will use that model instead. The only other network use is optional web lookup when a fact needs searching.
 
 This is **not** Raphael / Great Sage from *That Time I Got Reincarnated as a Slime*. That performance cannot be cloned. The clips are an original Indian-English inner-sage register.
 
@@ -12,7 +12,7 @@ Need **Node.js 20+** and **Chrome or Edge**. Unmute the browser tab.
 
 ```bash
 git clone https://github.com/flute-master/maya.git
-cd maya
+cd maya/maya
 npm install
 npm run dev
 ```
@@ -93,9 +93,25 @@ Chrome or Edge. Click the mic, allow the site, speak, then send. Words appear as
 
 Refresh does not reset her. **Export** downloads `maya-memory.json`. Import that file on another machine to take the same Maya with you. **New** archives a thread; it does not erase her.
 
-### Search
+If you ask “what are my skills?” she only answers from what you stored. Tell her, or write it under Customize → Memory. She will not invent a CV.
 
-Customize → Search. Off = fully offline. On = she may look up a fact and will say so.
+### Search (browser-like lookup)
+
+Customize → Search. Off = fully offline. On = she looks up world facts (DuckDuckGo + Wikipedia) and says so.
+
+Say **look this up** or ask “what is …” / “who is …”. She does not drive your Chrome window. She fetches search results.
+
+### Optional: a real local model (Ollama)
+
+Maya is not a trained copy of you. Training your own LLM is a separate project.
+
+If [Ollama](https://ollama.com) is installed and a model is pulled, restart Maya and she will use it when `http://127.0.0.1:11434` is up:
+
+```bash
+ollama pull llama3.2
+```
+
+Optional: `OLLAMA_MODEL=llama3.2` in the environment. If Ollama is not running, she uses the built-in engine.
 
 ## How she works
 
