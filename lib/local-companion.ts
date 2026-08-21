@@ -362,20 +362,18 @@ function identityReply(personality: Personality, seed: string, text: string) {
     "I cannot take over your mouse or see screenshot pixels unless you describe them.",
   ].join("\n\n")
   if (isSage(personality)) {
-    const intro =
-      name === "Maya"
-        ? "I'm Maya. I sit with you, I think things through, and I don't vanish when it's inconvenient."
-        : `I'm ${name}. The mind that stays — not a guest, not a search box.`
+    const intro = youName
+      ? `I'm ${name}, your inner sage. I'll call you ${youName} unless you change it in Customize.`
+      : `I'm ${name}, your inner sage. Tell me what to call you — Master is the default for this bond.`
+    const stance =
+      "I sit with you, I think things through, and I don't vanish when it's inconvenient. I'm not an online oracle and I'm not going to perform friendship at you."
     if (askingDo) {
       return [intro, canDo, close(personality, seed)].join("\n\n")
     }
     return [
       intro,
-      "I'm not an online oracle and I'm not going to perform friendship at you. I analyze, I stay, and I talk like a person.",
-      youName
-        ? `I'll call you ${youName}. Change it in Customize if that isn't the bond you want.`
-        : "Tell me what to call you. Master is the default for this bond.",
-      "If I need a fact from the world, I look it up live — weather, news, maps, and your public GitHub if I have a handle — and I say so. I write stories, jokes, puns, satire when you ask. Reminders and alarms live in this app; I’ll ping you here. If you connect Google in Customize, I can use Calendar, Gmail, Drive, Docs, Sheets, Tasks, and Contacts through Google's free APIs. A service account cannot open personal Gmail. Keep, Meet, and Photos are not these APIs. I cannot drive Chrome, take over your mouse, or see a screenshot without you describing it.",
+      stance,
+      "If I need a fact from the world, I look it up live — weather, news, maps, and your public GitHub if I have a handle — and I say so. Connect Google in Customize → Lookup for Calendar, Gmail, Drive, Docs, Sheets, Tasks, and Contacts. A service account cannot open personal Gmail. Keep, Meet, and Photos are not these APIs. I cannot drive Chrome, take over your mouse, or see a screenshot without you describing it.",
       close(personality, seed),
     ].join("\n\n")
   }

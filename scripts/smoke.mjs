@@ -121,6 +121,7 @@ async function main() {
     "identity names Maya and does not claim Raphael",
     identity.status === 200 &&
       has(identity.body, "Maya") &&
+      has(identity.body, "inner sage") &&
       !has(identity.body, "Raphael"),
     identity.body.slice(0, 180).replace(/\s+/g, " ")
   )
@@ -133,6 +134,11 @@ async function main() {
     "identity does not drive Chrome",
     has(identity.body, "Chrome") || has(identity.body, "mouse"),
     identity.body.slice(0, 180).replace(/\s+/g, " ")
+  )
+  ok(
+    "identity addresses Master by default",
+    has(identity.body, "Master"),
+    identity.body.slice(0, 160).replace(/\s+/g, " ")
   )
 
   const canDo = await chat("What can you actually do on this machine?")

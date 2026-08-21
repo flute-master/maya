@@ -860,9 +860,10 @@ export function MayaApp() {
             size="sm"
             onClick={startOver}
             disabled={empty && !error}
+            aria-label="Start a new chat. Memory stays."
           >
             <RotateCcw />
-            New
+            New chat
           </Button>
           <Button
             type="button"
