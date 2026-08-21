@@ -2,7 +2,7 @@
 
 A text-first inner sage who lives on your machine. Analysis, loyalty, a voice that stays. She learns from what you tell her (memory on disk), talks with a **free local model**, and looks the web up only when a fact needs it. No paid APIs.
 
-**Deploy (computer, phone PWA, optional tunnel):** see [DEPLOY.md](./DEPLOY.md).
+**Deploy (laptop + phone, step by step):** [DEPLOY.md](./DEPLOY.md) — WSL, Windows, Mac, Android home screen, iPhone, firewall, tunnel.
 
 This is **not** Raphael / Great Sage from *That Time I Got Reincarnated as a Slime*. That performance cannot be cloned. The clips are an original Indian-English inner-sage register.
 
