@@ -10,7 +10,7 @@ No paid APIs. No Google login.
 | Phone, same Wi‑Fi | Laptop’s LAN URL, then Add to Home Screen | Laptop’s Ollama, **or** an on-device model in Chrome |
 | Phone, away from home | Cloudflare tunnel URL | Laptop must stay on, **or** on-device model already loaded |
 
-The GitHub repo is nested. After `git clone` you must `cd maya/maya`.
+The app lives at the **root** of https://github.com/flute-master/maya. After `git clone` you `cd maya` once — the folder Git created — and you should see `package.json`. There is no inner `maya/maya`.
 
 ---
 
@@ -37,7 +37,7 @@ The phone does **not** install Node or Ollama.
 
 This is the path if Maya already lives at something like:
 
-`/mnt/c/Users/Bobba.ruthvik/maya/maya`
+`/mnt/c/Users/Bobba.ruthvik/maya`
 
 ### 1.1 One-time install
 
@@ -58,16 +58,17 @@ Clone (skip if you already have the folder):
 ```bash
 cd /mnt/c/Users/Bobba.ruthvik
 git clone https://github.com/flute-master/maya.git
-cd maya/maya
+cd maya
 ```
 
-If you already cloned:
+If you already cloned the old nested layout (`maya/maya`):
 
 ```bash
 cd /mnt/c/Users/Bobba.ruthvik/maya
 git pull
-cd maya
 ```
+
+The app is now in this folder (`package.json` here). If a leftover inner `maya/` directory remains, it is usually old `node_modules` — you can delete that inner folder.
 
 Install and start:
 
@@ -94,14 +95,14 @@ Checks:
 - Customize → Lookup — it should say the local model is live (`maya` or `llama3.2`).
 - Optional: Customize → Voice — Spoken replies on.
 
-Memory file on disk: `data/maya-memory.json` inside `maya/maya`. Do not commit that file.
+Memory file on disk: `data/maya-memory.json` in the project folder. Do not commit that file.
 
 ### 1.3 Keep her running after you close the terminal
 
 Dev mode (`npm run dev`) dies when you close WSL. For a longer-running laptop copy:
 
 ```bash
-cd /mnt/c/Users/Bobba.ruthvik/maya/maya
+cd /mnt/c/Users/Bobba.ruthvik/maya
 npm install
 npm run build
 OLLAMA_MODEL=maya npm start
@@ -125,7 +126,6 @@ Windows Ollama: Settings → expose / allow LAN if you need WSL to reach it. On 
 ```bash
 cd /mnt/c/Users/Bobba.ruthvik/maya
 git pull
-cd maya
 npm install
 # only if Modelfile changed:
 ollama create maya -f Modelfile
@@ -141,7 +141,7 @@ OLLAMA_MODEL=maya npm run dev
 
 ```bat
 git clone https://github.com/flute-master/maya.git
-cd maya\maya
+cd maya
 npm install
 ollama pull llama3.2
 ollama create maya -f Modelfile
@@ -165,7 +165,7 @@ This path is **easier for the phone**, because the server is already on the Wind
 
 ```bash
 git clone https://github.com/flute-master/maya.git
-cd maya/maya
+cd maya
 npm install
 bash scripts/setup-model.sh
 pip3 install -r requirements-voice.txt
@@ -290,7 +290,7 @@ The laptop must stay awake. For a phone that works in a bus with no laptop: load
 ## 6. Optional: put the UI on Vercel (free)
 
 ```bash
-cd maya/maya
+cd maya
 npx vercel
 ```
 
@@ -323,7 +323,7 @@ Phone (same Wi‑Fi):
 
 | Symptom | Fix |
 | --- | --- |
-| `cd maya` then nothing / no `package.json` | You are one folder too high. `cd maya` again (path should end in `maya/maya`) |
+| `cd maya` then nothing / no `package.json` | You are inside an extra folder from the old nested layout. Go up until you see `package.json`, or clone again |
 | `The application path is not writable` | Do not run create-next-app on `/`. This repo is already scaffolded. |
 | Site loads, answers are thin / “parsing” | No trained checkpoint and Ollama not running. Train from chats, or `ollama serve` then `ollama create maya -f Modelfile` |
 | Train from chats fails | `pip install -r requirements-train.txt` then `python3 train/train.py`. Needs a few GB of RAM |

@@ -12,39 +12,26 @@ Need **Node.js 20+** and **Chrome or Edge**. Unmute the browser tab.
 
 ```bash
 git clone https://github.com/flute-master/maya.git
-cd maya/maya
+cd maya
 npm install
 npm run dev
 ```
 
 Open **http://127.0.0.1:43217**
 
+The project is at the repo root. After clone you should see `package.json` in `maya/` — not `maya/maya`.
+
 Hear the clips first: **http://127.0.0.1:43217/hear.html** — press play on Inner sage.
 
-If you do not have the GitHub repo yet, open **http://127.0.0.1:43217/download.html** and use **Download maya.zip**. Unzip it, then `cd` into that folder and run `npm install` and `npm run dev` the same way.
-
-### Put this on your GitHub (empty repo)
-
-1. Open https://github.com/new
-2. Repository name: `maya`
-3. Public
-4. **Do not** add a README, .gitignore, or license (this project already has them)
-5. Create repository
-6. In the unzipped (or cloned Origin) folder:
-
-```bash
-git remote add github https://github.com/flute-master/maya.git
-git push -u github main
-```
-
-GitHub will ask you to sign in. Use a **Personal Access Token** as the password, not your GitHub account password. (GitHub → Settings → Developer settings → Personal access tokens → `repo` scope.)
-
-After the first push, later updates are:
+Later updates:
 
 ```bash
 cd maya
 git pull
+npm install
 ```
+
+If you still have a leftover inner `maya/` from the old nested repo, `git pull` at the git root (the folder that has `.git`). Work from the folder that contains `package.json`.
 
 ### Hear the clips first
 
