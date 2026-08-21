@@ -1,5 +1,7 @@
 "use client"
 
+import { stopAllAudio } from "@/lib/audio-bus"
+
 type RecognitionResult = {
   transcript: string
   interim: string
@@ -80,7 +82,7 @@ export function startListening(handlers: {
     return null
   }
 
-  window.speechSynthesis?.cancel()
+  stopAllAudio()
 
   const Engine = recognitionEngine()
   let stopped = false

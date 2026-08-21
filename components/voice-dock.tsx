@@ -2,7 +2,7 @@
 
 import { useEffect, type RefObject } from "react"
 
-const STOP_EVENT = "maya-stop-clips"
+import { armExclusiveAudio, stopAllAudio } from "@/lib/audio-bus"
 
 export function VoiceDock({
   audioRef,
@@ -12,16 +12,8 @@ export function VoiceDock({
   status?: string | null
 }) {
   useEffect(() => {
-    function onStop(event: Event) {
-      const node = audioRef.current
-      if (!node) return
-      const except = (event as CustomEvent<HTMLAudioElement | undefined>).detail
-      if (except === node) return
-      node.pause()
-    }
-    window.addEventListener(STOP_EVENT, onStop)
-    return () => window.removeEventListener(STOP_EVENT, onStop)
-  }, [audioRef])
+    armExclusiveAudio()
+  }, [])
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pb-2">
@@ -36,6 +28,7 @@ export function VoiceDock({
           playsInline
           src="/clips/sage.mp3"
           className="w-full"
+          onPlay={(event) => stopAllAudio(event.currentTarget)}
         />
         <p className="mt-1.5 text-[11px] leading-4 text-neutral-600">
           {status ||

@@ -4,13 +4,11 @@ import { useEffect, useRef, useState } from "react"
 import { Pause, Volume2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { armExclusiveAudio, stopAllAudio } from "@/lib/audio-bus"
 import { cn } from "@/lib/utils"
 
-const STOP_EVENT = "maya-stop-clips"
-
 export function stopClips(except?: HTMLAudioElement) {
-  if (typeof window === "undefined") return
-  window.dispatchEvent(new CustomEvent(STOP_EVENT, { detail: except }))
+  stopAllAudio(except)
 }
 
 export function ClipPlayer({
@@ -25,18 +23,8 @@ export function ClipPlayer({
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const audio = innerRef.current
-    if (!audio) return
-    const onStop = (event: Event) => {
-      const except = (event as CustomEvent<HTMLAudioElement | undefined>).detail
-      if (except === audio) return
-      audio.pause()
-      audio.currentTime = 0
-      setPlaying(false)
-    }
-    window.addEventListener(STOP_EVENT, onStop)
-    return () => window.removeEventListener(STOP_EVENT, onStop)
-  }, [src])
+    armExclusiveAudio()
+  }, [])
 
   async function toggle() {
     const audio = innerRef.current
@@ -47,11 +35,10 @@ export function ClipPlayer({
       setPlaying(false)
       return
     }
-    stopClips(audio)
-    if (typeof window !== "undefined") window.speechSynthesis?.cancel()
-    audio.muted = false
-    audio.volume = 1
+    stopAllAudio(audio)
     try {
+      audio.muted = false
+      audio.volume = 1
       await audio.play()
       setPlaying(true)
       setError(null)
@@ -84,7 +71,8 @@ export function ClipPlayer({
           preload="auto"
           playsInline
           className="w-full"
-          onPlay={() => {
+          onPlay={(event) => {
+            stopAllAudio(event.currentTarget)
             setPlaying(true)
             setError(null)
           }}

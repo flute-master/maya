@@ -1,5 +1,6 @@
 "use client"
 
+import { setSpeechStop, stopAllAudio } from "@/lib/audio-bus"
 import { forSpokenText, spokenChunks } from "@/lib/spoken-text"
 
 export type SpeakOptions = {
@@ -61,14 +62,18 @@ export function canSpeak() {
 
 let speakGeneration = 0
 
+setSpeechStop(() => {
+  speakGeneration += 1
+  if (typeof window !== "undefined") window.speechSynthesis?.cancel()
+})
+
 export function speakLine(text: string, options: SpeakOptions | string = {}) {
   if (typeof window === "undefined" || !window.speechSynthesis) return false
   const opts = typeof options === "string" ? { voiceURI: options } : options
   const chunks = spokenChunks(text)
   if (!chunks.length) return false
 
-  window.dispatchEvent(new CustomEvent("maya-stop-clips"))
-  window.speechSynthesis.cancel()
+  stopAllAudio()
   const generation = ++speakGeneration
   const voice = pickSpokenVoice(opts.voiceURI)
   const rate = opts.sage ? 0.98 : 1.04
@@ -119,9 +124,7 @@ export function speakLine(text: string, options: SpeakOptions | string = {}) {
 
 export function stopSpeaking() {
   if (typeof window === "undefined") return
-  speakGeneration += 1
-  window.dispatchEvent(new CustomEvent("maya-stop-clips"))
-  window.speechSynthesis?.cancel()
+  stopAllAudio()
 }
 
 let spokenObjectUrl = ""
@@ -145,6 +148,7 @@ export async function speakInto(
   audio.src = spokenObjectUrl
   audio.muted = false
   audio.volume = 1
+  stopAllAudio(audio)
   try {
     await audio.play()
     return "playing"
