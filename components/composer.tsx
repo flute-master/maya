@@ -236,7 +236,7 @@ export function Composer({
           onChange={(event) => setValue(event.target.value)}
           placeholder={listening ? "Listening…" : `Message ${name}…`}
           aria-label={`Message ${name}`}
-          className="h-11 min-h-11 flex-1 rounded-2xl border border-input bg-card px-4 text-base shadow-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="h-11 min-h-11 flex-1 rounded-xl border border-border bg-card px-4 text-base text-foreground shadow-none outline-none placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-0"
         />
         {busy ? (
           <Button

@@ -119,11 +119,12 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
   html {
     @apply font-sans;
     -webkit-tap-highlight-color: transparent;
+    cursor: default;
   }
   body {
     @apply bg-background text-foreground;
@@ -139,5 +140,17 @@
         transparent 55%
       );
     background-attachment: fixed;
+  }
+  input,
+  textarea,
+  [contenteditable="true"] {
+    cursor: text;
+    caret-color: var(--foreground);
+    caret-shape: bar;
+  }
+  input::selection,
+  textarea::selection {
+    background: color-mix(in oklch, var(--primary) 38%, transparent);
+    color: var(--foreground);
   }
 }
