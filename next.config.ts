@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@mlc-ai/web-llm"],
+  allowedDevOrigins: ["127.0.0.1", "localhost"],
   webpack: (config) => {
     if (config.output) {
       config.output.filename = "static/chunks/[contenthash].js"
