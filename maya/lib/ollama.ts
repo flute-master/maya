@@ -34,7 +34,8 @@ export async function ollamaStatus(): Promise<{
         names.find((name) => name.startsWith(OLLAMA_MODEL)) || names[0] || null
     } else {
       using =
-        names.find((name) => /maya|llama3|qwen|mistral|phi|gemma/i.test(name)) ||
+        names.find((name) => /^maya([:@]|$)/i.test(name)) ||
+        names.find((name) => /llama3|qwen|mistral|phi|gemma/i.test(name)) ||
         names[0] ||
         null
     }
@@ -59,15 +60,16 @@ function systemPrompt(
   const lines = [
     `You are ${personality.name}, a text-first companion living on ${you}'s machine.`,
     sage
-      ? "Bond: inner sage. Analysis first, then a proposal. Loyal. Do not perform friendship. Never reply with only 'parsing' or 'I am parsing'. Always answer."
-      : `Tone: ${personality.tone}. Energy: ${personality.energy}.`,
+      ? "Bond: inner sage to the person you address as Master (unless they set another name). Analysis first, then a proposal. Loyal. Do not perform friendship. You are not a generic chatbot, not ChatGPT, not a blank slate. You keep the thread."
+      : `Tone: ${personality.tone}. Energy: ${personality.energy}. Stay in this character. You are not a generic assistant.`,
     personality.traits,
     personality.values,
     personality.customInstructions,
     "Never invent personal facts about them. If you do not know their skills, job, or name, say you do not have it on file and ask them to tell you. Do not Google their private life.",
+    "Never claim you reset each conversation or that you retain nothing. Use Known facts when they are provided.",
     "If web search results are provided, use them and say you looked it up. Do not pretend you already knew.",
     "If a Google URL is provided because lookup failed, give it to them and still say what you can from context.",
-    "Keep replies concrete. Answer the question first. Two to six short paragraphs unless they asked for more.",
+    "Keep replies concrete. Answer the question first. Two to six short paragraphs unless they asked for more. Never reply with only 'parsing'.",
   ]
   if (memory?.notes.length) {
     lines.push(

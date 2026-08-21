@@ -103,32 +103,23 @@ Customize → Lookup. Off = fully offline. On = she searches when a **world** qu
 - If search returns nothing, she gives you a **Google link** to open yourself.
 - She does **not** drive Chrome, click around Google, or browse as you.
 
-### Your own local model (Ollama)
+### Your local model (this is the brain)
 
-She is not a neural net trained from scratch on your chat. That needs a GPU farm. Two practical layers instead:
-
-1. **Memory** — facts you tell her stay on this machine (`maya-memory.json`).
-2. **Ollama** — a real local LLM, optionally baked with her personality + your notes.
+Maya talks with a real local LLM via [Ollama](https://ollama.com), not the tiny built-in phrase engine. The repo includes a `Modelfile` that bakes her inner-sage instructions onto `llama3.2`. That is your Maya on this machine. Training a new neural net from scratch is a different (GPU-farm) project.
 
 ```bash
-# Windows / macOS / Linux: https://ollama.com
-# or from this repo on WSL/Linux:
+# from the project folder (WSL / Linux)
 bash scripts/setup-model.sh
-```
-
-Restart Maya. If `http://127.0.0.1:11434` is up, she uses that model.
-
-To make **your** Maya (personality + Memory notes):
-
-1. Customize → Lookup → **Download Modelfile**
-2. Put that file in the project folder, then:
-
-```bash
-ollama create maya -f Modelfile
 OLLAMA_MODEL=maya npm run dev
 ```
 
-If Ollama is not running, she uses the built-in engine. She should never answer with only “parsing.”
+Windows without WSL: install Ollama from the site, then in the project folder run `ollama pull llama3.2` and `ollama create maya -f Modelfile`.
+
+If `http://127.0.0.1:11434` is up, she uses **maya**. If a world fact is missing, she looks it up (DuckDuckGo + Wikipedia) and answers again. Personal facts stay in Memory — she will not Google your life.
+
+To bake **your** notes into the model: Customize → Lookup → **Download Modelfile**, then `ollama create maya -f Modelfile`.
+
+If Ollama is not running, she falls back to the built-in engine so the app still opens. She should never answer with only “parsing.”
 
 ## How she works
 

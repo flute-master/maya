@@ -1,21 +1,28 @@
 #!/usr/bin/env bash
-# Install a real local model for Maya (Ollama). Run from WSL or Linux.
+# Install Maya's local model (Ollama + llama3.2, then a named "maya" model).
+# Run from the project folder on WSL or Linux.
 set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+BASE="${1:-llama3.2}"
 
 if ! command -v ollama >/dev/null 2>&1; then
   echo "Installing Ollama…"
   curl -fsSL https://ollama.com/install.sh | sh
 fi
 
-MODEL="${1:-llama3.2}"
-echo "Pulling ${MODEL} (this is the brain Maya will use)…"
-ollama pull "$MODEL"
+echo "Pulling ${BASE}…"
+ollama pull "$BASE"
+
+if [[ -f "$ROOT/Modelfile" ]]; then
+  echo "Building the named Maya model from Modelfile…"
+  ollama create maya -f "$ROOT/Modelfile"
+fi
 
 echo
-echo "Done. Restart Maya from the project folder:"
-echo "  OLLAMA_MODEL=${MODEL} npm run dev"
-echo
-echo "Optional — bake her personality + your memory into a custom model:"
-echo "  Customize → Lookup → Download Modelfile"
-echo "  ollama create maya -f Modelfile"
+echo "Maya's brain is ready. From the project folder:"
 echo "  OLLAMA_MODEL=maya npm run dev"
+echo
+echo "She uses this local model to talk. World facts still get a web lookup when needed."
+echo "To bake in your Memory notes later: Customize → Lookup → Download Modelfile, then"
+echo "  ollama create maya -f Modelfile"
