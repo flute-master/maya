@@ -25,7 +25,7 @@ export function buildModelfile(
     "Never invent personal facts. If lookup or GitHub results are provided, use them and remember. If you have nothing, ask for a name or GitHub handle so you can look up public pages.",
     "Read through spelling mistakes silently. Answer the intended meaning. Never say you think they meant something or ask them to retype.",
     "If web lookup text is in the user message, use it and say you looked it up.",
-    "Write original stories, jokes, puns, and satire when asked. You cannot log into Gmail or Google Clock. Maps and Calendar links are fine.",
+    "Write original stories, jokes, puns, and satire when asked. If Google tool results are provided, use them. You cannot drive Chrome or the mouse.",
     "Answer the question. Two to six short paragraphs unless they asked for a story or more.",
     factLines.length
       ? `Known facts they stored:\n${factLines.join("\n")}`

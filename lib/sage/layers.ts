@@ -39,8 +39,14 @@ export const SAGE_LAYERS: SageLayer[] = [
     note: "A website cannot take over your mouse. That would be a separate local agent with OS permissions.",
   },
   {
+    ability: "Google apps",
+    how: "OAuth to your account (Calendar, Gmail, Drive, Docs, Sheets, Tasks, Contacts). Optional service account for shared Drive/Calendar",
+    status: "partial",
+    note: "A service account cannot open personal Gmail. Connect Google in Customize → Lookup. Keep, Meet, and Photos are not these APIs. She still cannot drive Chrome.",
+  },
+  {
     ability: "Use skills",
-    how: "Tool loop: weather, maps, reminders, tasks, GitHub, files, Python, lookup",
+    how: "Tool loop: weather, maps, reminders, tasks, GitHub, files, Python, lookup, Google APIs",
     status: "live",
     note: "Sage core picks tools, then the model talks from the results.",
   },

@@ -366,7 +366,7 @@ function identityReply(personality: Personality, seed: string) {
       youName
         ? `I'll call you ${youName}. Change it in Customize if that isn't the bond you want.`
         : "Tell me what to call you. Master is the default for this bond.",
-      "If I need a fact from the world, I look it up live — weather, news, maps, and your public GitHub if I have a handle — and I say so. I write stories, jokes, puns, satire when you ask. Reminders and alarms live in this app; I’ll ping you here. I can run Python in a sandbox and keep files you drop here. I cannot log into Gmail, take over your mouse, or see a screenshot without you describing it.",
+      "If I need a fact from the world, I look it up live — weather, news, maps, and your public GitHub if I have a handle — and I say so. I write stories, jokes, puns, satire when you ask. Reminders and alarms live in this app; I’ll ping you here. If you connect Google in Customize, I can use Calendar, Gmail, Drive, Docs, Sheets, Tasks, and Contacts through Google's free APIs. A service account cannot open personal Gmail. Keep, Meet, and Photos are not these APIs. I cannot drive Chrome, take over your mouse, or see a screenshot without you describing it.",
       close(personality, seed),
     ].join("\n\n")
   }
@@ -388,7 +388,7 @@ function identityReply(personality: Personality, seed: string) {
     : "Tell me what to call you whenever you like — there's a place for that in Customize."
 
   const net =
-    "I talk from this machine. I look up weather and the web, write stories and jokes, set reminders in this app, drop Maps links, recall from local vectors, and run Python you allow. I don't log into your Google account or puppeteer Chrome."
+    "I talk from this machine. I look up weather and the web, write stories and jokes, set reminders in this app, drop Maps links, recall from local vectors, and run Python you allow. Connect Google in Customize and I can use Calendar, Gmail, Drive, Docs, Sheets, Tasks, and Contacts through the free APIs. I cannot puppeteer Chrome."
 
   return [intro, mix, flavor(personality), address, net, close(personality, seed)].join(
     "\n\n"
@@ -641,7 +641,11 @@ export function replyLocally(
       ? `\n\nYou also asked me to keep this in mind: ${personality.customInstructions.trim()}`
       : ""
 
-  const tools = extras?.toolResults?.filter((item) => item.detail || item.summary) ?? []
+  const googleTools =
+    extras?.toolResults?.filter((item) => item.name.startsWith("google_")) ?? []
+  const tools = (googleTools.length ? googleTools : extras?.toolResults ?? []).filter(
+    (item) => item.detail || item.summary
+  )
   if (tools.length && intent !== "identity") {
     const blocks = tools
       .map((item) => {

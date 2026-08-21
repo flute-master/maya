@@ -33,6 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { VoicePicker } from "@/components/voice-picker"
 import { SageLayers } from "@/components/sage-layers"
+import { GoogleConnect } from "@/components/google-connect"
 
 export function SettingsSheet({
   open,
@@ -721,6 +722,13 @@ export function SettingsSheet({
                   />
                 </div>
               </div>
+
+              <GoogleConnect
+                allowWrite={prefs.allowGoogleWrite === true}
+                onAllowWrite={(allowGoogleWrite) =>
+                  onPrefsChange({ ...prefs, allowGoogleWrite })
+                }
+              />
 
               <div className="flex items-start justify-between gap-3 rounded-xl bg-muted/60 p-3">
                 <div>

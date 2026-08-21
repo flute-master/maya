@@ -8,6 +8,13 @@ export type ToolName =
   | "files_read"
   | "files_write"
   | "observe"
+  | "google_calendar"
+  | "google_gmail"
+  | "google_drive"
+  | "google_docs"
+  | "google_sheets"
+  | "google_tasks"
+  | "google_people"
 
 export type ToolRisk = "none" | "net" | "write" | "code"
 
@@ -41,6 +48,7 @@ export type SageTrust = {
   allowSearch: boolean
   allowPython: boolean
   allowFileWrite: boolean
+  allowGoogleWrite: boolean
 }
 
 export type SageRun = {

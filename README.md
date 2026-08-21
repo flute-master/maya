@@ -66,10 +66,25 @@ Ask in chat, or use the paperclip / monitor / mic on the composer.
 - **Stories / jokes / puns** — ask
 - **Python** — `Run python: print(sum(range(10)))`. She asks first. Sandbox is `data/workspace`
 - **Files** — paperclip drops a file into that sandbox. Monitor saves a screen still (she cannot see pixels without a vision model)
+- **Google apps** — Customize → Lookup → Connect Google (free Cloud project + OAuth). Then `What's on my Google Calendar today?`, `unread email`, `search drive`, `open my google doc`, or `google sheets`. A **service account cannot open personal Gmail**; it only sees calendars and Drive files you share with its email. Keep, Meet, and Photos Library are not these APIs.
 
 Customize → Lookup lists what is live, partial, or not this app.
 
-She does **not** get Gmail, Calendar takeover, or your desktop mouse. That would be a different kind of program.
+She still cannot drive Chrome or take over your mouse.
+
+### Connect Google (free)
+
+1. Open [Google Cloud Console](https://console.cloud.google.com/), create a project (free).
+2. Enable **Calendar, Gmail, Drive, Tasks, People, Docs, Sheets**.
+3. **OAuth consent screen**: External, add your Gmail as a test user.
+4. **Credentials → Create OAuth client → Web application**. Authorized redirect URI:
+
+   `http://127.0.0.1:43217/api/google/callback`
+
+5. In Maya: Customize → Lookup. Paste client ID and secret → Save client → Connect Google.
+6. Optional: create a **service account**, download the JSON key, upload it in the same panel, then share a Drive folder or calendar with that `...@....iam.gserviceaccount.com` email.
+
+Tokens stay in `data/google-*.json` on this machine (gitignored).
 
 ---
 

@@ -19,6 +19,10 @@ const STARTERS = [
     text: "Run python: print(sum(range(10)))",
   },
   {
+    label: "Calendar",
+    text: "What's on my Google Calendar today?",
+  },
+  {
     label: "What can you do",
     text: "What can you actually do on this machine?",
   },

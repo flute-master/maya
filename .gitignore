@@ -53,5 +53,6 @@ __pycache__/
 /data/maya-vectors.json
 /data/workspace/**
 !/data/workspace/.gitkeep
+/data/google-*.json
 /public/maya.zip
 

@@ -76,6 +76,7 @@ export type Prefs = {
   useTrainedBrain: boolean
   allowPython: boolean
   allowFileWrite: boolean
+  allowGoogleWrite: boolean
 }
 
 export type Conversation = {
@@ -128,6 +129,7 @@ export type ChatRequestBody = {
   useTrained?: boolean
   allowPython?: boolean
   allowFileWrite?: boolean
+  allowGoogleWrite?: boolean
   approved?: Array<{ name: string; args?: Record<string, string> }>
 }
 

@@ -565,6 +565,7 @@ export function MayaApp() {
               useTrained: snapshot.prefs.useTrainedBrain !== false,
               allowPython: snapshot.prefs.allowPython === true,
               allowFileWrite: snapshot.prefs.allowFileWrite === true,
+              allowGoogleWrite: snapshot.prefs.allowGoogleWrite === true,
               approved,
             }),
           })

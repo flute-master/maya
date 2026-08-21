@@ -30,6 +30,7 @@ const DEFAULT_PREFS: Prefs = {
   useTrainedBrain: true,
   allowPython: false,
   allowFileWrite: false,
+  allowGoogleWrite: false,
 }
 
 /** Frozen first-paint vault so SSR HTML matches the client (no random IDs). */
@@ -186,6 +187,7 @@ function normalizePrefs(value: unknown, vaultVersion: number): Prefs {
     useTrainedBrain: prefs.useTrainedBrain !== false,
     allowPython: prefs.allowPython === true,
     allowFileWrite: prefs.allowFileWrite === true,
+    allowGoogleWrite: prefs.allowGoogleWrite === true,
   }
 }
 

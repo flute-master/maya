@@ -30,6 +30,24 @@ function asMessages(incoming: ChatRequestBody["messages"]): ChatMessage[] {
   }))
 }
 
+function headerSafe(value: string) {
+  return value.replace(/[^\u0000-\u00FF]/g, (ch) => {
+    const map: Record<string, string> = {
+      "→": "->",
+      "←": "<-",
+      "—": "-",
+      "–": "-",
+      "“": '"',
+      "”": '"',
+      "‘": "'",
+      "’": "'",
+      "…": "...",
+      "•": "*",
+    }
+    return map[ch] ?? "?"
+  })
+}
+
 function streamHeaders(input: {
   mode: string
   engine: string
@@ -46,15 +64,15 @@ function streamHeaders(input: {
   }
   const expose = ["X-Maya-Mode", "X-Maya-Engine"]
   if (input.learn?.length) {
-    headers["X-Maya-Learn"] = JSON.stringify(input.learn.slice(0, 8))
+    headers["X-Maya-Learn"] = headerSafe(JSON.stringify(input.learn.slice(0, 8)))
     expose.push("X-Maya-Learn")
   }
   if (input.tools) {
-    headers["X-Maya-Tools"] = JSON.stringify(input.tools)
+    headers["X-Maya-Tools"] = headerSafe(JSON.stringify(input.tools))
     expose.push("X-Maya-Tools")
   }
   if (input.confirm) {
-    headers["X-Maya-Confirm"] = JSON.stringify(input.confirm)
+    headers["X-Maya-Confirm"] = headerSafe(JSON.stringify(input.confirm))
     expose.push("X-Maya-Confirm")
   }
   headers["Access-Control-Expose-Headers"] = expose.join(", ")
@@ -131,6 +149,7 @@ export async function POST(request: Request) {
       allowSearch,
       allowPython: body.allowPython === true,
       allowFileWrite: body.allowFileWrite === true,
+      allowGoogleWrite: body.allowGoogleWrite === true,
     },
     approved: body.approved,
   })
@@ -154,9 +173,12 @@ export async function POST(request: Request) {
     })
   }
 
-  let lookup: Lookup = allowSearch
-    ? await lookupWeb(last.content, false, hometown, identity)
-    : { hits: [], searched: false, searchFailed: false }
+  const googleRan = sage.results.some((item) => item.name.startsWith("google_"))
+
+  let lookup: Lookup =
+    allowSearch && !googleRan
+      ? await lookupWeb(last.content, false, hometown, identity)
+      : { hits: [], searched: false, searchFailed: false }
 
   for (const result of sage.results) {
     if (result.ok && result.detail && (result.name === "weather" || result.name === "fetch_page")) {
@@ -173,9 +195,21 @@ export async function POST(request: Request) {
   const hits = hitsForModel(lookup)
   const toolContext = formatToolContext(sage)
   const toolHeavy = sage.results.some((item) =>
-    ["python", "files_read", "files_write", "files_list", "fetch_page", "observe"].includes(
-      item.name
-    )
+    [
+      "python",
+      "files_read",
+      "files_write",
+      "files_list",
+      "fetch_page",
+      "observe",
+      "google_calendar",
+      "google_gmail",
+      "google_drive",
+      "google_docs",
+      "google_sheets",
+      "google_tasks",
+      "google_people",
+    ].includes(item.name)
   )
   const localOnly =
     skipTinyNet(last.content) &&
@@ -200,7 +234,7 @@ export async function POST(request: Request) {
   }
 
   let ollamaText =
-    localOnly || trainedText
+    localOnly || trainedText || googleRan
       ? null
       : await replyWithOllama({
           messages: history,

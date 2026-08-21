@@ -182,5 +182,125 @@ export function planTools(
     })
   }
 
+  const wantsGmail =
+    /\b(gmail|inbox|unread (mail|email)|my e-?mails?|check (my )?(e-?mail|inbox)|send (an? )?(e-?mail|mail))\b/.test(
+      lower
+    )
+  if (wantsGmail) {
+    const sendTo = text.match(
+      /\bsend (?:an? )?(?:e-?mail|mail|gmail) to\s+(\S+@\S+)/i
+    )
+    const subject = text.match(/\bsubject\s*[:\-]\s*(.+)$/i)
+    add({
+      name: "google_gmail",
+      args: sendTo
+        ? {
+            action: "send",
+            to: sendTo[1].replace(/[>,]+$/g, ""),
+            subject: subject?.[1]?.trim() || "",
+            body: text,
+          }
+        : { action: "list", query: /unread/.test(lower) ? "is:unread" : "in:inbox" },
+      reason: sendTo
+        ? `Send Gmail to ${sendTo[1]}.`
+        : "Read Gmail on the connected account.",
+      risk: sendTo ? "write" : "none",
+    })
+  }
+
+  if (
+    /\b(google calendar|gcal|what(?:'s| is) on my calendar|my calendar|calendar today|schedule (a |an )?(meeting|event)|add (an? )?(event|meeting) to (my )?(google )?calendar)\b/.test(
+      lower
+    )
+  ) {
+    const create =
+      /\b(schedule|add (an? )?(event|meeting)|put .* on (my )?calendar|create (an? )?event)\b/.test(
+        lower
+      )
+    add({
+      name: "google_calendar",
+      args: create
+        ? { action: "create", title: text.replace(/^.*?:\s*/, "").slice(0, 180), query: text }
+        : { action: "list", query: text },
+      reason: create
+        ? "Create a Google Calendar event."
+        : "List Google Calendar events.",
+      risk: create ? "write" : "none",
+    })
+  }
+
+  if (
+    /\b(google drive|files in drive|search drive|what's on my drive|whats on my drive)\b/.test(
+      lower
+    )
+  ) {
+    const q = text
+      .replace(/.*\b(?:drive)\b[:\s]*/i, "")
+      .replace(/^(search|find|list)\s+/i, "")
+      .trim()
+    add({
+      name: "google_drive",
+      args: { action: "list", query: q.slice(0, 120) },
+      reason: "Search Google Drive.",
+      risk: "none",
+    })
+  }
+
+  if (
+    /\b(google docs?|open (the )?(google )?doc|read (the )?(google )?doc)\b/.test(
+      lower
+    )
+  ) {
+    const q = text
+      .replace(/.*\b(?:docs?|document)\b[:\s]*/i, "")
+      .replace(/^(search|find|open|read)\s+/i, "")
+      .trim()
+    add({
+      name: "google_docs",
+      args: { action: "read", query: q.slice(0, 120) },
+      reason: "Read a Google Doc.",
+      risk: "none",
+    })
+  }
+
+  if (/\b(google sheets?|spreadsheet)\b/.test(lower)) {
+    const q = text
+      .replace(/.*\b(?:sheets?|spreadsheet)\b[:\s]*/i, "")
+      .replace(/^(search|find|open|read)\s+/i, "")
+      .trim()
+    add({
+      name: "google_sheets",
+      args: { action: "read", query: q.slice(0, 120) },
+      reason: "Read a Google Sheet.",
+      risk: "none",
+    })
+  }
+
+  if (/\b(google tasks?|tasks? in google)\b/.test(lower)) {
+    const addTask = /\b(add|create|put)\b/.test(lower)
+    add({
+      name: "google_tasks",
+      args: addTask
+        ? { action: "add", title: text.replace(/^.*?:\s*/, "").slice(0, 180) }
+        : { action: "list" },
+      reason: addTask ? "Add a Google Task." : "List Google Tasks.",
+      risk: addTask ? "write" : "none",
+    })
+  }
+
+  if (
+    /\b(in my contacts|google contacts|look up .* in contacts)\b/.test(lower)
+  ) {
+    const who =
+      text.match(/\bcontacts?\s+(?:for|named)?\s*(.+)$/i)?.[1] ||
+      text.replace(/.*contacts\s*/i, "")
+    add({
+      name: "google_people",
+      args: { action: "search", query: who.trim().slice(0, 80) },
+      reason: "Search Google Contacts.",
+      risk: "none",
+    })
+  }
+
   return calls.slice(0, 5)
 }

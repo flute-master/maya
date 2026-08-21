@@ -19,6 +19,7 @@ import type {
   ToolCall,
   ToolResult,
 } from "@/lib/sage/types"
+import { runGoogleTool } from "@/lib/google/apps"
 import { indexDocuments, retrieve } from "@/lib/sage/vectors"
 
 function approved(call: ToolCall, granted: ToolApproval[]) {
@@ -26,6 +27,9 @@ function approved(call: ToolCall, granted: ToolApproval[]) {
 }
 
 function needsAsk(call: ToolCall, trust: SageTrust) {
+  if (call.name.startsWith("google_") && call.risk === "write") {
+    return !trust.allowGoogleWrite
+  }
   if (call.risk === "code") return !trust.allowPython
   if (call.risk === "write") return !trust.allowFileWrite
   if (call.risk === "net") return !trust.allowSearch
@@ -172,6 +176,15 @@ async function execute(
         detail: bits.join(" "),
       }
     }
+    if (call.name.startsWith("google_")) {
+      const ran = await runGoogleTool(call.name, call.args)
+      return {
+        name: call.name,
+        ok: ran.ok,
+        summary: ran.summary,
+        detail: ran.detail,
+      }
+    }
     return { name: call.name, ok: false, summary: "Unknown tool." }
   } catch (caught) {
     return {
@@ -250,6 +263,15 @@ export function confirmCopy(pending: PendingConfirm[]): string {
   }
   if (item.name === "files_write") {
     return `I can write \`${item.args.path || "a file"}\` inside data/workspace — not anywhere else on your disk. Allow once?`
+  }
+  if (item.name === "google_gmail") {
+    return `I can send this with the Google account you connected (not a service account). It goes to Gmail over Google's API. Allow once?\n\nTo: ${item.args.to || ""}\n${(item.args.subject || item.args.body || "").slice(0, 400)}`
+  }
+  if (item.name === "google_calendar") {
+    return `I can create this on your Google Calendar via the API. Allow once, or turn on always-allow Google writes in Customize → Lookup.\n\n${item.args.title || item.args.query || ""}`
+  }
+  if (item.name === "google_tasks") {
+    return `I can add this to Google Tasks. Allow once?\n\n${item.args.title || ""}`
   }
   return `${item.reason} Allow this once?`
 }
