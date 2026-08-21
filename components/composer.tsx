@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react"
 import { ArrowUp, Mic, Monitor, Paperclip, Square } from "lucide-react"
 
 import { Button, buttonVariants } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
 import { canListen, startListening, type ListenHandle } from "@/lib/listen"
 import { cn } from "@/lib/utils"
 
@@ -39,19 +38,25 @@ export function Composer({
   const [level, setLevel] = useState(0)
   const recRef = useRef<ListenHandle | null>(null)
   const committedRef = useRef("")
+  const boxRef = useRef<HTMLInputElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     return () => recRef.current?.abort()
   }, [])
 
+  function readBox() {
+    return (boxRef.current?.value ?? value).trim()
+  }
+
   function submit() {
-    const text = value.trim()
+    const text = readBox()
     if (!text || busy) return
     stopMic()
     onSend(text)
     setValue("")
     committedRef.current = ""
+    if (boxRef.current) boxRef.current.value = ""
   }
 
   function stopMic() {
@@ -74,12 +79,14 @@ export function Composer({
     }
     onStopSpeak()
     setListenHint(null)
-    committedRef.current = value.trim() ? `${value.trim()} ` : ""
+    committedRef.current = readBox() ? `${readBox()} ` : ""
     try {
       const rec = startListening({
         onUpdate: ({ transcript, interim }) => {
           if (transcript) committedRef.current += `${transcript} `
-          setValue(`${committedRef.current}${interim}`.replace(/\s+/g, " "))
+          const next = `${committedRef.current}${interim}`.replace(/\s+/g, " ")
+          setValue(next)
+          if (boxRef.current) boxRef.current.value = next
         },
         onEnd: () => {
           recRef.current = null
@@ -118,12 +125,14 @@ export function Composer({
   const helper = listening
     ? "Listening — speak, then tap the square or Send."
     : speakReplies
-      ? "She speaks each reply. Mic turns speech into text. Paperclip adds files."
-      : "Text only. Mic turns speech into text. Paperclip adds files."
+      ? "Enter sends. Shift is not needed. Mic, paperclip, and monitor sit beside the box."
+      : "Enter sends. Text only. Mic, paperclip, and monitor sit beside the box."
   const banner = error || listenHint
 
   return (
     <form
+      action="#"
+      method="dialog"
       className="relative z-10 mx-auto flex w-full max-w-2xl flex-col gap-1 bg-background px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2"
       onSubmit={(event) => {
         event.preventDefault()
@@ -217,21 +226,17 @@ export function Composer({
             <Monitor />
           </Button>
         ) : null}
-        <Textarea
+        <input
+          ref={boxRef}
+          type="text"
+          enterKeyHint="send"
+          autoComplete="off"
+          autoCorrect="on"
           value={value}
-          rows={1}
           onChange={(event) => setValue(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault()
-              submit()
-            }
-          }}
-          placeholder={
-            listening ? "Listening…" : `Message ${name}…`
-          }
+          placeholder={listening ? "Listening…" : `Message ${name}…`}
           aria-label={`Message ${name}`}
-          className="max-h-36 min-h-11 flex-1 resize-none rounded-2xl bg-card px-4 py-2.5 shadow-sm"
+          className="h-11 min-h-11 flex-1 rounded-2xl border border-input bg-card px-4 text-base shadow-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         />
         {busy ? (
           <Button
@@ -246,12 +251,10 @@ export function Composer({
           </Button>
         ) : (
           <Button
-            type="button"
+            type="submit"
             size="icon-lg"
-            disabled={!value.trim()}
             aria-label="Send"
             className="rounded-full"
-            onClick={submit}
           >
             <ArrowUp />
           </Button>

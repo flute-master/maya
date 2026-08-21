@@ -498,7 +498,7 @@ export function MayaApp() {
                 keepLearned(data.learn)
               }
             }
-            const { replyOnDevice } = await import("@/lib/on-device")
+            const { replyOnDevice } = await import("@/lib/device-runtime")
             const deviceText = await replyOnDevice({
               messages: nextMessages,
               personality,
@@ -629,7 +629,7 @@ export function MayaApp() {
   const loadDevice = useCallback(async () => {
     setDeviceHint("Preparing the on-device model…")
     try {
-      const { loadOnDeviceModel } = await import("@/lib/on-device")
+      const { loadOnDeviceModel } = await import("@/lib/device-runtime")
       const id = await loadOnDeviceModel(setDeviceHint)
       setDeviceId(id)
       setDeviceHint(
