@@ -13,6 +13,8 @@ import type {
   Energy,
   LearnedState,
   MemoryNote,
+  MindFact,
+  MindPlan,
   ReadingItem,
   Personality,
   Prefs,
@@ -47,6 +49,8 @@ export function SettingsSheet({
   learned,
   onResetLearned,
   notes,
+  facts,
+  plans,
   conversations,
   activeId,
   storedCount,
@@ -57,6 +61,8 @@ export function SettingsSheet({
   onImportFile,
   onAddNote,
   onRemoveNote,
+  onRemoveFact,
+  onRemovePlan,
   reading,
   onRemoveReading,
   onOpenConversation,
@@ -71,6 +77,8 @@ export function SettingsSheet({
   learned: LearnedState
   onResetLearned: () => void
   notes: MemoryNote[]
+  facts: MindFact[]
+  plans: MindPlan[]
   conversations: Conversation[]
   activeId: string
   storedCount: number
@@ -81,6 +89,8 @@ export function SettingsSheet({
   onImportFile: (file: File) => Promise<void>
   onAddNote: (text: string) => void
   onRemoveNote: (id: string) => void
+  onRemoveFact: (id: string) => void
+  onRemovePlan: (id: string) => void
   reading: ReadingItem[]
   onRemoveReading: (id: string) => void
   onOpenConversation: (id: string) => void
@@ -91,6 +101,7 @@ export function SettingsSheet({
   }
   const fileRef = useRef<HTMLInputElement>(null)
   const [noteDraft, setNoteDraft] = useState("")
+  const [memoryQuery, setMemoryQuery] = useState("")
   const [importError, setImportError] = useState<string | null>(null)
   const [lanUrls, setLanUrls] = useState<string[]>([])
   const [modelHint, setModelHint] = useState("Checking for a local model…")
@@ -300,6 +311,23 @@ export function SettingsSheet({
                   maxLength={40}
                 />
               </Field>
+
+              <div className="flex items-start justify-between gap-3 rounded-xl bg-card p-3 ring-1 ring-foreground/8">
+                <div>
+                  <p className="text-sm font-medium">Sage Mode</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Assessment first, then the answer. She will not invent a
+                    gap-filling fact to sound complete. Off = shorter, ordinary
+                    replies.
+                  </p>
+                </div>
+                <Switch
+                  checked={prefs.sageMode !== false}
+                  onCheckedChange={(sageMode) =>
+                    onPrefsChange({ ...prefs, sageMode })
+                  }
+                />
+              </div>
 
               <div>
                 <p className="mb-2 text-sm font-medium">The room</p>
@@ -651,6 +679,112 @@ export function SettingsSheet({
               <Separator />
 
               <div>
+                <p className="text-sm font-medium">Maya&apos;s memory</p>
+                <p className="mt-1 mb-2 text-xs text-muted-foreground">
+                  Preferences are settled. Mentions were said once. Confidence
+                  is not certainty. Forget deletes the row.
+                </p>
+                <Input
+                  value={memoryQuery}
+                  onChange={(event) => setMemoryQuery(event.target.value)}
+                  placeholder="Search memory"
+                  className="mb-3"
+                />
+                {(["preference", "fact", "goal", "mention"] as const).map(
+                  (kind) => {
+                    const needle = memoryQuery.trim().toLowerCase()
+                    const rows = facts.filter(
+                      (fact) =>
+                        fact.kind === kind &&
+                        (!needle || fact.text.toLowerCase().includes(needle))
+                    )
+                    if (!rows.length) return null
+                    const label =
+                      kind === "preference"
+                        ? "Preferences"
+                        : kind === "fact"
+                          ? "Facts"
+                          : kind === "goal"
+                            ? "Goals"
+                            : "Mentions"
+                    return (
+                      <div key={kind} className="mb-3">
+                        <p className="mb-1 text-xs font-medium text-muted-foreground">
+                          {label}
+                        </p>
+                        <ul className="flex flex-col gap-2">
+                          {rows.map((fact) => (
+                            <li
+                              key={fact.id}
+                              className="flex items-start justify-between gap-2 rounded-lg bg-card px-3 py-2 text-sm ring-1 ring-foreground/8"
+                            >
+                              <span className="min-w-0 flex-1 leading-6">
+                                {fact.text}
+                                <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                                  {Math.round(fact.confidence * 100)}% ·{" "}
+                                  {fact.source} · ×{fact.mentions}
+                                </span>
+                              </span>
+                              <Button
+                                type="button"
+                                size="icon-xs"
+                                variant="ghost"
+                                aria-label="Forget this fact"
+                                onClick={() => onRemoveFact(fact.id)}
+                              >
+                                <Trash2 />
+                              </Button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )
+                  }
+                )}
+                {!facts.length ? (
+                  <p className="text-sm text-muted-foreground">
+                    No structured facts yet. Tell her something on purpose, or
+                    save a note above.
+                  </p>
+                ) : null}
+              </div>
+
+              {plans.length ? (
+                <div>
+                  <p className="text-sm font-medium">Plans</p>
+                  <ul className="mt-2 flex flex-col gap-2">
+                    {plans.map((plan) => {
+                      const done = plan.steps.filter((step) => step.done).length
+                      return (
+                        <li
+                          key={plan.id}
+                          className="flex items-start justify-between gap-2 rounded-lg bg-card px-3 py-2 text-sm ring-1 ring-foreground/8"
+                        >
+                          <span className="min-w-0 flex-1 leading-6">
+                            {plan.goal}
+                            <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                              {done}/{plan.steps.length} steps
+                            </span>
+                          </span>
+                          <Button
+                            type="button"
+                            size="icon-xs"
+                            variant="ghost"
+                            aria-label="Drop this plan"
+                            onClick={() => onRemovePlan(plan.id)}
+                          >
+                            <Trash2 />
+                          </Button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              ) : null}
+
+              <Separator />
+
+              <div>
                 <p className="text-sm font-medium">Otaku shelf</p>
                 <p className="mt-1 mb-2 text-xs text-muted-foreground">
                   Manga, novels, and anime she is holding for you. Say “I&apos;m
@@ -742,6 +876,50 @@ export function SettingsSheet({
             className="min-h-0 overflow-y-auto px-4 py-4"
           >
             <div className="flex flex-col gap-5">
+              <div className="rounded-xl bg-card p-3 ring-1 ring-foreground/8">
+                <p className="text-sm font-medium">Maya permissions</p>
+                <p className="mt-1 mb-3 text-xs text-muted-foreground">
+                  Powerful tools stay gated. She may suggest. She may not
+                  assume.
+                </p>
+                <ul className="flex flex-col gap-2 text-sm">
+                  <li className="flex justify-between gap-3">
+                    <span>Internet</span>
+                    <span className="text-muted-foreground">
+                      {prefs.allowSearch ? "Allowed" : "Ask every time"}
+                    </span>
+                  </li>
+                  <li className="flex justify-between gap-3">
+                    <span>Files</span>
+                    <span className="text-muted-foreground">
+                      Read always · writes {prefs.allowFileWrite ? "allowed" : "ask first"}
+                    </span>
+                  </li>
+                  <li className="flex justify-between gap-3">
+                    <span>Python</span>
+                    <span className="text-muted-foreground">
+                      {prefs.allowPython ? "Always allow" : "Ask before execution"}
+                    </span>
+                  </li>
+                  <li className="flex justify-between gap-3">
+                    <span>Google</span>
+                    <span className="text-muted-foreground">
+                      {prefs.allowGoogleWrite ? "Writes allowed" : "Read first; writes ask"}
+                    </span>
+                  </li>
+                  <li className="flex justify-between gap-3">
+                    <span>Screen</span>
+                    <span className="text-muted-foreground">
+                      Ask every time · stills only, no vision model
+                    </span>
+                  </li>
+                  <li className="flex justify-between gap-3">
+                    <span>Shell</span>
+                    <span className="text-muted-foreground">Disabled</span>
+                  </li>
+                </ul>
+              </div>
+
               <div className="rounded-xl bg-card p-3 ring-1 ring-foreground/8">
                 <p className="text-sm font-medium">Body around the model</p>
                 <p className="mt-1 text-sm text-muted-foreground">

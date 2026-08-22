@@ -119,6 +119,25 @@ export function parsePlan(text: string, now = Date.now()): ParsedPlan | null {
   const kind: "reminder" | "alarm" = wantsAlarm ? "alarm" : "reminder"
   const fallback = kind === "alarm" ? "Alarm" : "Reminder"
   const tomorrow = /\btomorrow\b/.test(lower)
+  const morning = /\b(tomorrow morning|in the morning|this morning)\b/.test(lower)
+
+  if (morning && !/\bat\s+\d/.test(lower)) {
+    const label = tidyLabel(
+      t
+        .replace(
+          /^(remind me|set a reminder|set reminder|set an? alarm|wake me)\s+/i,
+          ""
+        )
+        .replace(/\b(tomorrow morning|in the morning|this morning)\b/i, "")
+        .replace(/^(to|that|about)\s+/i, ""),
+      fallback
+    )
+    return {
+      kind,
+      at: clockAt(9, 0, "am", tomorrow || /\btomorrow morning\b/.test(lower), new Date(now)),
+      label,
+    }
+  }
 
   const rel = t.match(
     /\bin\s+(\d+)\s*(seconds?|secs?|minutes?|mins?|hours?|hrs?|hr|days?)\b(?:\s+(?:to|that)\s+(.+))?/i

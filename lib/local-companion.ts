@@ -7,6 +7,7 @@ import type {
 } from "@/lib/types"
 import { isSage } from "@/lib/bonds"
 import { prefersBrief } from "@/lib/adapt"
+import { renderRemember, renderSage } from "@/lib/mind"
 import { creativeKind, creativeTopic } from "@/lib/skills"
 import { creativeReply } from "@/lib/creative"
 import { relevantMemories } from "@/lib/recall"
@@ -160,13 +161,16 @@ function rememberReply(
   memory: MemoryContext | undefined,
   seed: string
 ) {
+  if (memory?.mindFacts?.length || memory?.facts?.length) {
+    return renderRemember(memory.mindFacts ?? [], memory.notes ?? [])
+  }
   const notes = memory?.notes ?? []
   const prior = memory?.priorUserLines ?? []
   const past = memory?.pastTitles ?? []
   if (!notes.length && !prior.length && !past.length) {
     return named(
       personality,
-      `Not yet {name} — this thread is still thin. Keep talking. I keep it on this machine by myself.`
+      `I do not actually know much about you yet, {name}. A mention in passing is not a fact. Keep talking — I keep it on this machine.`
     )
   }
 
@@ -759,14 +763,7 @@ export function replyLocally(
       body = identityReply(personality, seed, text) + mixNote
       break
     case "remember":
-      body = isSage(personality)
-        ? named(
-            personality,
-            (memory?.notes.length || memory?.priorUserLines.length
-              ? `I still have this, {name}. I don't reset.\n\n${[...(memory?.notes ?? []).slice(0, 5), ...(memory?.priorUserLines ?? []).slice(-2)].map((line) => `• ${line}`).join("\n")}\n\nTell me if anything's gone stale.`
-              : `I don't have much on you yet, {name}. Keep talking — I'll keep it.`)
-          )
-        : rememberReply(personality, memory, seed)
+      body = rememberReply(personality, memory, seed)
       break
     case "customize":
       body = isSage(personality)
@@ -848,5 +845,13 @@ export function replyLocally(
   if (prefersBrief(extras?.learned)) {
     combined = combined.split(/\n\n/).slice(0, 2).join("\n\n")
   }
+  const sageWrap =
+    memory?.sageMode !== false &&
+    isSage(personality) &&
+    intent !== "greeting" &&
+    intent !== "thanks" &&
+    intent !== "goodbye" &&
+    intent !== "remember"
+  if (sageWrap) return renderSage(combined)
   return combined
 }

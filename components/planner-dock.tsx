@@ -3,23 +3,29 @@
 import { Bell, Check, ListTodo, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { formatPlanLine } from "@/lib/mind"
 import { formatWhen, googleCalendarUrl } from "@/lib/reminders"
-import type { Reminder, TaskItem } from "@/lib/types"
+import type { MindPlan, Reminder, TaskItem } from "@/lib/types"
 
 export function PlannerDock({
   reminders,
   tasks,
+  plans,
   onDismissReminder,
   onToggleTask,
 }: {
   reminders: Reminder[]
   tasks: TaskItem[]
+  plans?: MindPlan[]
   onDismissReminder: (id: string) => void
   onToggleTask: (id: string) => void
 }) {
   const openReminders = reminders.filter((item) => !item.done).slice(0, 4)
   const openTasks = tasks.filter((item) => !item.done).slice(0, 4)
-  if (!openReminders.length && !openTasks.length) return null
+  const openPlans = (plans ?? [])
+    .filter((plan) => plan.steps.some((step) => !step.done))
+    .slice(0, 2)
+  if (!openReminders.length && !openTasks.length && !openPlans.length) return null
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-1.5 px-4 pb-1">
@@ -55,6 +61,22 @@ export function PlannerDock({
             >
               <X />
             </Button>
+          </div>
+        )
+      })}
+      {openPlans.map((plan) => {
+        const next = plan.steps.find((step) => !step.done)
+        return (
+          <div
+            key={plan.id}
+            className="flex items-center gap-2 rounded-xl bg-card px-3 py-2 text-sm shadow-sm ring-1 ring-foreground/5"
+          >
+            <ListTodo className="size-3.5 shrink-0 text-primary" />
+            <p className="min-w-0 flex-1 truncate">
+              <span className="text-muted-foreground">Plan · </span>
+              {formatPlanLine(plan)}
+              {next ? ` — next: ${next.text}` : ""}
+            </p>
           </div>
         )
       })}

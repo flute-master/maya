@@ -63,6 +63,12 @@ Ask in chat, or use the paperclip / monitor / mic on the composer.
 
 - **Talk** — text, mic (Chrome/Edge), spoken replies on by default
 - **Remember** — notes and chats on this machine (`data/maya-memory.json`). Refresh does not wipe her. **New** archives a thread; it does not erase memory
+- **Mind** — facts with a confidence score (preference vs mention vs “I do not actually know”). `What do you remember about me?` / `forget that I live in Hyderabad`. Search or delete rows in Customize → Memory
+- **Sage Mode** — assessment first, then the answer. Toggle under Customize → Presence. She will not invent a gap-filling fact
+- **Analysis Chamber** — `Analyze whether I should buy this laptop`. Structured objective / evidence / gaps / WAIT. She will not fabricate a BUY
+- **Plans** — `Plan my weekend`, then `continue the plan`. Open plans show in the dock and under Memory
+- **Permissions** — Customize → Lookup lists Internet / Files / Python / Google / Screen / Shell. Python and file writes ask first. Screen stills are stored; she cannot see pixels without a vision model
+- **Today** — `What am I supposed to do today?` lists stored reminders, tasks, and the next plan step. Reminders understand `tomorrow morning`
 - **Look up** — DuckDuckGo, Wikipedia, public GitHub. If search fails she gives you a Google link. She does not drive Chrome
 - **Weather** — `weather in Hyderabad` (live from wttr.in)
 - **News** — `what's the news`, `news in Hyderabad`, `national news`, `world news`, or `news about elections`. Live headlines from Google News RSS (BBC / The Hindu if Google is quiet). Local if she knows your city or you name one. She does not invent stories.
@@ -71,7 +77,7 @@ Ask in chat, or use the paperclip / monitor / mic on the composer.
 - **Reminders** — `remind me in 10 minutes to drink water`. They fire in this tab, not the phone Clock app
 - **Stories / jokes / puns** — ask
 - **Python** — `Run python: print(sum(range(10)))`. She asks first. Sandbox is `data/workspace`
-- **Files** — paperclip drops a file into that sandbox. Monitor saves a screen still (she cannot see pixels without a vision model)
+- **Files** — paperclip drops a file into that sandbox. Monitor saves a screen still (she cannot see pixels without a vision model). Vision is permission-based and not faked
 - **Google apps** — Customize → Lookup → Connect Google (free Cloud project + OAuth). Then `What's on my Google Calendar today?`, `unread email`, `search drive`, `open my google doc`, or `google sheets`. A **service account cannot open personal Gmail**; it only sees calendars and Drive files you share with its email. Keep, Meet, and Photos Library are not these APIs.
 - **Flute** — `Teach me flute`, `kinds of flute`, `notes for Twinkle`, or paperclip a short clip and say `notes for this clip`. Teaching tunes and ragas (Bhupali, Yaman, Bhairav) get sargam + fingerings. She will not dump a full copyrighted film score.
 

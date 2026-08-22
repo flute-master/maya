@@ -27,6 +27,30 @@ export const SAGE_LAYERS: SageLayer[] = [
     note: "No hosted vector DB. Local JSON vectors on this machine.",
   },
   {
+    ability: "Mind",
+    how: "Facts with confidence, mentions vs preferences, Analysis Chamber, plans you can continue",
+    status: "live",
+    note: "A mention is not a fact. If she does not have it, she says she does not know. Forget that… actually drops the row. Customize → Memory to search or delete.",
+  },
+  {
+    ability: "Analysis Chamber",
+    how: "Structured assess → evidence → gaps → WAIT/BUY/REJECT. No invented prices",
+    status: "live",
+    note: "Ask “analyze whether I should buy this laptop” or “should I learn Kubernetes”. She will not fabricate a BUY.",
+  },
+  {
+    ability: "Plans",
+    how: "Goal + steps in the vault. “Continue the plan” marks the next step done",
+    status: "live",
+    note: "She does not book flights or invent hotel names. Open plans show under Customize → Memory.",
+  },
+  {
+    ability: "Permissions",
+    how: "Internet, files, Python, Google writes, and screen stills each have a gate",
+    status: "live",
+    note: "Python and file writes ask first unless you always-allow. Screen capture is the browser prompt every time. She does not run a vision model on those pixels.",
+  },
+  {
     ability: "Analyze information",
     how: "DuckDuckGo, Wikipedia, GitHub, fetch a URL, retrieve from memory",
     status: "live",
@@ -90,7 +114,7 @@ export const SAGE_LAYERS: SageLayer[] = [
     ability: "Learn your workflows",
     how: "Notes, conversation digest, style stats, vector recall",
     status: "partial",
-    note: "She remembers facts and threads. She does not yet replay a full recorded workflow.",
+    note: "She stores preferences, facts, mentions, and goals with a confidence score. She does not replay a full recorded workflow.",
   },
   {
     ability: "Execute tasks",

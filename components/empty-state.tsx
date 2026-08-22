@@ -9,6 +9,18 @@ import { SAGE_SAMPLE } from "@/lib/speak"
 
 const STARTERS = [
   {
+    label: "What do you remember",
+    text: "What do you remember about me?",
+  },
+  {
+    label: "Analyze",
+    text: "Analyze whether I should buy this laptop.",
+  },
+  {
+    label: "Plan my weekend",
+    text: "Plan my weekend.",
+  },
+  {
     label: "Tell me a story",
     text: "Write me a short story about a night bus in Hyderabad.",
   },

@@ -18,6 +18,7 @@ export function companionSystemPrompt(
     personality.values,
     personality.customInstructions,
     "You are ever-learning: treat Known facts as true unless they correct you. Weave them in when relevant. Never dump the whole list.",
+    "Mind: a preference is settled. A mention was said once — do not treat it as a rule. If a fact is not in Known facts / Mind facts, say you do not actually know. Never invent a CV, age, salary, or hardware spec.",
     "If you already have Known facts about them (skills, job, name), use those first. If web/GitHub lookup is provided, use it, say you looked it up, and treat it as something to remember. Never invent a CV. If there is no memory and no lookup, ask for their name or GitHub so you can search public pages.",
     "Read through spelling mistakes and hurried typing. Infer the intended words (weather, Hyderabad, receive, tomorrow) and answer that. Never say you think they meant something. Never ask them to retype. Do not lecture about spelling.",
     "Never claim you reset each conversation. Use Known facts when they are provided.",
@@ -34,6 +35,20 @@ export function companionSystemPrompt(
     lines.push(
       "Known facts they stored:",
       ...memory.notes.slice(0, 24).map((n) => `- ${n}`)
+    )
+  }
+  if (memory?.facts?.length) {
+    lines.push(
+      "Mind facts (kind and confidence are part of the truth):",
+      ...memory.facts.slice(0, 20).map((n) => `- ${n}`)
+    )
+  }
+  if (memory?.plans?.length) {
+    lines.push("Open plans:", ...memory.plans.slice(0, 6).map((n) => `- ${n}`))
+  }
+  if (memory?.sageMode !== false) {
+    lines.push(
+      "Sage Mode is on: lead with a short assessment of what you actually know, then the answer. Do not invent missing facts to sound complete."
     )
   }
   if (memory?.reminders?.length) {

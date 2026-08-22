@@ -3,6 +3,7 @@ import { SAGE_DEFAULTS } from "@/lib/bonds"
 import { DEFAULT_PERSONALITY } from "@/lib/personality"
 import { newId } from "@/lib/id"
 import { DEFAULT_ATMOSPHERE, isAtmosphere } from "@/lib/atmosphere"
+import { isMindFact, isMindPlan } from "@/lib/mind"
 import { DEFAULT_VOICE_ID } from "@/lib/voices"
 import type {
   ChatMessage,
@@ -13,6 +14,8 @@ import type {
   MemoryVault,
   Personality,
   Prefs,
+  MindFact,
+  MindPlan,
   ReadingItem,
   Reminder,
   TaskItem,
@@ -35,6 +38,7 @@ const DEFAULT_PREFS: Prefs = {
   allowFileWrite: false,
   allowGoogleWrite: false,
   atmosphere: DEFAULT_ATMOSPHERE,
+  sageMode: true,
 }
 
 /** Frozen first-paint vault so SSR HTML matches the client (no random IDs). */
@@ -71,6 +75,8 @@ export function bootVault(): MemoryVault {
     reminders: [],
     tasks: [],
     reading: [],
+    facts: [],
+    plans: [],
   }
 }
 
@@ -87,6 +93,8 @@ export function emptyVault(): MemoryVault {
     reminders: [],
     tasks: [],
     reading: [],
+    facts: [],
+    plans: [],
   }
 }
 
@@ -197,6 +205,7 @@ function normalizePrefs(value: unknown, vaultVersion: number): Prefs {
     atmosphere: isAtmosphere(prefs.atmosphere)
       ? prefs.atmosphere
       : DEFAULT_ATMOSPHERE,
+    sageMode: prefs.sageMode !== false,
   }
 }
 
@@ -240,6 +249,8 @@ export function normalizeVault(value: unknown): MemoryVault | null {
     reading: Array.isArray(raw.reading)
       ? raw.reading.filter(isReadingItem)
       : [],
+    facts: Array.isArray(raw.facts) ? raw.facts.filter(isMindFact) : [],
+    plans: Array.isArray(raw.plans) ? raw.plans.filter(isMindPlan) : [],
   }
 }
 
@@ -275,6 +286,8 @@ function migrateLegacyVault(): MemoryVault | null {
     reminders: [],
     tasks: [],
     reading: [],
+    facts: [],
+    plans: [],
   }
 }
 
@@ -417,6 +430,8 @@ export function toExport(vault: MemoryVault): MayaExport {
     reminders: vault.reminders,
     tasks: vault.tasks,
     reading: vault.reading,
+    facts: vault.facts,
+    plans: vault.plans,
   }
 }
 
@@ -521,6 +536,28 @@ export function removeTask(vault: MemoryVault, id: string): MemoryVault {
     ...vault,
     tasks: vault.tasks.filter((item) => item.id !== id),
   }
+}
+
+export function replaceFacts(vault: MemoryVault, facts: MindFact[]): MemoryVault {
+  return { ...vault, facts: facts.slice(0, 80) }
+}
+
+export function upsertPlan(vault: MemoryVault, plan: MindPlan): MemoryVault {
+  return {
+    ...vault,
+    plans: [plan, ...(vault.plans ?? []).filter((item) => item.id !== plan.id)].slice(
+      0,
+      12
+    ),
+  }
+}
+
+export function removeFact(vault: MemoryVault, id: string): MemoryVault {
+  return { ...vault, facts: (vault.facts ?? []).filter((item) => item.id !== id) }
+}
+
+export function removePlan(vault: MemoryVault, id: string): MemoryVault {
+  return { ...vault, plans: (vault.plans ?? []).filter((item) => item.id !== id) }
 }
 
 export function upsertReadingItem(

@@ -24,6 +24,7 @@ export function ChatThread({
   messages,
   companionName,
   isThinking,
+  ticks,
   error,
   onRetry,
   onSpeak,
@@ -35,6 +36,7 @@ export function ChatThread({
   messages: ChatMessage[]
   companionName: string
   isThinking: boolean
+  ticks?: string[]
   error: string | null
   onRetry: () => void
   onSpeak?: (text: string, messageId: string) => void
@@ -184,6 +186,13 @@ export function ChatThread({
           <p className="px-1 text-[11px] text-muted-foreground/80">
             {companionName} is answering
           </p>
+          {ticks?.length ? (
+            <ul className="px-1 text-[11px] text-muted-foreground/80">
+              {ticks.map((tick) => (
+                <li key={tick}>◉ {tick}</li>
+              ))}
+            </ul>
+          ) : null}
         </article>
       ) : null}
 

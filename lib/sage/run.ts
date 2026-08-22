@@ -33,6 +33,7 @@ import { runFluteTool } from "@/lib/flute"
 import { runGoogleTool } from "@/lib/google/apps"
 import { googleStatus } from "@/lib/google/auth"
 import { indexDocuments, retrieve } from "@/lib/sage/vectors"
+import { mindAsk, runMind } from "@/lib/mind"
 
 function approved(call: ToolCall, granted: ToolApproval[]) {
   return granted.some((item) => item.name === call.name)
@@ -235,6 +236,29 @@ async function execute(
         ok: ran.ok,
         summary: ran.ok ? "Python finished." : "Python failed or timed out.",
         detail: body || "(no output)",
+      }
+    }
+    if (call.name === "mind") {
+      const ran = await runMind({
+        ask: mindAsk(call.args.query || ""),
+        facts: input.memory?.mindFacts ?? [],
+        notes: input.memory?.notes ?? [],
+        reminders: input.memory?.reminders ?? [],
+        tasks: input.memory?.tasks ?? [],
+        plans: input.memory?.mindPlans ?? [],
+      })
+      return {
+        name: "mind",
+        ok: true,
+        summary:
+          ran.plan
+            ? `Plan: ${ran.plan.goal}`
+            : ran.removed?.length
+              ? `Forgot ${ran.removed.length} fact${ran.removed.length === 1 ? "" : "s"}.`
+              : "Mind.",
+        detail: ran.text,
+        facts: ran.facts,
+        plan: ran.plan,
       }
     }
     if (call.name === "observe") {

@@ -1,4 +1,5 @@
 import { newId } from "@/lib/id"
+import { formatFactLine, formatPlanLine } from "@/lib/mind"
 import { formatShelfLine } from "@/lib/otaku"
 import { intendedMeaning } from "@/lib/typos"
 import type {
@@ -153,7 +154,24 @@ export function buildMemoryContext(
     .slice(0, 20)
     .map((item) => formatShelfLine(item))
 
-  return { notes, pastTitles, priorUserLines, reminders, tasks, reading }
+  const mindFacts = vault.facts ?? []
+  const mindPlans = vault.plans ?? []
+  const facts = mindFacts.slice(0, 24).map((fact) => formatFactLine(fact))
+  const plans = mindPlans.slice(0, 8).map((plan) => formatPlanLine(plan))
+
+  return {
+    notes,
+    pastTitles,
+    priorUserLines,
+    reminders,
+    tasks,
+    reading,
+    facts,
+    plans,
+    sageMode: vault.prefs.sageMode !== false,
+    mindFacts,
+    mindPlans,
+  }
 }
 
 export function formatMemoryForPrompt(memory: MemoryContext): string {
@@ -175,6 +193,15 @@ export function formatMemoryForPrompt(memory: MemoryContext): string {
       "Otaku shelf (manga / novels / anime they asked you to remember):",
       ...memory.reading.slice(0, 16).map((line) => `- ${line}`)
     )
+  }
+  if (memory.facts?.length) {
+    blocks.push(
+      "Mind facts. A preference is settled. A mention was said once. If it is not here, you do not actually know it:",
+      ...memory.facts.slice(0, 20).map((line) => `- ${line}`)
+    )
+  }
+  if (memory.plans?.length) {
+    blocks.push("Open plans:", ...memory.plans.slice(0, 6).map((line) => `- ${line}`))
   }
   if (memory.priorUserLines.length) {
     blocks.push(

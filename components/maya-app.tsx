@@ -24,6 +24,12 @@ import { isSage } from "@/lib/bonds"
 import { newId } from "@/lib/id"
 import { describePresence } from "@/lib/personality"
 import {
+  factsFromUtterance,
+  PRESENCE_LABEL,
+  upsertFact,
+  type Presence,
+} from "@/lib/mind"
+import {
   buildMemoryContext,
   extractFacts,
   mergeFacts,
@@ -63,10 +69,14 @@ import {
   patchReminder,
   patchTask,
   removeConversation,
+  removeFact,
   removeNote,
+  removePlan,
   removeReadingItem,
+  replaceFacts,
   saveVault,
   startFreshConversation,
+  upsertPlan,
   upsertReadingItem,
   upsertReminder,
   upsertTask,
@@ -96,6 +106,9 @@ export function MayaApp() {
   const [deviceId, setDeviceId] = useState<string | null>(null)
   const [follow, setFollow] = useState<FollowAlong | null>(null)
   const [voiceStatus, setVoiceStatus] = useState<string | null>(null)
+  const [presence, setPresence] = useState<Presence>("idle")
+  const [ticks, setTicks] = useState<string[]>([])
+  const [wakeNote, setWakeNote] = useState<string | null>(null)
   const [deviceSave, setDeviceSave] = useState<"saving" | "saved" | "error">(
     "saved"
   )
@@ -218,6 +231,7 @@ export function MayaApp() {
     }
     setFollow(null)
     setVoiceStatus(null)
+    setPresence("idle")
   }, [])
 
   const playVoice = useCallback(
@@ -250,10 +264,12 @@ export function MayaApp() {
           )
           restoreSample(audio)
           setVoiceStatus(null)
+          setPresence("idle")
         }
         try {
           const result = await speakInto(audio, text, sage)
           if (result === "playing" || result === "ready") {
+            setPresence(result === "playing" ? "speaking" : "idle")
             setVoiceStatus(
               result === "ready"
                 ? "Her line is loaded. Press play on Maya's voice."
@@ -273,16 +289,20 @@ export function MayaApp() {
         nameHints: chosen.nameHints,
         sage,
         onBoundary: (charIndex) => setFollow({ messageId, charIndex }),
-        onEnd: () =>
+        onEnd: () => {
           setFollow((current) =>
             current?.messageId === messageId ? null : current
-          ),
+          )
+          setPresence("idle")
+        },
       })
       if (started) {
+        setPresence("speaking")
         setVoiceStatus("Using this computer's speech engine.")
         return
       }
       setFollow(null)
+      setPresence("idle")
       setVoiceStatus("Press play on Maya's voice. Live speech did not start.")
     },
     [sage, vault.prefs.spokenVoiceURI, personality.voiceId]
@@ -332,6 +352,50 @@ export function MayaApp() {
     }
   }, [vault.reminders, fireReminder])
 
+  useEffect(() => {
+    const key = "maya:sleep-at"
+    const onHide = () => {
+      try {
+        sessionStorage.setItem(key, String(Date.now()))
+      } catch {
+        /* ignore */
+      }
+    }
+    const onShow = () => {
+      try {
+        const left = Number(sessionStorage.getItem(key) || "0")
+        sessionStorage.removeItem(key)
+        if (!left || Date.now() - left < 45_000) return
+        const current = vaultRef.current
+        const due = (current.reminders ?? []).filter(
+          (item) => !item.done && item.at <= Date.now()
+        ).length
+        const openPlans = (current.plans ?? []).filter((plan) =>
+          plan.steps.some((step) => !step.done)
+        ).length
+        const bits = [
+          due ? `${due} reminder${due === 1 ? "" : "s"} became due` : "",
+          openPlans
+            ? `${openPlans} planned task${openPlans === 1 ? "" : "s"} still open`
+            : "",
+        ].filter(Boolean)
+        setWakeNote(
+          bits.length
+            ? `While you were away: ${bits.join("; ")}. Nothing else was accessed.`
+            : "Welcome back. Nothing ran in the background."
+        )
+      } catch {
+        /* ignore */
+      }
+    }
+    const onVis = () => {
+      if (document.hidden) onHide()
+      else onShow()
+    }
+    document.addEventListener("visibilitychange", onVis)
+    return () => document.removeEventListener("visibilitychange", onVis)
+  }, [])
+
   const setMessages = useCallback(
     (updater: ChatMessage[] | ((current: ChatMessage[]) => ChatMessage[])) => {
       setVault((current) => {
@@ -378,6 +442,8 @@ export function MayaApp() {
       retryRef.current = trimmed
       setError(null)
       setIsSending(true)
+      setPresence("thinking")
+      setTicks(["Understanding request", "Checking memory"])
       if (isMapsQuery(trimmed)) {
         try {
           mapsWinRef.current = window.open("about:blank", "maya-maps")
@@ -418,6 +484,7 @@ export function MayaApp() {
       }
 
       const facts = isRedo ? [] : extractFacts(trimmed)
+      const spokenFacts = isRedo ? [] : factsFromUtterance(trimmed)
       const learned = isRedo
         ? snapshot.learned
         : updateLearned(snapshot.learned, trimmed)
@@ -427,6 +494,10 @@ export function MayaApp() {
           ...nextMessages,
           assistantMessage,
         ])
+        let nextFacts = withMessages.facts ?? []
+        for (const fact of spokenFacts) {
+          nextFacts = upsertFact(nextFacts, fact)
+        }
         return {
           ...withMessages,
           notes: upsertDigest(mergeFacts(withMessages.notes, facts), [
@@ -434,6 +505,7 @@ export function MayaApp() {
             assistantMessage,
           ]),
           learned,
+          facts: nextFacts,
         }
       })
 
@@ -503,7 +575,10 @@ export function MayaApp() {
             }
           })
           if (snapshot.prefs.speakReplies !== false) {
+            setPresence("speaking")
             playVoice(reply, assistantMessage.id)
+          } else {
+            setPresence("idle")
           }
           return
         }
@@ -615,6 +690,11 @@ export function MayaApp() {
         }
 
         if (!acc) {
+          setTicks((current) =>
+            current.includes("Preparing answer")
+              ? current
+              : [...current, "Preparing answer"]
+          )
           const response = await fetch("/api/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -662,6 +742,30 @@ export function MayaApp() {
             /* ignore bad learn payload */
           }
           try {
+            const packed = response.headers.get("X-Maya-Facts")
+            if (packed) {
+              const items = JSON.parse(packed) as Array<
+                import("@/lib/mind").MindFact
+              >
+              if (Array.isArray(items)) {
+                setVault((current) => replaceFacts(current, items))
+              }
+            }
+          } catch {
+            /* ignore bad facts payload */
+          }
+          try {
+            const packed = response.headers.get("X-Maya-Plan")
+            if (packed) {
+              const plan = JSON.parse(packed) as import("@/lib/mind").MindPlan
+              if (plan?.id && plan.goal && Array.isArray(plan.steps)) {
+                setVault((current) => upsertPlan(current, plan))
+              }
+            }
+          } catch {
+            /* ignore bad plan payload */
+          }
+          try {
             const packed = response.headers.get("X-Maya-Reading")
             if (packed) {
               const items = JSON.parse(packed) as Array<
@@ -686,6 +790,22 @@ export function MayaApp() {
             const packed = response.headers.get("X-Maya-Tools")
             if (packed) {
               tools = JSON.parse(packed) as ChatMessage["tools"]
+              const names = (tools ?? []).map((item) => item.name)
+              if (names.some((name) => ["lookup", "weather", "news", "maps", "otaku", "fetch_page"].includes(name))) {
+                setPresence("searching")
+                setTicks((current) =>
+                  current.includes("Searching web")
+                    ? current
+                    : [...current, "Searching web"]
+                )
+              } else if (names.some((name) => name !== "recall" && name !== "mind")) {
+                setPresence("executing")
+                setTicks((current) =>
+                  current.includes("Using a tool")
+                    ? current
+                    : [...current, "Using a tool"]
+                )
+              }
             }
           } catch {
             /* ignore */
@@ -751,6 +871,7 @@ export function MayaApp() {
           latest.filter((message) => message.id !== assistantMessage.id)
         )
         if ((caught as Error).name === "AbortError") return
+        setPresence("error")
         setError(
           caught instanceof Error
             ? caught.message
@@ -760,6 +881,10 @@ export function MayaApp() {
         if (gen === sendGen.current) {
           sendingLock.current = false
           setIsSending(false)
+          setTicks([])
+          setPresence((current) =>
+            current === "speaking" || current === "error" ? current : "idle"
+          )
         }
       }
     },
@@ -966,6 +1091,9 @@ export function MayaApp() {
                           ? "On-device"
                           : "On this machine"}
             </Badge>
+            <Badge variant="secondary" className="hidden sm:inline-flex">
+              {PRESENCE_LABEL[presence]}
+            </Badge>
           </div>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
             {describePresence(personality)}
@@ -1052,6 +1180,7 @@ export function MayaApp() {
             messages={messages}
             companionName={personality.name}
             isThinking={isSending && !messages.at(-1)?.content}
+            ticks={ticks}
             error={error}
             follow={follow}
             onSpeak={playVoice}
@@ -1119,9 +1248,23 @@ export function MayaApp() {
 
       <VoiceDock audioRef={liveRef} status={voiceStatus} />
 
+      {wakeNote ? (
+        <p className="mx-auto max-w-2xl px-4 pb-1 text-center text-xs text-muted-foreground">
+          {wakeNote}{" "}
+          <button
+            type="button"
+            className="underline-offset-2 hover:underline"
+            onClick={() => setWakeNote(null)}
+          >
+            Dismiss
+          </button>
+        </p>
+      ) : null}
+
       <PlannerDock
         reminders={vault.reminders ?? []}
         tasks={vault.tasks ?? []}
+        plans={vault.plans ?? []}
         onDismissReminder={(id) =>
           setVault((current) => patchReminder(current, id, { done: true }))
         }
@@ -1174,6 +1317,8 @@ export function MayaApp() {
           setVault((current) => ({ ...current, learned: { ...DEFAULT_LEARNED } }))
         }
         notes={vault.notes}
+        facts={vault.facts ?? []}
+        plans={vault.plans ?? []}
         reading={vault.reading ?? []}
         conversations={vault.conversations}
         activeId={vault.activeId}
@@ -1183,8 +1328,31 @@ export function MayaApp() {
         onLoadDevice={() => void loadDevice()}
         onExport={() => downloadVault(vault)}
         onImportFile={importMemory}
-        onAddNote={(text) => setVault((current) => addNote(current, text))}
+        onAddNote={(text) =>
+          setVault((current) => {
+            const withNote = addNote(current, text)
+            const extra = factsFromUtterance(text)
+            let nextFacts = withNote.facts ?? []
+            if (extra.length) {
+              for (const fact of extra) {
+                nextFacts = upsertFact(nextFacts, { ...fact, source: "user", confidence: 0.9 })
+              }
+            } else if (text.trim().length > 6) {
+              nextFacts = upsertFact(nextFacts, {
+                text: text.trim().slice(0, 140),
+                kind: "fact",
+                confidence: 0.9,
+                source: "user",
+                lastConfirmed: Date.now(),
+                mentions: 1,
+              })
+            }
+            return replaceFacts(withNote, nextFacts)
+          })
+        }
         onRemoveNote={(id) => setVault((current) => removeNote(current, id))}
+        onRemoveFact={(id) => setVault((current) => removeFact(current, id))}
+        onRemovePlan={(id) => setVault((current) => removePlan(current, id))}
         onRemoveReading={(id) =>
           setVault((current) => removeReadingItem(current, id))
         }

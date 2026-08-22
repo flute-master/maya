@@ -1,5 +1,6 @@
 import { calcExpr, isCalcQuery } from "@/lib/calc"
 import { isFluteQuery } from "@/lib/flute"
+import { isMindQuery } from "@/lib/mind"
 import { isMusicQuery, musicQuery } from "@/lib/music"
 import { extractHttpUrl } from "@/lib/search"
 import { isNewsQuery, newsAsk } from "@/lib/news"
@@ -380,6 +381,15 @@ export function planTools(
             ? "Check AniList for official updates on the shelf."
             : "Official manga, novel, and episode links. Remember the shelf.",
       risk: ask.action === "guide" || ask.action === "list" ? "none" : "net",
+    })
+  }
+
+  if (isMindQuery(text)) {
+    add({
+      name: "mind",
+      args: { query: text.slice(0, 400) },
+      reason: "Mind: facts, plans, or Analysis Chamber.",
+      risk: "none",
     })
   }
 

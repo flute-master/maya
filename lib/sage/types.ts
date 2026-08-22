@@ -21,6 +21,7 @@ export type ToolName =
   | "google_sheets"
   | "google_tasks"
   | "google_people"
+  | "mind"
 
 export type ToolRisk = "none" | "net" | "write" | "code"
 
@@ -38,6 +39,8 @@ export type ToolResult = {
   detail?: string
   url?: string
   reading?: import("@/lib/otaku").ReadingItem[]
+  facts?: import("@/lib/mind").MindFact[]
+  plan?: import("@/lib/mind").MindPlan
 }
 
 export type PendingConfirm = {

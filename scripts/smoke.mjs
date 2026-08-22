@@ -63,6 +63,8 @@ async function chat(text, extra = {}) {
     engine: headers.get("x-maya-engine"),
     tools: headers.get("x-maya-tools"),
     confirm: headers.get("x-maya-confirm"),
+    facts: headers.get("x-maya-facts"),
+    plan: headers.get("x-maya-plan"),
     ms: Date.now() - started,
   }
 }
@@ -429,6 +431,138 @@ async function main() {
     writeAsk.status === 200 &&
       Boolean(writeAsk.confirm && has(writeAsk.confirm, "files_write")),
     writeAsk.body.slice(0, 180).replace(/\s+/g, " ")
+  )
+
+  const hyderabadFact = {
+    id: "f-hyd",
+    text: "I live in Hyderabad",
+    kind: "fact",
+    confidence: 0.88,
+    source: "conversation",
+    lastConfirmed: Date.now(),
+    mentions: 2,
+  }
+  const mindMemory = {
+    notes: ["I live in Hyderabad"],
+    pastTitles: [],
+    priorUserLines: [],
+    reminders: ["reminder: Continue Kubernetes course at Sat 9:00 AM"],
+    tasks: ["Finish Maya vision module"],
+    reading: [],
+    facts: ["fact (88%): I live in Hyderabad"],
+    plans: [],
+    sageMode: true,
+    mindFacts: [hyderabadFact],
+    mindPlans: [],
+  }
+
+  const rememberMe = await chat("What do you remember about me?", {
+    memory: mindMemory,
+  })
+  ok(
+    "remember uses mind",
+    rememberMe.status === 200 && has(rememberMe.tools || "", "mind"),
+    rememberMe.tools || rememberMe.body.slice(0, 120)
+  )
+  ok(
+    "remember distinguishes stored facts",
+    rememberMe.status === 200 &&
+      has(rememberMe.body, "Hyderabad") &&
+      (has(rememberMe.body, "88%") || has(rememberMe.body, "confidence")),
+    rememberMe.body.slice(0, 220).replace(/\s+/g, " ")
+  )
+
+  const forgetHyd = await chat("forget that I live in Hyderabad", {
+    memory: mindMemory,
+  })
+  ok(
+    "forget drops the matching fact",
+    forgetHyd.status === 200 &&
+      has(forgetHyd.body, "Forgotten") &&
+      has(forgetHyd.body, "Hyderabad") &&
+      (forgetHyd.facts === "[]" || has(forgetHyd.facts || "", "[]")),
+    forgetHyd.body.slice(0, 180).replace(/\s+/g, " ")
+  )
+
+  const unknownMe = await chat("What do you remember about me?", {
+    memory: {
+      notes: [],
+      pastTitles: [],
+      priorUserLines: [],
+      reminders: [],
+      tasks: [],
+      reading: [],
+      facts: [],
+      plans: [],
+      sageMode: true,
+      mindFacts: [],
+      mindPlans: [],
+    },
+  })
+  ok(
+    "remember admits not knowing",
+    unknownMe.status === 200 && has(unknownMe.body, "do not actually know"),
+    unknownMe.body.slice(0, 180).replace(/\s+/g, " ")
+  )
+
+  const chamber = await chat("Analyze whether I should buy this laptop")
+  ok(
+    "analysis chamber waits",
+    chamber.status === 200 &&
+      has(chamber.body, "ANALYSIS CHAMBER") &&
+      has(chamber.body, "WAIT") &&
+      !/Verdict[\s\S]{0,40}BUY/.test(chamber.body),
+    chamber.body.slice(0, 240).replace(/\s+/g, " ")
+  )
+
+  const weekend = await chat("Plan my weekend")
+  ok(
+    "plan my weekend",
+    weekend.status === 200 &&
+      has(weekend.body, "GOAL") &&
+      has(weekend.body, "TASKS") &&
+      has(weekend.tools || "", "mind"),
+    weekend.body.slice(0, 200).replace(/\s+/g, " ")
+  )
+
+  const openPlan = {
+    id: "p-week",
+    goal: "weekend",
+    steps: [
+      { id: "s1", text: "State the goal in one sentence", done: false },
+      { id: "s2", text: "List what is already true", done: false },
+    ],
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  }
+  const continued = await chat("continue the plan", {
+    memory: { ...mindMemory, mindPlans: [openPlan], plans: ["weekend — 0/2 steps"] },
+  })
+  ok(
+    "continue the plan marks a step",
+    continued.status === 200 &&
+      (has(continued.body, "Marked done") || has(continued.body, "1 / 2") || has(continued.body, "1/2")),
+    continued.body.slice(0, 200).replace(/\s+/g, " ")
+  )
+
+  const today = await chat("What am I supposed to do today?", {
+    memory: mindMemory,
+  })
+  ok(
+    "today lists stored work",
+    today.status === 200 &&
+      has(today.body, "Kubernetes") &&
+      has(today.body, "vision"),
+    today.body.slice(0, 200).replace(/\s+/g, " ")
+  )
+
+  const skills = await chat("What skills do you have?")
+  ok(
+    "skills lists the registry",
+    skills.status === 200 &&
+      has(skills.body, "Weather") &&
+      has(skills.body, "Mind"),
+    skills.body.slice(0, 200).replace(/\s+/g, " ")
   )
 
   const speakEmpty = await req("/api/speak", {

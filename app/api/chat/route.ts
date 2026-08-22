@@ -58,6 +58,8 @@ function streamHeaders(input: {
   maps?: string
   music?: string
   reading?: string
+  facts?: string
+  plan?: string
 }) {
   const headers: Record<string, string> = {
     "Content-Type": "text/plain; charset=utf-8",
@@ -90,6 +92,14 @@ function streamHeaders(input: {
   if (input.reading) {
     headers["X-Maya-Reading"] = headerSafe(input.reading)
     expose.push("X-Maya-Reading")
+  }
+  if (input.facts) {
+    headers["X-Maya-Facts"] = headerSafe(input.facts)
+    expose.push("X-Maya-Facts")
+  }
+  if (input.plan) {
+    headers["X-Maya-Plan"] = headerSafe(input.plan)
+    expose.push("X-Maya-Plan")
   }
   headers["Access-Control-Expose-Headers"] = expose.join(", ")
   return headers
@@ -213,6 +223,11 @@ export async function POST(request: Request) {
     (item) =>
       `Reading ${item.kind}: ${item.title}${item.progress ? ` at ${item.progress}` : ""}`
   )
+  const mindHit = sage.results.find((item) => item.name === "mind")
+  const factsHeader = mindHit?.facts
+    ? JSON.stringify(mindHit.facts.slice(0, 24))
+    : undefined
+  const planHeader = mindHit?.plan ? JSON.stringify(mindHit.plan) : undefined
 
   if (sage.pending.length) {
     return new Response(localStream(confirmCopy(sage.pending)), {
@@ -224,6 +239,8 @@ export async function POST(request: Request) {
         maps: mapsUrl,
         music: musicHeader,
         reading: readingHeader,
+        facts: factsHeader,
+        plan: planHeader,
       }),
     })
   }
@@ -276,6 +293,7 @@ export async function POST(request: Request) {
       "music",
       "otaku",
       "flute",
+      "mind",
       "google_calendar",
       "google_gmail",
       "google_drive",
@@ -373,6 +391,8 @@ export async function POST(request: Request) {
       maps: mapsUrl,
       music: musicHeader,
       reading: readingHeader,
+      facts: factsHeader,
+      plan: planHeader,
     }),
   })
 }

@@ -1,7 +1,8 @@
 import type { AtmosphereId } from "@/lib/atmosphere"
+import type { MindFact, MindPlan } from "@/lib/mind"
 import type { ReadingItem } from "@/lib/otaku"
 
-export type { ReadingItem }
+export type { ReadingItem, MindFact, MindPlan }
 
 export type Role = "user" | "assistant"
 
@@ -83,6 +84,7 @@ export type Prefs = {
   allowFileWrite: boolean
   allowGoogleWrite: boolean
   atmosphere: AtmosphereId
+  sageMode: boolean
 }
 
 export type Conversation = {
@@ -110,6 +112,8 @@ export type MemoryVault = {
   reminders: Reminder[]
   tasks: TaskItem[]
   reading: ReadingItem[]
+  facts: MindFact[]
+  plans: MindPlan[]
 }
 
 export type MemoryContext = {
@@ -119,6 +123,11 @@ export type MemoryContext = {
   reminders: string[]
   tasks: string[]
   reading: string[]
+  facts: string[]
+  plans: string[]
+  sageMode: boolean
+  mindFacts?: MindFact[]
+  mindPlans?: MindPlan[]
 }
 
 export type SearchHit = {
@@ -155,4 +164,6 @@ export type MayaExport = {
   reminders?: Reminder[]
   tasks?: TaskItem[]
   reading?: ReadingItem[]
+  facts?: MindFact[]
+  plans?: MindPlan[]
 }
