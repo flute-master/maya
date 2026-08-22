@@ -195,12 +195,12 @@ npm run brain:use`}</code>
           </li>
         </ul>
         <p className="mt-6 text-sm text-muted-foreground">
-          Feature list (maps, Google, flute, …):{" "}
+          Feature list and the words that turn each tool on:{" "}
           <a
             className="underline underline-offset-2"
-            href="https://github.com/flute-master/maya/blob/main/README.md"
+            href="https://github.com/flute-master/maya/blob/main/README.md#keyword-triggers"
           >
-            README
+            README · Keyword triggers
           </a>
           . Those pages assume the brain is already loaded.
         </p>

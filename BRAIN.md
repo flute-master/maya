@@ -173,6 +173,6 @@ iPhone Safari usually cannot (no WebGPU). Use the laptop URL instead.
 - Not a paid OpenAI / Gemini key
 - Not something you zip and upload to GitHub (the weights stay in Ollama’s store)
 - Not a cloud sync of memory
-- Not a substitute for the feature guide — [README.md](./README.md) is how to *use the app* after this brain is loaded
+- Not a substitute for the feature guide — [README.md](./README.md) is how to *use the app* after this brain is loaded. Trigger words: [Keyword triggers](./README.md#keyword-triggers).
 
 The download lives in Ollama’s library on **this computer**. Another machine needs its own `npm run brain`.

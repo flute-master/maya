@@ -13,21 +13,22 @@ This is **not** Raphael / Great Sage from *That Time I Got Reincarnated as a Sli
 1. [Run it](#run-it)
 2. [How to read the screen](#how-to-read-the-screen)
 3. [First ten minutes](#first-ten-minutes)
-4. [Permissions](#permissions)
-5. [Customize](#customize)
-6. [Talk, listen, and voice](#talk-listen-and-voice)
-7. [Memory, Mind, and plans](#memory-mind-and-plans)
-8. [Calculator, maps, weather, news, music](#calculator-maps-weather-news-music)
-9. [Files, Python, and screen stills](#files-python-and-screen-stills)
-10. [Knowledge vault](#knowledge-vault)
-11. [Otaku shelf and flute](#otaku-shelf-and-flute)
-12. [Google apps](#google-apps)
-13. [Load the brain, then use it](#load-the-brain-then-use-it)
-14. [System, doctor, backup](#system-doctor-backup)
-15. [What works offline](#what-works-offline)
-16. [Phone](#phone)
-17. [GitHub](#github)
-18. [What this is not](#what-this-is-not)
+4. [Keyword triggers](#keyword-triggers)
+5. [Permissions](#permissions)
+6. [Customize](#customize)
+7. [Talk, listen, and voice](#talk-listen-and-voice)
+8. [Memory, Mind, and plans](#memory-mind-and-plans)
+9. [Calculator, maps, weather, news, music](#calculator-maps-weather-news-music)
+10. [Files, Python, and screen stills](#files-python-and-screen-stills)
+11. [Knowledge vault](#knowledge-vault)
+12. [Otaku shelf and flute](#otaku-shelf-and-flute)
+13. [Google apps](#google-apps)
+14. [Load the brain, then use it](#load-the-brain-then-use-it)
+15. [System, doctor, backup](#system-doctor-backup)
+16. [What works offline](#what-works-offline)
+17. [Phone](#phone)
+18. [GitHub](#github)
+19. [What this is not](#what-this-is-not)
 
 ---
 
@@ -131,6 +132,44 @@ When she needs a powerful tool, a message shows **Allow once**. That is Maya Cor
 Typos are fine: `weathere in hyderbad` is weather in Hyderabad.
 
 Refresh does not wipe her. **New chat** starts a fresh thread. Old threads stay under Customize → Memory.
+
+Which words turn on maps, music, weather, and the rest: [Keyword triggers](#keyword-triggers). Ordinary chat does not.
+
+---
+
+## Keyword triggers
+
+Ordinary chat uses the local **maya** model. A mention of a place, song, metro, anime, or the weather is **not** an order.
+
+Tools run only when the line clearly asks. Typos still count (`wafa` → way to, `ply` → play, `weathere` → weather).
+
+| Feature | Say these (or close) | Does **not** fire on |
+| --- | --- | --- |
+| **Talk** (default) | Anything else. Jokes, opinions, “I feel stuck”, cricket, “who are you to me” | — |
+| **New chat** | `refresh` · `reload` · `clear` · `clear the screen` · `new chat` · `start over` · `reset chat` | The header loop button is the same idea. Memory stays. |
+| **Maps** | `take me to` · `take us to` · `way to` · `ways to` · `directions to` · `navigate to` · `how to get` · `how to reach` · `how do I get` · `route to` · `drive me to` · `drop me at` · `get me to` · `let’s go to` · `I want to go to` · `path to` · `uber me to` · `open maps` · `google maps` · `map of` · `show the map` · `where is … located` | `I took the metro` · `Miyapur Metro is crowded` · a place name alone |
+| **Music / YouTube** | Line starts with `play` · `song` · `music` · `gaana` · `youtube` · or contains `play …` · `put on` · `listen to` · `sunaao` / `suna do` · `open youtube` | `I love that song` · naming a track in a story |
+| **Weather** | `weather in` / `for` / `at` · `what’s the weather` · `forecast` · `how hot is it` · `will it rain` · `is it raining` · `temperature in` · `aqi` / `air quality` · bare `weather` | `the weather was awful yesterday` |
+| **News** | `what’s the news` · `headlines` · `news today` · `local news` · `national news` · `world news` · `news in` / `about` / `from` | `I have good news` · chatting about a story you already heard |
+| **Calculator** | `calculate` · `compute` · `15% of 240` · `7 * 8` · `open calculator` | The word “calculator” in passing |
+| **Web lookup** | `look this up` · `look up` · `search the web` · `search for` · `google this` · `browse` · `find out about` · `check the web` | A bare question mark · `what is love` · `why did the chicken cross the road` |
+| **Memory / Mind** | `what do you remember` · `search your memory` · `forget that I …` · `plan my` · `continue the plan` · `analyze whether` · `what am I supposed to do today` · `what did you access today` · `remind me` · `set a reminder` · `set an alarm` · `add a task` · `mark … done` | `good morning` (that is just a greeting) |
+| **Jokes / stories** | `tell me a joke` · `write a story` · `make me laugh` · `another joke` · `another one` after a joke | `I heard a joke` |
+| **Files** | `list your files` · `what’s in your files` · `read hello.txt` · `write` / `save` / `put` `as note.txt` | The word “workspace” in passing |
+| **Python** | `run python:` · `execute python` · `python sandbox` · a ` ```python ` block | A math sum (that is the calculator) |
+| **Screen still** | Monitor button, or `look at my screen` · `observe the screen` · `screenshot` · `what do you see` | She still cannot see pixels without a vision model |
+| **Flute** | `teach me flute` · `flute lesson` · `kinds of flute` · `notes for` · `sargam for` · `how to play flute` · `riyaz` | `I saw a flute in a shop` |
+| **Otaku shelf** | `where can I read` / `watch` · `legal manga` · `official anime links` · `mihon` · `tachiyomi` · `what am I reading` · `my shelf` · `any updates on my manga` · `I’m reading … chapter 12` | `I watched anime last night` |
+| **Gmail** | `gmail` · `inbox` · `unread email` · `check my email` · `send an email to name@x.com` | Talking about email in general without those words |
+| **Calendar** | `google calendar` · `gcal` · `what’s on my calendar` · `my calendar` · `calendar today` · `schedule a meeting` · `add an event` | A calendar invite you only mention |
+| **Drive** | `google drive` · `search drive` · `files in drive` · `what’s on my drive` | — |
+| **Docs / Sheets** | `google doc` · `read the google doc` · `google sheets` · `spreadsheet` | — |
+| **Tasks** | `google tasks` · `tasks in google` · `add` / `create` a Google task | The in-app task list uses `add a task` / `mark … done` instead |
+| **Contacts** | `google contacts` · `in my contacts` · `look up … in contacts` | — |
+
+Header buttons still work without a phrase: calculator, YouTube / music, new chat, Customize.
+
+Internet switch off (Customize → Lookup): network tools ask first. Gmail **send** always asks. Python and file writes ask first unless you turned on always-allow.
 
 ---
 
@@ -272,7 +311,7 @@ Remind me tomorrow morning to call home.
 
 ## Calculator, maps, weather, news, music
 
-These need the **internet** switch on (default), except the calculator.
+These need the **internet** switch on (default), except the calculator. Exact trigger words: [Keyword triggers](#keyword-triggers).
 
 ### Calculator
 
