@@ -84,9 +84,9 @@ She still cannot drive Chrome or take over your mouse.
    `http://127.0.0.1:43217/api/google/callback`
 
 5. In Maya: Customize → Lookup. Paste client ID and secret → Save client → Connect Google.
-6. Optional: create a **service account**, download the JSON key, upload it in the same panel, then share a Drive folder or calendar with that `...@....iam.gserviceaccount.com` email.
+6. Optional: create a **service account**, download the JSON key, upload it in the same panel (or copy it to `data/google-service-account.json`), then share a Drive folder or calendar with that `...@....iam.gserviceaccount.com` email. `google-service-account.example.json` shows the file shape. **Never commit a live private key.**
 
-Tokens stay in `data/google-*.json` on this machine (gitignored).
+Tokens stay in `data/google-*.json` on this machine (gitignored). A service account cannot open personal Gmail — Connect Google with OAuth for inbox and Contacts. If a tool says an API is disabled, enable it on the Cloud project.
 
 ---
 
