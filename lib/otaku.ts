@@ -57,12 +57,13 @@ export function isOtakuQuery(text: string): boolean {
 
 export function otakuAsk(text: string): OtakuAsk {
   const lower = text.toLowerCase()
-  if (
+  const wantsGuide =
     /\b(tachiyomi|mihon|komga|kavita|extension repos?|manga repos?)\b/.test(lower) ||
     /\bhow (do|to) (i )?(read manga|use (a )?manga app)\b/.test(lower)
-  ) {
-    return { action: "guide", query: text }
-  }
+  const titleGuess = extractTitle(text)
+  const hasTitle =
+    titleGuess.length >= 2 &&
+    !/^(otaku|anime|manga|manhwa|novel|links?)$/i.test(titleGuess)
   if (
     /\b(any updates|new (chapter|episode|ch|ep)|what(?:'s| is) new)\b/.test(lower) ||
     /\bupdates on (my )?(manga|anime|novels?|reading|shelf)\b/.test(lower)
@@ -77,9 +78,13 @@ export function otakuAsk(text: string): OtakuAsk {
     return { action: "list", query: text }
   }
 
+  if (wantsGuide && !hasTitle) {
+    return { action: "guide", query: text }
+  }
+
   const kind = inferKind(lower)
   const progressNum = parseProgress(text)
-  const title = extractTitle(text)
+  const title = titleGuess
   const tracking =
     /\b(i('?m| am) (reading|watching)|add |put |track |started |finished |caught up|on chapter|on episode|ch\.?\s*\d+|ep\.?\s*\d+)\b/.test(
       lower
@@ -121,6 +126,8 @@ function extractTitle(text: string): string {
     )
     .replace(/\b(on )?(chapter|ch\.?|episode|ep\.?)\s*\d+\b/gi, " ")
     .replace(/\b(legally|official|links?|please)\b/gi, " ")
+    .replace(/\b(also explain|vs\.? tachiyomi|vs\.? mihon)\b[\s\S]*$/i, " ")
+    .replace(/\band watch\b[\s\S]*$/i, " ")
     .replace(/[?.!]+$/g, "")
     .replace(/\s+/g, " ")
     .trim()

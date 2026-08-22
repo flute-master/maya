@@ -22,7 +22,11 @@ const STARTERS = [
   },
   {
     label: "Manga / anime",
-    text: "I'm an otaku. Where can I read Frieren and watch the anime legally? Also explain Mihon vs Tachiyomi.",
+    text: "Where can I read Frieren and watch the anime legally?",
+  },
+  {
+    label: "Mihon",
+    text: "Tachiyomi or Mihon — how do I read manga on my phone?",
   },
   {
     label: "Run Python",

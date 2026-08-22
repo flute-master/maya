@@ -42,7 +42,7 @@ export function VoiceDock({
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pb-2">
-      <div className="rounded-2xl bg-neutral-100 px-3 py-2.5 text-neutral-900 ring-1 ring-black/10">
+      <div className="rounded-2xl bg-card px-3 py-2.5 text-foreground ring-1 ring-foreground/10">
         <p className="mb-1.5 text-xs font-medium tracking-wide">
           Maya&apos;s voice — press play
         </p>
@@ -58,7 +58,7 @@ export function VoiceDock({
             void recover(event.currentTarget)
           }}
         />
-        <p className="mt-1.5 text-[11px] leading-4 text-neutral-600">
+        <p className="mt-1.5 text-[11px] leading-4 text-muted-foreground">
           {status ||
             (clipMissing
               ? "Sample clip is missing on this machine. Spoken replies still use this browser’s voice."

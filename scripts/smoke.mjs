@@ -307,6 +307,17 @@ async function main() {
     mihon.body.slice(0, 240).replace(/\s+/g, " ")
   )
 
+  const otakuMix = await chat(
+    "I'm an otaku. Where can I read Frieren and watch the anime legally? Also explain Mihon vs Tachiyomi."
+  )
+  ok(
+    "otaku mixed ask still finds Frieren",
+    otakuMix.status === 200 &&
+      has(otakuMix.body, "Frieren") &&
+      (has(otakuMix.body, "AniList") || has(otakuMix.body, "anilist")),
+    otakuMix.body.slice(0, 200).replace(/\s+/g, " ")
+  )
+
   const maps = await chat("directions to Charminar")
   ok("maps 200", maps.status === 200)
   ok(
