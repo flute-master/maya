@@ -212,7 +212,7 @@ Brain name, skill count, permission table, doctor checks, recent access log. The
 
 ## Talk, listen, and voice
 
-**Type** in the box. Enter sends.
+**Type** in the box. Enter sends. Type `refresh` (or `clear` / `new chat`) to wipe the current thread. Memory stays.
 
 **Speak:** tap the microphone, allow the site, talk, tap the square or Send. Chrome or Edge. Firefox is weaker here.
 
@@ -282,11 +282,12 @@ Local. No Python confirm.
 
 ```
 Take me to Charminar
+Way to Miyapur Metro
 Directions to Charminar
 Take me there
 ```
 
-She returns a **Google Maps link**. She does not drive Chrome or log into Google for maps. Click the Maps mark under her reply, or the link.
+She **opens Google Maps in a new tab** as soon as she recognizes a place. Typo `Wafa Miyapur Metro` is treated as `way to Miyapur Metro`. She does not drive Chrome or log into Google for maps. If a popup is blocked, use the Maps mark under her reply.
 
 ### Weather
 

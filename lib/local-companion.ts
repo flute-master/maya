@@ -728,7 +728,7 @@ export function replyLocally(
   if (creative) {
     const piece = creativeReply(
       creative,
-      jokeAgain ? "another try" : creativeTopic(text),
+      jokeAgain ? "" : creativeTopic(text),
       `${seed}|again|${messages.length}`
     )
     return `${hindiOpen}${piece}`.trim()
