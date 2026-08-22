@@ -63,7 +63,9 @@ export function otakuAsk(text: string): OtakuAsk {
   const titleGuess = extractTitle(text)
   const hasTitle =
     titleGuess.length >= 2 &&
-    !/^(otaku|anime|manga|manhwa|novel|links?)$/i.test(titleGuess)
+    !/^(otaku|anime|manga|manhwa|novel|links?|tachiyomi|mihon|repository)$/i.test(
+      titleGuess
+    )
   if (
     /\b(any updates|new (chapter|episode|ch|ep)|what(?:'s| is) new)\b/.test(lower) ||
     /\bupdates on (my )?(manga|anime|novels?|reading|shelf)\b/.test(lower)
@@ -127,6 +129,7 @@ function extractTitle(text: string): string {
     .replace(/\b(on )?(chapter|ch\.?|episode|ep\.?)\s*\d+\b/gi, " ")
     .replace(/\b(legally|official|links?|please)\b/gi, " ")
     .replace(/\b(also explain|vs\.? tachiyomi|vs\.? mihon)\b[\s\S]*$/i, " ")
+    .replace(/\b(tachiyomi|mihon|komga|kavita|extension repos?|repos?itor(y|ies)|repos?)\b/gi, " ")
     .replace(/\band watch\b[\s\S]*$/i, " ")
     .replace(/[?.!]+$/g, "")
     .replace(/\s+/g, " ")
