@@ -18,6 +18,7 @@ test("refresh clears the screen command", () => {
   assert.equal(isClearScreenCommand("refresh"), true)
   assert.equal(isClearScreenCommand("Clear the screen"), true)
   assert.equal(isClearScreenCommand("new chat"), true)
+  assert.equal(intendedMeaning("new chat").toLowerCase(), "new chat")
   assert.equal(isClearScreenCommand("weather in Hyderabad"), false)
 })
 
@@ -33,6 +34,30 @@ test("wafa typo becomes way to", () => {
   assert.equal(isMapsQuery(meaning), true)
   const dest = mapsQuery(meaning)
   assert.ok(dest && /miyapur/i.test(dest))
+})
+
+test("hurried typos keep the intended skill", () => {
+  assert.equal(intendedMeaning("another onw").toLowerCase(), "another one")
+  assert.equal(intendedMeaning("Tell me a joke]").toLowerCase(), "tell me a joke")
+  assert.equal(intendedMeaning("weathere in hyderbad").toLowerCase(), "weather in hyderabad")
+  assert.equal(intendedMeaning("You are uo").toLowerCase(), "you are up")
+  assert.equal(intendedMeaning("refesh").toLowerCase(), "refresh")
+  assert.equal(intendedMeaning("ply tum hi ho").toLowerCase(), "play tum hi ho")
+  assert.equal(isClearScreenCommand("refesh"), true)
+  assert.equal(isMapsQuery("wfa miyapr metro"), true)
+  assert.match(mapsQuery("wfa miyapr metro") || "", /miyapur/i)
+  assert.equal(isMusicQuery("ply kesariya"), true)
+})
+
+test("joke follow-ups survive typos", () => {
+  const history = [
+    { role: "user", content: "Tell me a joke]" },
+    { role: "assistant", content: "A joke." },
+  ]
+  assert.equal(isCreativeQuery("Tell me a joke]"), true)
+  assert.equal(isJokeFollowUp("another onw", history), true)
+  assert.equal(isJokeFollowUp("anothr one", history), true)
+  assert.equal(isJokeFollowUp("another onw", []), true)
 })
 
 test("joke follow-ups stay jokes", () => {

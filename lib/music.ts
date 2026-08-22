@@ -1,4 +1,5 @@
 import { searchWeb } from "@/lib/search"
+import { intendedMeaning } from "@/lib/typos"
 
 export type MusicTrack = {
   title: string
@@ -23,7 +24,7 @@ const INVIDIOUS = [
 ]
 
 export function isMusicQuery(text: string): boolean {
-  const lower = text.toLowerCase().trim()
+  const lower = intendedMeaning(text).toLowerCase().trim()
   if (/\bflute\b/.test(lower) || /\bpython\b/.test(lower)) return false
   if (
     /^(play|music|song|gaana|gana|youtube)$/.test(lower) ||
@@ -41,6 +42,7 @@ export function isMusicQuery(text: string): boolean {
 }
 
 export function musicQuery(text: string): string {
+  text = intendedMeaning(text)
   const url = text.match(
     /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/i
   )

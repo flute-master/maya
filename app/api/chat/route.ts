@@ -15,6 +15,7 @@ import type {
 } from "@/lib/types"
 import { stripSageChrome } from "@/lib/mind"
 import { syncVaultFacts } from "@/lib/db/store"
+import { intendedMeaning } from "@/lib/typos"
 
 export const runtime = "nodejs"
 
@@ -182,8 +183,10 @@ export async function POST(request: Request) {
         : undefined
   const allowSearch = body.allowSearch !== false
 
+  const intended = intendedMeaning(last.content)
+
   const sage = await runSage({
-    text: last.content,
+    text: intended,
     memory,
     hometown,
     lastPlace,
@@ -257,11 +260,11 @@ export async function POST(request: Request) {
 
   const googleRan = sage.results.some((item) => item.name.startsWith("google_"))
   const grounded = sage.results.some((item) => item.name !== "recall")
-  const skipBrain = skipTinyNet(last.content)
+  const skipBrain = skipTinyNet(intended)
 
   let lookup: Lookup =
     allowSearch && !googleRan && !grounded && !skipBrain
-      ? await lookupWeb(last.content, false, hometown, identity)
+      ? await lookupWeb(intended, false, hometown, identity)
       : { hits: [], searched: false, searchFailed: false }
 
   for (const result of sage.results) {
@@ -349,7 +352,7 @@ export async function POST(request: Request) {
     !lookup.hits.length &&
     modelNeedsWeb(ollamaText)
   ) {
-    lookup = await lookupWeb(last.content, true, hometown, identity)
+    lookup = await lookupWeb(intended, true, hometown, identity)
     const retry = await replyWithOllama({
       messages: history,
       personality,

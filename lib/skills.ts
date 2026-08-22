@@ -1,3 +1,5 @@
+import { intendedMeaning } from "@/lib/typos"
+
 /** What Maya can actually do from a chat line — no Google login required. */
 
 export function hometownFromNotes(notes: string[] | undefined): string | undefined {
@@ -15,13 +17,14 @@ export function hometownFromNotes(notes: string[] | undefined): string | undefin
 }
 
 export function isWeatherQuery(text: string): boolean {
-  const lower = text.toLowerCase()
+  const lower = intendedMeaning(text).toLowerCase()
   return /\b(weather|forecast|temperature|humidity|aqi|air quality|will it rain|is it raining|how hot|how cold)\b/.test(
     lower
   )
 }
 
 export function weatherPlace(text: string, hometown?: string): string | undefined {
+  text = intendedMeaning(text)
   const match = text.match(
     /\b(?:weather|forecast|temperature|temp|rain|humidity|aqi)\b(?:\s+(?:like|today|now|tomorrow|outside))?[\s,]*(?:in|for|at|near)\s+(.+)$/i
   )
@@ -49,14 +52,14 @@ export function isVaguePlace(place: string | undefined): boolean {
 }
 
 export function isDirectionsQuery(text: string): boolean {
-  const lower = text.toLowerCase()
+  const lower = intendedMeaning(text).toLowerCase()
   return /\b(take me|directions?|navigate|route|how do i get|how to get|how to reach|way to|ways to|drive me|drop me|get me (there|to)|let'?s go|i want to go|bring me|uber me|take us|path to|towards)\b/.test(
     lower
   )
 }
 
 export function isMapsQuery(text: string): boolean {
-  const lower = text.toLowerCase()
+  const lower = intendedMeaning(text).toLowerCase()
   return (
     isDirectionsQuery(lower) ||
     /\b(google maps|on (the )?map|show (me )?the map|where is .+ (located|on the map)|open (google )?maps)\b/.test(
@@ -110,6 +113,7 @@ export function mapsQuery(
   hometown?: string,
   lastPlace?: string
 ): string | undefined {
+  text = intendedMeaning(text)
   const dest = text.match(
     /\b(?:directions?|navigate|route|take me|take us|drive me|drop me|bring me|uber me|get me|how do i get|how to get|how to reach|way to|ways to|path to|towards|let'?s go|i want to go)\s+(?:to\s+)?(.+)$/i
   )
@@ -145,7 +149,7 @@ export function mapsQuery(
 
 export function isClearScreenCommand(text: string): boolean {
   return /^(refresh|reload|clear(?:\s+(?:the\s+)?(?:screen|chat|thread))?|new chat|start over|reset chat)\.?$/i.test(
-    text.trim()
+    intendedMeaning(text).trim()
   )
 }
 
@@ -153,29 +157,32 @@ export function isJokeFollowUp(
   text: string,
   history?: Array<{ role?: string; content?: string }>
 ): boolean {
-  const lower = text.trim().toLowerCase()
+  const lower = intendedMeaning(text).trim().toLowerCase()
   if (
-    /\b(another (one|joke)|tell another|one more joke|worse|not funny|that sucked|try again|funnier|a better joke)\b/.test(
+    /\b(another (one|joke|please)|tell another|one more( joke)?|worse|not funny|that sucked|try again|funnier|a better joke)\b/.test(
       lower
     )
   ) {
     return true
   }
   const recentJoke = (history ?? [])
-    .filter((message) => message.role === "user")
     .slice(-8)
     .some((message) => {
-      const line = String(message.content || "").toLowerCase()
-      return /\bjokes?\b|make me laugh|be funny/.test(line)
+      const line = intendedMeaning(String(message.content || "")).toLowerCase()
+      if (message.role === "user") {
+        return /\bjokes?\b|make me laugh|be funny/.test(line)
+      }
+      return false
     })
   if (!recentJoke) return false
+  if (/^another\b/.test(lower) && lower.split(/\s+/).length <= 5) return true
   return /^(yes|yeah|yep|ok|okay|sure|more|again|lol|lmao|haha|another)[.!]?$/i.test(
     lower
   ) || /^(that'?s )?(terrible|bad|awful|lame|mid|not funny)[.!]?$/i.test(lower)
 }
 
 export function isCreativeQuery(text: string): boolean {
-  const lower = text.toLowerCase()
+  const lower = intendedMeaning(text).toLowerCase()
   return (
     /\b(write|tell|make|give|create|spin)\b.{0,24}\b(story|stories|tale|joke|jokes|pun|puns|satire|roast|stand-?up)\b/.test(
       lower
@@ -209,7 +216,7 @@ export function creativeTopic(text: string): string {
 }
 
 export function isPlannerQuery(text: string): boolean {
-  const lower = text.toLowerCase()
+  const lower = intendedMeaning(text).toLowerCase()
   return (
     /\b(remind me|set a reminder|set reminder|set an? alarm|wake me|alarm for)\b/.test(
       lower
