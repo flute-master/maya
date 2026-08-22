@@ -14,7 +14,6 @@ import {
 } from "@/components/music-dock"
 import { PlannerDock } from "@/components/planner-dock"
 import { SettingsSheet } from "@/components/settings-sheet"
-import { VoiceDock } from "@/components/voice-dock"
 import type { MusicTrack } from "@/lib/music"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -105,7 +104,6 @@ export function MayaApp() {
   const [modelName, setModelName] = useState<string | null>(null)
   const [deviceId, setDeviceId] = useState<string | null>(null)
   const [follow, setFollow] = useState<FollowAlong | null>(null)
-  const [voiceStatus, setVoiceStatus] = useState<string | null>(null)
   const [presence, setPresence] = useState<Presence>("idle")
   const [ticks, setTicks] = useState<string[]>([])
   const [wakeNote, setWakeNote] = useState<string | null>(null)
@@ -230,7 +228,6 @@ export function MayaApp() {
       audio.pause()
     }
     setFollow(null)
-    setVoiceStatus(null)
     setPresence("idle")
   }, [])
 
@@ -239,7 +236,6 @@ export function MayaApp() {
       const audio = liveRef.current
       stopSpeaking()
       setFollow({ messageId, charIndex: 0 })
-      setVoiceStatus("Preparing her voice…")
 
       if (audio) {
         audio.muted = true
@@ -263,18 +259,12 @@ export function MayaApp() {
             current?.messageId === messageId ? null : current
           )
           restoreSample(audio)
-          setVoiceStatus(null)
           setPresence("idle")
         }
         try {
           const result = await speakInto(audio, text, sage)
           if (result === "playing" || result === "ready") {
             setPresence(result === "playing" ? "speaking" : "idle")
-            setVoiceStatus(
-              result === "ready"
-                ? "Her line is loaded. Press play on Maya's voice."
-                : "Speaking this reply. Press play if the bar stayed paused."
-            )
             return
           }
         } catch {
@@ -298,12 +288,10 @@ export function MayaApp() {
       })
       if (started) {
         setPresence("speaking")
-        setVoiceStatus("Using this computer's speech engine.")
         return
       }
       setFollow(null)
       setPresence("idle")
-      setVoiceStatus("Press play on Maya's voice. Live speech did not start.")
     },
     [sage, vault.prefs.spokenVoiceURI, personality.voiceId]
   )
@@ -1246,7 +1234,12 @@ export function MayaApp() {
         </div>
       ) : null}
 
-      <VoiceDock audioRef={liveRef} status={voiceStatus} />
+      <audio
+        ref={liveRef}
+        className="hidden"
+        preload="none"
+        playsInline
+      />
 
       {wakeNote ? (
         <p className="mx-auto max-w-2xl px-4 pb-1 text-center text-xs text-muted-foreground">

@@ -140,8 +140,8 @@ export function EmptyState({
         “{SAGE_SAMPLE}”
       </p>
       <p className="mt-2 max-w-sm text-xs text-muted-foreground">
-        Press play on Maya&apos;s voice below to hear her. Inner sage, Indian
-        English — not the anime character.
+        Inner sage, Indian English — not the anime character. Spoken replies
+        stay on unless you mute them in the composer.
       </p>
       {past.length > 0 ? (
         <div className="mt-6 flex w-full flex-col gap-2">

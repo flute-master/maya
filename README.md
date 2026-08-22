@@ -153,7 +153,7 @@ If neither is running, she still answers with the built-in engine. On a phone, *
 
 ## Voice
 
-Spoken replies are on by default. Recorded clips always work.
+Spoken replies are on by default. Mute them in the composer if you want text only.
 
 Live speech uses the same Indian-English voice if Python can run `edge-tts`:
 
