@@ -281,7 +281,7 @@ export async function fetchNews(ask: NewsAsk): Promise<SearchHit | null> {
     }
     const stories = await localStories(place, ask.country, 6)
     return hitFromSections(
-      `Local news · ${place}`,
+      `Local news - ${place}`,
       [formatStories(`Local · ${place}`, stories)],
       stories[0]?.url || `https://news.google.com/search?q=${encodeURIComponent(place)}`
     )
@@ -290,7 +290,7 @@ export async function fetchNews(ask: NewsAsk): Promise<SearchHit | null> {
   if (ask.scope === "national") {
     const stories = await nationalStories(ask.country, 6)
     return hitFromSections(
-      `National news · ${nation}`,
+      `National news - ${nation}`,
       [formatStories(`National · ${nation}`, stories)],
       stories[0]?.url || "https://news.google.com/"
     )
@@ -308,7 +308,7 @@ export async function fetchNews(ask: NewsAsk): Promise<SearchHit | null> {
   if (ask.scope === "topic" && ask.topic) {
     const stories = await topicStories(ask.topic, ask.country, 6)
     return hitFromSections(
-      `News · ${ask.topic}`,
+      `News - ${ask.topic}`,
       [formatStories(`About ${ask.topic}`, stories)],
       stories[0]?.url ||
         `https://news.google.com/search?q=${encodeURIComponent(ask.topic)}`
@@ -337,7 +337,7 @@ export async function fetchNews(ask: NewsAsk): Promise<SearchHit | null> {
 
   const first = local[0] || national[0] || world[0]
   return hitFromSections(
-    place ? `News briefing · ${place}, ${nation}, world` : `News briefing · ${nation} and world`,
+    place ? `News briefing - ${place}, ${nation}, world` : `News briefing - ${nation} and world`,
     sections,
     first?.url || "https://news.google.com/"
   )
