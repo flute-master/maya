@@ -1,26 +1,28 @@
-# Maya’s offline brain
+# Load Maya’s brain, then use it
 
-This is the **one-time download**. After it finishes she talks on your laptop with no paid API. Ever-learning is memory plus a small extra net — not training Llama from your chats.
+Download and load are **not** the same as talking to her. They are two steps on **one path**. Do them in order.
 
-A laptop cannot grow a ChatGPT-sized model from zero. The smart part is a **downloaded open model** (Llama 3.2). Maya’s personality is baked on top. Your facts live in `data/maya-memory.json` and grow every time you talk.
+In the running app this same guide is **[http://127.0.0.1:43217/brain](http://127.0.0.1:43217/brain)**. Feature list (maps, Google, flute): [README.md](./README.md) — those pages assume this brain is already loaded.
 
-Full feature guide: [README.md](./README.md)
-
----
-
-## What you download (once)
-
-| Piece | Size (about) | What it is |
-| --- | --- | --- |
-| **Ollama + `llama3.2` → model `maya`** | ~2 GB | The smart offline talker. This is the one you want. |
-| **On-device (Chrome/Edge)** | ~0.9–2 GB | Same family, stored in the browser. Use on a phone or when Ollama is off. |
-| **Train from chats** | a few MB | Tiny transformer on *your* dialogues. Honest extra. It will not become Llama. |
-
-Prefer order when she answers: tools (weather, maps, YouTube, …) → tiny trained net (only for plain talk, if you trained it) → **`maya` on Ollama** → built-in engine.
+A laptop cannot grow a ChatGPT-sized model from your chats. The smart offline talker is a **downloaded** open model (Llama 3.2) baked as **`maya`**. Ever-learning is memory plus an optional tiny net.
 
 ---
 
-## Laptop — one command (Linux / WSL / macOS)
+## The path (linked)
+
+| Step | When | Command | What it does |
+| --- | --- | --- | --- |
+| **1. Download** | Once per machine | `npm run brain` | Installs Ollama if needed, pulls llama3.2 (~2 GB), creates model `maya` |
+| **2. Load** | Every session | `npm run brain:use` | Checks `maya`, then **starts Maya with that model** |
+| **3. Use** | In the browser | open `/` then hard-refresh | Talk. Confirm Lookup says `maya` is ready |
+
+`npm run brain:load` is step 2 **without** starting the site (check only).
+
+Do not download in one window and then run a bare `npm run dev` in another unless Ollama is already up. Load and use stay on this path.
+
+---
+
+## Step 1 — Download (once)
 
 From the folder that has `package.json`:
 
@@ -47,28 +49,26 @@ Or, if Git Bash is on PATH: `npm run brain`.
 
 ---
 
-## How to load it
-
-### Every time you open Maya
+## Step 2 — Load (every time you open Maya)
 
 1. Start **Ollama** (the app, or `ollama serve`).
 2. From the project folder:
 
    ```bash
+   npm run brain:use
+   ```
+
+   That checks `maya` exists (downloads it if you skipped step 1), then starts the site **with this brain**.
+
+   Check only:
+
+   ```bash
    npm run brain:load
    ```
 
-   That checks `maya` exists, then prints the run command. Or start her yourself:
-
-   ```bash
-   OLLAMA_MODEL=maya npm run dev
-   ```
-
 3. Open **http://127.0.0.1:43217**
-4. Hard-refresh once: **Ctrl+Shift+R**
-5. Look at Customize → Lookup (globe). It should say **`maya` is ready** (or `maya:latest`).
-
-You can also click **Install offline brain** in that same panel if Ollama is already running.
+4. Open the linked use guide: **http://127.0.0.1:43217/brain**
+5. Hard-refresh once: **Ctrl+Shift+R**
 
 ### WSL talking to Windows Ollama
 
@@ -76,15 +76,25 @@ If Customize says Ollama is down but the Windows Ollama app is open:
 
 ```bash
 export OLLAMA_URL=http://127.0.0.1:11434
-OLLAMA_MODEL=maya npm run dev
+npm run brain:use
 ```
 
 Windows Ollama: allow LAN / localhost. Recent WSL usually forwards `127.0.0.1`.
 
-### Prove it is the local model
+---
 
-Send `Who are you to me?`  
-The header badge is a CPU / sparkle mark when the local model or sage tools ran — not a cloud API.
+## Step 3 — Use it correctly
+
+These checks are how you know the load actually stuck. Features in the README will not “turn the brain on” by themselves.
+
+1. Customize → Lookup (globe). It must say **`maya` is ready** (or `maya:latest`). Same panel: **Install offline brain** only if step 1 never ran.
+2. Send `Who are you to me?`  
+   The header badge is a CPU / sparkle mark when the local model or sage tools ran — not a cloud API.
+3. Talk normally. Typos are fine (`weathere in hyderbad`, `another onw` after a joke).
+4. Weather, maps, and songs still open **tools first**. That is correct. The brain writes the reply around what the tool found.
+5. Memory is how she learns you. Facts land in `data/maya-memory.json`. Refresh does not wipe her. **New chat** only starts a fresh thread.
+
+Prove the weights from a terminal:
 
 ```bash
 ollama list
@@ -92,20 +102,32 @@ ollama list
 ollama run maya "Say one sentence as Maya."
 ```
 
+`npm run doctor` prints whether the local model is visible.
+
 ---
 
-## Ever-learning (after the download)
+## Three brains — linked, not mixed
 
-The big model stays the downloaded weights. She still gets smarter about *you* without a GPU farm:
+They sit in the same Lookup panel. They are **not** three copies of the same download.
+
+| Which | When to use it | How you turn it on |
+| --- | --- | --- |
+| **Ollama `maya`** | Laptop, smart offline talk | Steps 1–2. This is the one you want. |
+| **On-device** | Phone, or Ollama off | Customize → Lookup → **Load on-device brain**. Chrome/Edge, ~0.9 GB once, then that browser is offline. |
+| **Tiny net** | Optional extra on small talk | Lookup → **Train from chats**, leave **Use trained net** on. `npm run brain:train`. It will not become Llama. |
+
+Prefer order when she answers: tools (weather, maps, YouTube, …) → tiny trained net (plain talk only, if you trained it) → **`maya` on Ollama** → built-in engine.
+
+### Ever-learning (after the download)
+
+The big weights stay downloaded. She still gets smarter about *you*:
 
 | What | How | Offline? |
 | --- | --- | --- |
-| Memory | Talk. Facts land in `data/maya-memory.json`. Refresh does not wipe her. | Yes |
+| Memory | Talk. Facts land in `data/maya-memory.json`. | Yes |
 | Knowledge | Drop notes in `data/knowledge/` | Yes |
-| Re-bake `maya` | Customize → Lookup → **Download Modelfile** (includes your notes), then `ollama create maya -f Modelfile` | Needs Ollama |
-| Tiny net | Customize → Lookup → **Train from chats**, or `npm run brain:train` | Yes (laptop CPU, ~2 min) |
-
-Toggle **Use trained net** if you want the tiny checkpoint tried on small talk. Tools (maps, weather, songs) still skip it so answers stay honest.
+| Re-bake `maya` | Lookup → **Download Modelfile** (includes your notes), then `ollama create maya -f Modelfile` | Needs Ollama |
+| Tiny net | Lookup → **Train from chats**, or `npm run brain:train` | Yes (laptop CPU, ~2 min) |
 
 ```bash
 pip install -r requirements-train.txt
@@ -116,9 +138,9 @@ Checkpoint files stay on this machine and are **gitignored** (`data/maya-gpt.pt`
 
 ---
 
-## Phone — one-time browser download
+## Phone
 
-Laptop can stay the Ollama host on the same Wi‑Fi (open the LAN URL from Customize → Lookup).
+Laptop can stay the Ollama host on the same Wi‑Fi (LAN URL from Customize → Lookup).
 
 Or, in **Chrome or Edge** on the phone:
 
@@ -137,12 +159,11 @@ iPhone Safari usually cannot (no WebGPU). Use the laptop URL instead.
 | `ollama: command not found` | Install [Ollama](https://ollama.com), then `npm run brain` again |
 | Pull is slow | Normal the first time. ~2 GB. Keep the laptop awake |
 | `maya` missing after pull | `ollama create maya -f Modelfile` from the project folder |
-| Site up, replies thin / “parsing” | Ollama not running, or wrong folder. `ollama serve` then `OLLAMA_MODEL=maya npm run dev` |
+| Site up, replies thin / “parsing” | Ollama not running, or you never loaded. `ollama serve` then `npm run brain:use` |
+| Lookup does not say `maya` | You downloaded but did not load. Stay on this file / `/brain`. README feature pages will not load the model. |
 | WSL cannot see Ollama | `export OLLAMA_URL=http://127.0.0.1:11434` |
 | Train from chats fails | `pip install -r requirements-train.txt` — needs a few GB of RAM |
 | On-device button missing | Chrome/Edge + WebGPU. Not Safari on many iPhones |
-
-`npm run doctor` prints whether the local model is visible.
 
 ---
 
@@ -152,5 +173,6 @@ iPhone Safari usually cannot (no WebGPU). Use the laptop URL instead.
 - Not a paid OpenAI / Gemini key
 - Not something you zip and upload to GitHub (the weights stay in Ollama’s store)
 - Not a cloud sync of memory
+- Not a substitute for the feature guide — [README.md](./README.md) is how to *use the app* after this brain is loaded
 
 The download lives in Ollama’s library on **this computer**. Another machine needs its own `npm run brain`.

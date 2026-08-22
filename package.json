@@ -14,6 +14,7 @@
     "train": "python3 train/train.py",
     "brain": "bash scripts/setup-model.sh",
     "brain:load": "bash scripts/load-brain.sh",
+    "brain:use": "bash scripts/load-brain.sh --start",
     "brain:train": "python3 train/train.py",
     "doctor": "node scripts/doctor.mjs",
     "backup": "node scripts/backup.mjs",

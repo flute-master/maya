@@ -22,7 +22,7 @@ This is **not** Raphael / Great Sage from *That Time I Got Reincarnated as a Sli
 10. [Knowledge vault](#knowledge-vault)
 11. [Otaku shelf and flute](#otaku-shelf-and-flute)
 12. [Google apps](#google-apps)
-13. [Brain (Ollama, trained net, on-device)](#brain-ollama-trained-net-on-device)
+13. [Load the brain, then use it](#load-the-brain-then-use-it)
 14. [System, doctor, backup](#system-doctor-backup)
 15. [What works offline](#what-works-offline)
 16. [Phone](#phone)
@@ -35,16 +35,19 @@ This is **not** Raphael / Great Sage from *That Time I Got Reincarnated as a Sli
 
 You need [Node.js 20+](https://nodejs.org) and Chrome or Edge. Unmute the tab.
 
+The **app** and the **offline brain** are two pieces. Load the brain, then use the app — they are linked:
+
 ```bash
 git clone https://github.com/flute-master/maya.git
 cd maya
 npm install
-npm run dev
+npm run brain        # once: download ~2 GB, bake model `maya`
+npm run brain:use    # every time: load that model and start the site
 ```
 
-Open **http://127.0.0.1:43217**
+Open **http://127.0.0.1:43217** then the linked guide **http://127.0.0.1:43217/brain**
 
-**Offline brain (one-time, ~2 GB):** [BRAIN.md](./BRAIN.md) — `npm run brain` then `OLLAMA_MODEL=maya npm run dev`.
+Full walkthrough (download → load → use correctly): [BRAIN.md](./BRAIN.md). A bare `npm run dev` starts the UI only; if Ollama is already up she will still pick `maya`, but **`npm run brain:use` is the path that loads and uses the brain together**.
 
 You should see `package.json` in that folder. There is no extra `maya/maya`.
 
@@ -115,13 +118,15 @@ When she needs a powerful tool, a message shows **Allow once**. That is Maya Cor
 
 ## First ten minutes
 
-1. Open **http://127.0.0.1:43217**. Unmute the tab.
-2. Optional: [http://127.0.0.1:43217/hear.html](http://127.0.0.1:43217/hear.html) — play Inner sage.
-3. Send `Who are you to me?` She answers in text, then reads it aloud.
-4. Tell her something on purpose: `I live in Hyderabad. Evenings are for family.`
-5. Ask `What do you remember about me?`
-6. Try `weather in Hyderabad` and `calculate 15% of 240`.
-7. Open Customize (sliders) if you want a different room or to turn Sage Mode off.
+0. Brain already loaded? If not, [BRAIN.md](./BRAIN.md) steps 1–2, or `npm run brain` then `npm run brain:use`. In the app: **[/brain](http://127.0.0.1:43217/brain)**.
+1. Open **http://127.0.0.1:43217**. Unmute the tab. Hard-refresh once.
+2. Customize → Lookup: it should say **`maya` is ready**. That is how you know load worked.
+3. Optional: [http://127.0.0.1:43217/hear.html](http://127.0.0.1:43217/hear.html) — play Inner sage.
+4. Send `Who are you to me?` She answers in text, then reads it aloud.
+5. Tell her something on purpose: `I live in Hyderabad. Evenings are for family.`
+6. Ask `What do you remember about me?`
+7. Try `weather in Hyderabad` and `calculate 15% of 240`.
+8. Open Customize (sliders) if you want a different room or to turn Sage Mode off.
 
 Typos are fine: `weathere in hyderbad` is weather in Hyderabad.
 
@@ -524,37 +529,36 @@ She will not invent events or an inbox. If she is not connected she tells you to
 
 ---
 
-## Brain (offline, one-time download)
+## Load the brain, then use it
 
-**Full load steps:** [BRAIN.md](./BRAIN.md)
+Download, load, and everyday use are **one path**. They used to read as two unconnected pages — they are not.
 
-You do **not** train Llama from your chats. The smart offline talker is a **one-time download**. Ever-learning is memory + an optional tiny net.
+**Linked guide:** [BRAIN.md](./BRAIN.md) · in the app: **[/brain](http://127.0.0.1:43217/brain)**
+
+You do **not** train Llama from your chats. The smart offline talker is a **one-time download**. Then you **load** it each session. Then you **use** her in the tab.
 
 ```bash
-npm run brain        # download llama3.2 once, bake model `maya`
-npm run brain:load   # check it is there, print how to start
-OLLAMA_MODEL=maya npm run dev
+npm run brain        # 1. download llama3.2 once, bake model `maya`
+npm run brain:use    # 2. load that model and start the site
+# 3. open http://127.0.0.1:43217  and  /brain
 ```
 
-Open http://127.0.0.1:43217 — Customize → Lookup should say `maya` is ready. Same panel: **Install offline brain**.
+`npm run brain:load` only checks the model is there. Customize → Lookup must say `maya` is ready. Same panel: **Install offline brain** if step 1 never ran.
 
 WSL if Windows Ollama is the host:
 
 ```bash
 export OLLAMA_URL=http://127.0.0.1:11434
-OLLAMA_MODEL=maya npm run dev
+npm run brain:use
 ```
 
-**Ever-learning tiny net** (optional, ~2 min CPU):
+**Three brains in Lookup — do not mix them up**
 
-```bash
-pip install -r requirements-train.txt
-npm run brain:train
-```
-
-Or Customize → Lookup → Train from chats. It will not become Llama.
-
-**Phone:** Customize → Lookup → Load on-device brain (Chrome/Edge, ~0.9 GB once, then offline in that browser).
+| Which | Role |
+| --- | --- |
+| Ollama `maya` | The smart laptop talker. Steps above. |
+| On-device | Phone / Ollama off. Lookup → **Load on-device brain** (Chrome/Edge, ~0.9 GB once). |
+| Tiny net | Optional extra. Lookup → **Train from chats**. `npm run brain:train`. Not Llama. |
 
 **Prefer order:** tools (weather, maps, YouTube, …) → tiny trained net (plain talk only) → Ollama `maya` → built-in engine.
 

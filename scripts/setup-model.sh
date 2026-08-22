@@ -20,10 +20,11 @@ if [[ -f "$ROOT/Modelfile" ]]; then
 fi
 
 echo
-echo "Maya's offline brain is ready (one-time download)."
-echo "Load it:"
-echo "  OLLAMA_MODEL=maya npm run dev"
+echo "Maya's offline brain is downloaded (one-time)."
+echo "Load it and use it (linked, one command):"
+echo "  npm run brain:use"
 echo "  open http://127.0.0.1:43217"
+echo "  then http://127.0.0.1:43217/brain"
 echo
 echo "Ever-learning is memory + optional tiny net, not retraining Llama."
 echo "Walkthrough: BRAIN.md"

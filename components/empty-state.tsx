@@ -100,8 +100,16 @@ export function EmptyState({
       <p className="mt-3 max-w-sm text-sm text-muted-foreground">
         {modelReady
           ? `Local model live${modelName ? `: ${modelName}` : ""}.`
-          : "She answers now. Load a local brain later if you want."}
+          : "She answers now with the built-in engine."}
       </p>
+      <a
+        href="/brain"
+        className="mt-2 text-sm underline underline-offset-4 text-muted-foreground hover:text-foreground"
+      >
+        {modelReady
+          ? "How to use this brain"
+          : "How to load the offline brain and use it"}
+      </a>
       {onLoadDevice ? (
         <Button
           type="button"

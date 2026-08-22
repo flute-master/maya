@@ -1155,8 +1155,12 @@ export function SettingsSheet({
                   After that she talks offline. Ever-learning is memory plus
                   the tiny net above — not retraining Llama from your chats.
                   Terminal: <span className="font-medium text-foreground">npm run brain</span>{" "}
-                  then <span className="font-medium text-foreground">npm run brain:load</span>.
-                  Full steps in BRAIN.md.
+                  then <span className="font-medium text-foreground">npm run brain:use</span>{" "}
+                  (load and start together).{" "}
+                  <a href="/brain" className="underline underline-offset-2">
+                    How to load it and use it
+                  </a>{" "}
+                  — download, load, and everyday use are one path.
                 </p>
                 <p
                   className={`mt-2 text-sm whitespace-pre-wrap ${modelReady ? "text-foreground" : "text-muted-foreground"}`}

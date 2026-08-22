@@ -21,10 +21,10 @@ export async function GET() {
     url: status.url,
     install,
     hint: status.using
-      ? `${status.using} is ready. That is the offline brain. Load it with OLLAMA_MODEL=maya npm run dev. See BRAIN.md.`
+      ? `${status.using} is ready. That is the offline brain. Everyday use: open /brain. Reload a session with npm run brain:use.`
       : install.running
         ? install.step || "Downloading the offline brain…"
-        : "No local model yet. One-time: npm run brain — or click Install offline brain if Ollama is running. Until then she uses the built-in engine. BRAIN.md has the load steps.",
+        : "No local model yet. One path: npm run brain (download) then npm run brain:use (load + start). Or click Install offline brain if Ollama is running. Guide: /brain.",
   })
 }
 

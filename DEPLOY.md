@@ -74,12 +74,12 @@ Install and start:
 
 ```bash
 npm install
-bash scripts/setup-model.sh
+npm run brain
 pip install -r requirements-voice.txt
-OLLAMA_MODEL=maya npm run dev
+npm run brain:use
 ```
 
-Leave that terminal running.
+Leave that terminal running. Load and everyday use are one path: [BRAIN.md](./BRAIN.md) and **http://127.0.0.1:43217/brain**.
 
 ### 1.2 Open on the laptop
 
