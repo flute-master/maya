@@ -49,42 +49,38 @@ export function ClipPlayer({
   }
 
   return (
-    <div className="flex min-w-[10rem] flex-col gap-1">
-      <div className="flex items-center gap-2">
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          className={cn(playing && "border-primary")}
-          onClick={() => void toggle()}
-          aria-pressed={playing}
-        >
-          {playing ? <Pause /> : <Volume2 />}
-          {playing ? "Playing" : label}
-        </Button>
-      </div>
-      <div className="rounded-lg bg-neutral-100 p-1">
-        <audio
-          ref={innerRef}
-          src={src}
-          controls
-          preload="none"
-          playsInline
-          className="w-full"
-          onPlay={(event) => {
-            stopAllAudio(event.currentTarget)
-            setPlaying(true)
-            setError(null)
-          }}
-          onPause={() => setPlaying(false)}
-          onEnded={() => setPlaying(false)}
-          onError={() =>
-            setError(
-              "This browser could not play the clip. Try Customize → Voice."
-            )
-          }
-        />
-      </div>
+    <div className="flex flex-col gap-1">
+      <Button
+        type="button"
+        size="icon"
+        variant="outline"
+        className={cn(playing && "border-primary")}
+        onClick={() => void toggle()}
+        aria-pressed={playing}
+        aria-label={playing ? "Stop clip" : label}
+        title={playing ? "Stop clip" : label}
+      >
+        {playing ? <Pause /> : <Volume2 />}
+      </Button>
+      <audio
+        ref={innerRef}
+        src={src}
+        preload="none"
+        playsInline
+        className="hidden"
+        onPlay={(event) => {
+          stopAllAudio(event.currentTarget)
+          setPlaying(true)
+          setError(null)
+        }}
+        onPause={() => setPlaying(false)}
+        onEnded={() => setPlaying(false)}
+        onError={() =>
+          setError(
+            "This browser could not play the clip. Try Customize → Voice."
+          )
+        }
+      />
       {error ? <p className="text-[11px] text-destructive">{error}</p> : null}
     </div>
   )

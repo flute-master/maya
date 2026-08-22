@@ -1,6 +1,6 @@
 "use client"
 
-import type { LucideIcon } from "lucide-react"
+import type { ComponentType } from "react"
 import {
   BookOpen,
   Brain,
@@ -8,8 +8,6 @@ import {
   CalendarDays,
   CloudSun,
   Flame,
-  MapPin,
-  Music2,
   Newspaper,
   Scale,
   ScrollText,
@@ -18,6 +16,11 @@ import {
   Tv,
 } from "lucide-react"
 
+import {
+  GoogleCalendarMark,
+  GoogleMapsMark,
+  YouTubeMark,
+} from "@/components/brand-marks"
 import { MayaMark } from "@/components/maya-mark"
 import { RoomPicker } from "@/components/room-picker"
 import { Button } from "@/components/ui/button"
@@ -26,7 +29,7 @@ import type { AtmosphereId } from "@/lib/atmosphere"
 const STARTERS: Array<{
   label: string
   text: string
-  icon: LucideIcon
+  icon: ComponentType<{ className?: string }>
 }> = [
   { label: "Remember", text: "What do you remember about me?", icon: Brain },
   { label: "Analyze", text: "Analyze whether I should buy this laptop.", icon: Scale },
@@ -37,12 +40,12 @@ const STARTERS: Array<{
   { label: "Manga", text: "Where can I read Frieren and watch the anime legally?", icon: BookOpen },
   { label: "Mihon", text: "Tachiyomi or Mihon — how do I read manga on my phone?", icon: Tv },
   { label: "Python", text: "Run python: print(sum(range(10)))", icon: Terminal },
-  { label: "Calendar", text: "What's on my Google Calendar today?", icon: CalendarDays },
+  { label: "Calendar", text: "What's on my Google Calendar today?", icon: GoogleCalendarMark },
   { label: "Skills", text: "What can you actually do on this machine?", icon: Sparkles },
   { label: "Flute", text: "Teach me flute. I am a beginner.", icon: Flame },
-  { label: "Maps", text: "Take me to Charminar", icon: MapPin },
+  { label: "Maps", text: "Take me to Charminar", icon: GoogleMapsMark },
   { label: "Calc", text: "Calculate 15% of 240", icon: Calculator },
-  { label: "Music", text: "Play tum hi ho on YouTube", icon: Music2 },
+  { label: "Music", text: "Play tum hi ho on YouTube", icon: YouTubeMark },
 ]
 
 export function EmptyState({
@@ -76,13 +79,14 @@ export function EmptyState({
     <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-12 text-center">
       <div className="relative mb-8">
         <div className="pointer-events-none absolute inset-0 -m-10 rounded-full bg-primary/20 blur-3xl" />
-        <div className="relative flex size-16 items-center justify-center rounded-full bg-card text-primary ring-1 ring-foreground/10">
-          <MayaMark className="size-10" />
+        <div
+          className="relative flex size-20 items-center justify-center rounded-full bg-card text-primary ring-1 ring-foreground/10"
+          title={name}
+        >
+          <MayaMark className="size-12" />
         </div>
       </div>
-      <h1 className="font-heading text-4xl font-medium tracking-tight text-foreground sm:text-5xl">
-        {name}
-      </h1>
+      <h1 className="sr-only">{name}</h1>
       <div className="mt-5 flex w-full flex-col items-center gap-2">
         <RoomPicker compact value={atmosphere} onPick={onAtmosphere} />
       </div>
@@ -129,15 +133,12 @@ export function EmptyState({
             <button
               key={starter.label}
               type="button"
-              title={starter.text}
+              title={starter.label}
               aria-label={starter.label}
               onClick={() => onStart(starter.text)}
-              className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-card px-2 py-3 text-foreground transition-colors hover:border-primary/50 hover:bg-primary/10"
+              className="flex items-center justify-center rounded-2xl border border-border bg-card px-2 py-3.5 text-foreground transition-colors hover:border-primary/50 hover:bg-primary/10"
             >
-              <Icon className="size-5 text-primary" aria-hidden />
-              <span className="text-[10px] font-medium tracking-wide text-muted-foreground">
-                {starter.label}
-              </span>
+              <Icon className="size-6 text-primary" />
             </button>
           )
         })}

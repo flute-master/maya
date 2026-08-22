@@ -2,6 +2,7 @@
 
 import { Bell, Check, ListTodo, X } from "lucide-react"
 
+import { GoogleCalendarMark } from "@/components/brand-marks"
 import { Button } from "@/components/ui/button"
 import { formatPlanLine } from "@/lib/mind"
 import { formatWhen, googleCalendarUrl } from "@/lib/reminders"
@@ -45,12 +46,14 @@ export function PlannerDock({
               <span className="text-foreground"> · {item.text}</span>
             </p>
             <a
-              className="shrink-0 text-xs text-primary underline-offset-2 hover:underline"
+              className="inline-flex size-7 shrink-0 items-center justify-center rounded-md hover:bg-muted"
               href={googleCalendarUrl(item.text, item.at)}
               target="_blank"
               rel="noreferrer"
+              title="Add to Google Calendar"
+              aria-label="Add to Google Calendar"
             >
-              Calendar
+              <GoogleCalendarMark className="size-4" />
             </a>
             <Button
               type="button"

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react"
 
+import { Pause, Volume2 } from "lucide-react"
+
 import { ClipPlayer, stopClips } from "@/components/clip-player"
 import { Button } from "@/components/ui/button"
 import { listSpokenVoices, speakLine, stopSpeaking } from "@/lib/speak"
@@ -34,12 +36,14 @@ function SpeakPreview({ voice }: { voice: MayaVoice }) {
   return (
     <Button
       type="button"
-      size="sm"
+      size="icon"
       variant="outline"
       aria-pressed={playing}
+      aria-label={playing ? "Stop preview" : "Hear this voice"}
+      title={playing ? "Stop" : "Hear this"}
       onClick={toggle}
     >
-      {playing ? "Stop" : "Hear this"}
+      {playing ? <Pause /> : <Volume2 />}
     </Button>
   )
 }

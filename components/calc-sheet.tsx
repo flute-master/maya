@@ -2,6 +2,8 @@
 
 import { useState } from "react"
 
+import { Calculator } from "lucide-react"
+
 import { evaluateCalc } from "@/lib/calc"
 import { Button } from "@/components/ui/button"
 import {
@@ -65,7 +67,10 @@ export function CalcSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-full gap-0 sm:max-w-sm" showCloseButton>
         <SheetHeader className="border-b border-border">
-          <SheetTitle>Calculator</SheetTitle>
+          <SheetTitle className="flex items-center gap-2">
+            <Calculator className="size-5" />
+            <span className="sr-only">Calculator</span>
+          </SheetTitle>
           <SheetDescription>
             Local, instant, no Python confirm. You can also type “calculate 15% of
             240” in chat.

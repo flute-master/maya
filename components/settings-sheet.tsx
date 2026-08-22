@@ -6,11 +6,18 @@ import {
   Download,
   Flame,
   Globe,
+  LayoutDashboard,
   Mic,
   Trash2,
   Upload,
 } from "lucide-react"
 
+import {
+  DuckDuckGoMark,
+  GitHubMark,
+  WikipediaMark,
+} from "@/components/brand-marks"
+import { MayaMark } from "@/components/maya-mark"
 import { RoomPicker } from "@/components/room-picker"
 import { BONDS, isSage } from "@/lib/bonds"
 import { stopSpeaking } from "@/lib/speak"
@@ -281,7 +288,10 @@ export function SettingsSheet({
         showCloseButton
       >
         <SheetHeader className="border-b border-border">
-          <SheetTitle>Customize {personality.name}</SheetTitle>
+          <SheetTitle className="flex items-center gap-2">
+            <MayaMark className="size-6 text-primary" />
+            <span className="sr-only">Customize {personality.name}</span>
+          </SheetTitle>
           <SheetDescription>
             Shape how she shows up. Changes apply to the next message.
           </SheetDescription>
@@ -307,12 +317,7 @@ export function SettingsSheet({
                 <span className="sr-only">Lookup</span>
               </TabsTrigger>
               <TabsTrigger value="system" title="System" aria-label="System">
-                <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
-                  <path
-                    fill="currentColor"
-                    d="M4 5h6v6H4V5zm10 0h6v4h-6V5zM4 13h4v6H4v-6zm6-2h10v2H10v-2zm0 4h10v4H10v-4z"
-                  />
-                </svg>
+                <LayoutDashboard />
                 <span className="sr-only">System</span>
               </TabsTrigger>
             </TabsList>
@@ -609,18 +614,25 @@ export function SettingsSheet({
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <Button type="button" size="sm" variant="outline" onClick={onExport}>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  onClick={onExport}
+                  title="Spare copy"
+                  aria-label="Export a spare copy"
+                >
                   <Download />
-                  Spare copy
                 </Button>
                 <Button
                   type="button"
-                  size="sm"
+                  size="icon"
                   variant="outline"
                   onClick={() => fileRef.current?.click()}
+                  title="Import file"
+                  aria-label="Import a memory file"
                 >
                   <Upload />
-                  Import file
                 </Button>
                 <input
                   ref={fileRef}
@@ -1006,7 +1018,12 @@ export function SettingsSheet({
 
               <div className="flex items-start justify-between gap-3 rounded-xl bg-muted/60 p-3">
                 <div>
-                  <p className="text-sm font-medium">Look up world facts</p>
+                  <p className="flex items-center gap-2 text-sm font-medium">
+                  <DuckDuckGoMark className="size-4" />
+                  <WikipediaMark className="size-4" />
+                  <GitHubMark className="size-4" />
+                  <span className="sr-only">Look up world facts</span>
+                </p>
                   <p className="mt-1 text-sm text-muted-foreground">
                     On by default. She searches DuckDuckGo, Wikipedia, and
                     public GitHub when a question needs the outside world —

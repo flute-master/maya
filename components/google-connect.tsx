@@ -2,6 +2,16 @@
 
 import { useEffect, useState, type ReactNode } from "react"
 
+import {
+  GmailMark,
+  GoogleCalendarMark,
+  GoogleContactsMark,
+  GoogleDocsMark,
+  GoogleDriveMark,
+  GoogleMark,
+  GoogleSheetsMark,
+  GoogleTasksMark,
+} from "@/components/brand-marks"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -128,7 +138,10 @@ export function GoogleConnect({
 
   return (
     <div className="rounded-xl bg-card p-3 ring-1 ring-foreground/8">
-      <p className="text-sm font-medium">Google apps (free APIs)</p>
+      <p className="flex items-center gap-2 text-sm font-medium">
+        <GoogleMark className="size-4" />
+        <span className="sr-only">Google apps</span>
+      </p>
       <p className="mt-1 text-sm text-muted-foreground">
         A service account cannot open your personal Gmail or Calendar. Connect
         with Google OAuth (free Cloud project, test user = you) for Gmail,
@@ -143,14 +156,28 @@ export function GoogleConnect({
           Authorized redirect URI to paste in Google Cloud: {status.redirectUri}
         </p>
       ) : null}
-      <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-muted-foreground">
-        <span>Gmail {status?.canGmail ? "live" : "off"}</span>
-        <span>· Calendar {status?.canCalendar ? "live" : "off"}</span>
-        <span>· Drive {status?.canDrive ? "live" : "off"}</span>
-        <span>· Docs {status?.canDrive ? "live" : "off"}</span>
-        <span>· Sheets {status?.canDrive ? "live" : "off"}</span>
-        <span>· Tasks {status?.canTasks ? "live" : "off"}</span>
-        <span>· Contacts {status?.canContacts ? "live" : "off"}</span>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <AppChip live={Boolean(status?.canGmail)} label="Gmail">
+          <GmailMark className="size-5" />
+        </AppChip>
+        <AppChip live={Boolean(status?.canCalendar)} label="Calendar">
+          <GoogleCalendarMark className="size-5" />
+        </AppChip>
+        <AppChip live={Boolean(status?.canDrive)} label="Drive">
+          <GoogleDriveMark className="size-5" />
+        </AppChip>
+        <AppChip live={Boolean(status?.canDrive)} label="Docs">
+          <GoogleDocsMark className="size-5" />
+        </AppChip>
+        <AppChip live={Boolean(status?.canDrive)} label="Sheets">
+          <GoogleSheetsMark className="size-5" />
+        </AppChip>
+        <AppChip live={Boolean(status?.canTasks)} label="Tasks">
+          <GoogleTasksMark className="size-5" />
+        </AppChip>
+        <AppChip live={Boolean(status?.canContacts)} label="Contacts">
+          <GoogleContactsMark className="size-5" />
+        </AppChip>
       </div>
 
       <div className="mt-3 flex flex-col gap-2">
@@ -181,8 +208,18 @@ export function GoogleConnect({
           >
             Save client
           </Button>
-          <Button type="button" size="sm" disabled={busy} onClick={() => void connect()}>
-            {status?.connected ? "Reconnect Google" : "Connect Google"}
+          <Button
+            type="button"
+            size="sm"
+            disabled={busy}
+            onClick={() => void connect()}
+            title={status?.connected ? "Reconnect Google" : "Connect Google"}
+            aria-label={status?.connected ? "Reconnect Google" : "Connect Google"}
+          >
+            <GoogleMark />
+            <span className="sr-only">
+              {status?.connected ? "Reconnect Google" : "Connect Google"}
+            </span>
           </Button>
           {status?.connected ? (
             <Button type="button" size="sm" variant="ghost" disabled={busy} onClick={() => void disconnect()}>
@@ -234,6 +271,30 @@ export function GoogleConnect({
       </div>
       {hint ? <p className="mt-2 text-sm text-foreground">{hint}</p> : null}
     </div>
+  )
+}
+
+function AppChip({
+  live,
+  label,
+  children,
+}: {
+  live: boolean
+  label: string
+  children: ReactNode
+}) {
+  return (
+    <span
+      title={`${label} ${live ? "live" : "off"}`}
+      aria-label={`${label} ${live ? "live" : "off"}`}
+      className={`inline-flex size-9 items-center justify-center rounded-lg ring-1 ${
+        live
+          ? "bg-card ring-primary/40"
+          : "bg-muted/40 opacity-50 ring-foreground/10"
+      }`}
+    >
+      {children}
+    </span>
   )
 }
 

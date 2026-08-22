@@ -2,8 +2,9 @@
 
 import { useEffect, useRef } from "react"
 
-import { MapPin, Music2, Square, Volume2 } from "lucide-react"
+import { Square, Volume2 } from "lucide-react"
 
+import { GoogleMapsMark, YouTubeMark } from "@/components/brand-marks"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { ChatMessage } from "@/lib/types"
@@ -122,31 +123,33 @@ export function ChatThread({
             {!mine && mapsLinkFrom(message.content) ? (
               <Button
                 type="button"
-                size="sm"
+                size="icon"
                 variant="outline"
                 className="mt-1"
+                title="Open Google Maps"
+                aria-label="Open Google Maps"
                 onClick={() => {
                   const href = mapsLinkFrom(message.content)
                   if (href) window.open(href, "maya-maps", "noopener,noreferrer")
                 }}
               >
-                <MapPin />
-                Open Google Maps
+                <GoogleMapsMark className="size-5" />
               </Button>
             ) : null}
             {!mine && youtubeFrom(message.content) && onPlayMusic ? (
               <Button
                 type="button"
-                size="sm"
+                size="icon"
                 variant="outline"
                 className="mt-1"
+                title="Play in Maya"
+                aria-label="Play in Maya"
                 onClick={() => {
                   const found = youtubeFrom(message.content)
                   if (found) onPlayMusic(found)
                 }}
               >
-                <Music2 />
-                Play in Maya
+                <YouTubeMark className="size-5" />
               </Button>
             ) : null}
             {!mine && message.tools?.length ? (

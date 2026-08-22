@@ -1,8 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ExternalLink, Music2, Search } from "lucide-react"
+import { ExternalLink, Search } from "lucide-react"
 
+import { YouTubeMark } from "@/components/brand-marks"
 import type { MusicTrack } from "@/lib/music"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -90,7 +91,10 @@ export function MusicDock({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full gap-0 sm:max-w-md" showCloseButton>
         <SheetHeader className="border-b border-border">
-          <SheetTitle>Music</SheetTitle>
+          <SheetTitle className="flex items-center gap-2">
+            <YouTubeMark className="size-6" />
+            <span className="sr-only">Music</span>
+          </SheetTitle>
           <SheetDescription>
             Free YouTube player. Say “play tum hi ho” in chat, or search here. Not
             Spotify — I cannot log into that.
@@ -110,9 +114,14 @@ export function MusicDock({
               placeholder="Song or artist"
               aria-label="Song or artist"
             />
-            <Button type="submit" disabled={busy || !draft.trim()}>
+            <Button
+              type="submit"
+              size="icon"
+              disabled={busy || !draft.trim()}
+              aria-label={busy ? "Finding song" : "Find song"}
+              title={busy ? "Finding…" : "Find"}
+            >
               <Search />
-              {busy ? "Finding…" : "Find"}
             </Button>
           </form>
           {hint ? <p className="text-sm text-muted-foreground">{hint}</p> : null}
@@ -128,7 +137,7 @@ export function MusicDock({
             </div>
           ) : (
             <div className="flex aspect-video flex-col items-center justify-center gap-2 rounded-xl bg-muted/50 text-muted-foreground ring-1 ring-foreground/8">
-              <Music2 className="size-8" />
+              <YouTubeMark className="size-10" />
               <p className="px-6 text-center text-sm">
                 Search a song. I embed the YouTube video when I can pin one.
               </p>
@@ -143,8 +152,9 @@ export function MusicDock({
                 rel="noreferrer"
                 className="inline-flex items-center gap-1 text-sm text-primary underline-offset-2 hover:underline"
               >
+                <YouTubeMark className="size-4" />
                 <ExternalLink className="size-3.5" />
-                Open on YouTube
+                <span className="sr-only">Open on YouTube</span>
               </a>
               <p className="text-xs text-muted-foreground">
                 Source: {track.source}. I do not download the audio.
