@@ -99,8 +99,16 @@ export async function replyWithOllama(input: {
       message?: { content?: string }
     }
     const text = data.message?.content?.trim()
-    return text || null
+    if (!text) return null
+    if (looksGenericAssistant(text)) return null
+    return text
   } catch {
     return null
   }
+}
+
+export function looksGenericAssistant(text: string) {
+  return /as an ai|language model|i don'?t have (personal )?(intelligence|consciousness)|what can i help you with today|i('m| am) (just |only )?(an? )?(ai|assistant|chatbot|language model)\b/i.test(
+    text
+  )
 }

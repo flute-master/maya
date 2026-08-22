@@ -15,6 +15,7 @@ import {
 import { intendedMeaning } from "../../lib/typos"
 import { replyLocally } from "../../lib/local-companion"
 import { skipTinyNet } from "../../lib/trained"
+import { looksGenericAssistant } from "../../lib/ollama"
 
 test("refresh clears the screen command", () => {
   assert.equal(isClearScreenCommand("refresh"), true)
@@ -135,4 +136,14 @@ test("smart-now does not get a wander line", () => {
   assert.doesNotMatch(text, /better would look like/i)
   assert.doesNotMatch(text, /decision or a feeling/i)
   assert.match(text, /maya/i)
+})
+
+test("generic assistant sludge is rejected", () => {
+  assert.equal(
+    looksGenericAssistant(
+      "I don't have personal intelligence or consciousness. What can I help you with today?"
+    ),
+    true
+  )
+  assert.equal(looksGenericAssistant("I'm Maya. The local model is loaded."), false)
 })
