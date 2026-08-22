@@ -46,9 +46,15 @@ export const SAGE_LAYERS: SageLayer[] = [
   },
   {
     ability: "Use skills",
-    how: "Tool loop: weather, news, maps, calculator, music, reminders, tasks, GitHub, files, Python, lookup, flute, Google APIs",
+    how: "Tool loop: weather, news, otaku shelf, maps, calculator, music, reminders, tasks, GitHub, files, Python, lookup, flute, Google APIs",
     status: "live",
     note: "Sage core picks tools, then the model talks from the results. Flute notes come from the teaching book or a clip, not a guessed film score. News is live RSS — local if she knows your city, plus national and world.",
+  },
+  {
+    ability: "Otaku shelf",
+    how: "AniList for official manga, novel, and episode links. Shelf in Customize → Memory. Mihon for files you own — not pirate repos",
+    status: "live",
+    note: "Say “I’m reading Frieren chapter 12”, “where can I watch Frieren”, “any updates on my manga”, or “Mihon repository”. Tachiyomi is dead. She will not hand out scanlation or stream-rip URLs.",
   },
   {
     ability: "News",

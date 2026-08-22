@@ -21,6 +21,10 @@ const STARTERS = [
     text: "What's the news? Local if you know my city, plus national and world.",
   },
   {
+    label: "Manga / anime",
+    text: "I'm an otaku. Where can I read Frieren and watch the anime legally? Also explain Mihon vs Tachiyomi.",
+  },
+  {
     label: "Run Python",
     text: "Run python: print(sum(range(10)))",
   },

@@ -13,9 +13,11 @@ import type {
   MemoryVault,
   Personality,
   Prefs,
+  ReadingItem,
   Reminder,
   TaskItem,
 } from "@/lib/types"
+import { isReadingItem, upsertReading as mergeReading } from "@/lib/otaku"
 
 const VAULT_KEY = "maya:vault"
 const LEGACY_VAULT_KEY = "mitra:vault"
@@ -68,6 +70,7 @@ export function bootVault(): MemoryVault {
     prefs: { ...DEFAULT_PREFS },
     reminders: [],
     tasks: [],
+    reading: [],
   }
 }
 
@@ -83,6 +86,7 @@ export function emptyVault(): MemoryVault {
     prefs: { ...DEFAULT_PREFS },
     reminders: [],
     tasks: [],
+    reading: [],
   }
 }
 
@@ -233,6 +237,9 @@ export function normalizeVault(value: unknown): MemoryVault | null {
           done: Boolean(item.done),
         }))
       : [],
+    reading: Array.isArray(raw.reading)
+      ? raw.reading.filter(isReadingItem)
+      : [],
   }
 }
 
@@ -267,6 +274,7 @@ function migrateLegacyVault(): MemoryVault | null {
     prefs: { ...DEFAULT_PREFS },
     reminders: [],
     tasks: [],
+    reading: [],
   }
 }
 
@@ -408,6 +416,7 @@ export function toExport(vault: MemoryVault): MayaExport {
     prefs: vault.prefs,
     reminders: vault.reminders,
     tasks: vault.tasks,
+    reading: vault.reading,
   }
 }
 
@@ -511,6 +520,23 @@ export function removeTask(vault: MemoryVault, id: string): MemoryVault {
   return {
     ...vault,
     tasks: vault.tasks.filter((item) => item.id !== id),
+  }
+}
+
+export function upsertReadingItem(
+  vault: MemoryVault,
+  item: ReadingItem
+): MemoryVault {
+  return {
+    ...vault,
+    reading: mergeReading(vault.reading ?? [], item),
+  }
+}
+
+export function removeReadingItem(vault: MemoryVault, id: string): MemoryVault {
+  return {
+    ...vault,
+    reading: (vault.reading ?? []).filter((item) => item.id !== id),
   }
 }
 

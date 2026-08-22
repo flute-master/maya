@@ -3,6 +3,7 @@ import { isFluteQuery } from "@/lib/flute"
 import { isMusicQuery, musicQuery } from "@/lib/music"
 import { extractHttpUrl } from "@/lib/search"
 import { isNewsQuery, newsAsk } from "@/lib/news"
+import { isOtakuQuery, otakuAsk } from "@/lib/otaku"
 import {
   isDirectionsQuery,
   isMapsQuery,
@@ -359,6 +360,26 @@ export function planTools(
       args: { action: "search", query: who.trim().slice(0, 80) },
       reason: "Search Google Contacts.",
       risk: "none",
+    })
+  }
+
+  if (isOtakuQuery(text)) {
+    const ask = otakuAsk(text)
+    add({
+      name: "otaku",
+      args: {
+        action: ask.action,
+        query: ask.query.slice(0, 160),
+        kind: ask.kind || "",
+        progress: ask.progressNum != null ? String(ask.progressNum) : "",
+      },
+      reason:
+        ask.action === "guide"
+          ? "Mihon and official reading — not pirate repos."
+          : ask.action === "updates"
+            ? "Check AniList for official updates on the shelf."
+            : "Official manga, novel, and episode links. Remember the shelf.",
+      risk: ask.action === "guide" || ask.action === "list" ? "none" : "net",
     })
   }
 

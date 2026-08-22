@@ -57,6 +57,7 @@ function streamHeaders(input: {
   confirm?: unknown
   maps?: string
   music?: string
+  reading?: string
 }) {
   const headers: Record<string, string> = {
     "Content-Type": "text/plain; charset=utf-8",
@@ -85,6 +86,10 @@ function streamHeaders(input: {
   if (input.music) {
     headers["X-Maya-Music"] = headerSafe(input.music)
     expose.push("X-Maya-Music")
+  }
+  if (input.reading) {
+    headers["X-Maya-Reading"] = headerSafe(input.reading)
+    expose.push("X-Maya-Reading")
   }
   headers["Access-Control-Expose-Headers"] = expose.join(", ")
   return headers
@@ -200,6 +205,14 @@ export async function POST(request: Request) {
         source: "YouTube",
       })
     : undefined
+  const readingItems = sage.results.flatMap((item) => item.reading ?? [])
+  const readingHeader = readingItems.length
+    ? JSON.stringify(readingItems.slice(0, 8))
+    : undefined
+  const readingLearn = readingItems.map(
+    (item) =>
+      `Reading ${item.kind}: ${item.title}${item.progress ? ` at ${item.progress}` : ""}`
+  )
 
   if (sage.pending.length) {
     return new Response(localStream(confirmCopy(sage.pending)), {
@@ -210,6 +223,7 @@ export async function POST(request: Request) {
         confirm: sage.pending,
         maps: mapsUrl,
         music: musicHeader,
+        reading: readingHeader,
       }),
     })
   }
@@ -229,6 +243,7 @@ export async function POST(request: Request) {
       result.detail &&
       (result.name === "weather" ||
         result.name === "news" ||
+        result.name === "otaku" ||
         result.name === "fetch_page" ||
         result.name === "maps" ||
         result.name === "calc" ||
@@ -259,6 +274,7 @@ export async function POST(request: Request) {
       "maps",
       "calc",
       "music",
+      "otaku",
       "flute",
       "google_calendar",
       "google_gmail",
@@ -352,10 +368,11 @@ export async function POST(request: Request) {
     headers: streamHeaders({
       mode,
       engine,
-      learn: lookup.learn,
+      learn: [...(lookup.learn ?? []), ...readingLearn],
       tools: toolTrace.length ? toolTrace : undefined,
       maps: mapsUrl,
       music: musicHeader,
+      reading: readingHeader,
     }),
   })
 }

@@ -1,4 +1,5 @@
 import { newId } from "@/lib/id"
+import { formatShelfLine } from "@/lib/otaku"
 import { intendedMeaning } from "@/lib/typos"
 import type {
   ChatMessage,
@@ -148,7 +149,11 @@ export function buildMemoryContext(
     .slice(0, 8)
     .map((item) => item.text)
 
-  return { notes, pastTitles, priorUserLines, reminders, tasks }
+  const reading = (vault.reading ?? [])
+    .slice(0, 20)
+    .map((item) => formatShelfLine(item))
+
+  return { notes, pastTitles, priorUserLines, reminders, tasks, reading }
 }
 
 export function formatMemoryForPrompt(memory: MemoryContext): string {
@@ -163,6 +168,12 @@ export function formatMemoryForPrompt(memory: MemoryContext): string {
     blocks.push(
       "Earlier conversations you still have:",
       ...memory.pastTitles.map((title) => `- ${title}`)
+    )
+  }
+  if (memory.reading?.length) {
+    blocks.push(
+      "Otaku shelf (manga / novels / anime they asked you to remember):",
+      ...memory.reading.slice(0, 16).map((line) => `- ${line}`)
     )
   }
   if (memory.priorUserLines.length) {

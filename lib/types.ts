@@ -1,4 +1,7 @@
 import type { AtmosphereId } from "@/lib/atmosphere"
+import type { ReadingItem } from "@/lib/otaku"
+
+export type { ReadingItem }
 
 export type Role = "user" | "assistant"
 
@@ -106,6 +109,7 @@ export type MemoryVault = {
   prefs: Prefs
   reminders: Reminder[]
   tasks: TaskItem[]
+  reading: ReadingItem[]
 }
 
 export type MemoryContext = {
@@ -114,6 +118,7 @@ export type MemoryContext = {
   priorUserLines: string[]
   reminders: string[]
   tasks: string[]
+  reading: string[]
 }
 
 export type SearchHit = {
@@ -149,4 +154,5 @@ export type MayaExport = {
   prefs?: Prefs
   reminders?: Reminder[]
   tasks?: TaskItem[]
+  reading?: ReadingItem[]
 }

@@ -13,6 +13,7 @@ export type ToolName =
   | "calc"
   | "music"
   | "flute"
+  | "otaku"
   | "google_calendar"
   | "google_gmail"
   | "google_drive"
@@ -36,6 +37,7 @@ export type ToolResult = {
   summary: string
   detail?: string
   url?: string
+  reading?: import("@/lib/otaku").ReadingItem[]
 }
 
 export type PendingConfirm = {

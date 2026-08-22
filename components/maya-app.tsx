@@ -64,8 +64,10 @@ import {
   patchTask,
   removeConversation,
   removeNote,
+  removeReadingItem,
   saveVault,
   startFreshConversation,
+  upsertReadingItem,
   upsertReminder,
   upsertTask,
   withActiveMessages,
@@ -659,6 +661,25 @@ export function MayaApp() {
           } catch {
             /* ignore bad learn payload */
           }
+          try {
+            const packed = response.headers.get("X-Maya-Reading")
+            if (packed) {
+              const items = JSON.parse(packed) as Array<
+                import("@/lib/otaku").ReadingItem
+              >
+              if (Array.isArray(items) && items.length) {
+                setVault((current) =>
+                  items.reduce(
+                    (next, item) =>
+                      item?.title ? upsertReadingItem(next, item) : next,
+                    current
+                  )
+                )
+              }
+            }
+          } catch {
+            /* ignore bad shelf payload */
+          }
           let tools: ChatMessage["tools"]
           let pending: ChatMessage["pending"]
           try {
@@ -1153,6 +1174,7 @@ export function MayaApp() {
           setVault((current) => ({ ...current, learned: { ...DEFAULT_LEARNED } }))
         }
         notes={vault.notes}
+        reading={vault.reading ?? []}
         conversations={vault.conversations}
         activeId={vault.activeId}
         storedCount={countStoredMessages(vault)}
@@ -1163,6 +1185,9 @@ export function MayaApp() {
         onImportFile={importMemory}
         onAddNote={(text) => setVault((current) => addNote(current, text))}
         onRemoveNote={(id) => setVault((current) => removeNote(current, id))}
+        onRemoveReading={(id) =>
+          setVault((current) => removeReadingItem(current, id))
+        }
         onOpenConversation={(id) =>
           setVault((current) => ({ ...current, activeId: id }))
         }

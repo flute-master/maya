@@ -13,6 +13,7 @@ import type {
   Energy,
   LearnedState,
   MemoryNote,
+  ReadingItem,
   Personality,
   Prefs,
   Tone,
@@ -56,6 +57,8 @@ export function SettingsSheet({
   onImportFile,
   onAddNote,
   onRemoveNote,
+  reading,
+  onRemoveReading,
   onOpenConversation,
   onRemoveConversation,
 }: {
@@ -78,6 +81,8 @@ export function SettingsSheet({
   onImportFile: (file: File) => Promise<void>
   onAddNote: (text: string) => void
   onRemoveNote: (id: string) => void
+  reading: ReadingItem[]
+  onRemoveReading: (id: string) => void
   onOpenConversation: (id: string) => void
   onRemoveConversation: (id: string) => void
 }) {
@@ -527,6 +532,7 @@ export function SettingsSheet({
                 <p className="text-sm font-medium">Saved on this device</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {storedCount} messages, {notes.length} notes,{" "}
+                  {reading.length} shelf titles,{" "}
                   {conversations.filter((item) => item.messages.length).length}{" "}
                   conversations. She writes herself to{" "}
                   <span className="font-medium text-foreground">
@@ -641,6 +647,49 @@ export function SettingsSheet({
                   No notes yet. Talk, or write one above.
                 </p>
               )}
+
+              <Separator />
+
+              <div>
+                <p className="text-sm font-medium">Otaku shelf</p>
+                <p className="mt-1 mb-2 text-xs text-muted-foreground">
+                  Manga, novels, and anime she is holding for you. Say “I&apos;m
+                  reading Frieren chapter 12” in chat. Official links only — no
+                  pirate repos.
+                </p>
+                {reading.length ? (
+                  <ul className="flex flex-col gap-2">
+                    {reading.map((item) => (
+                      <li
+                        key={item.id}
+                        className="flex items-start justify-between gap-2 rounded-lg bg-card px-3 py-2 text-sm ring-1 ring-foreground/8"
+                      >
+                        <span className="min-w-0 flex-1 leading-6">
+                          <span className="text-muted-foreground">
+                            {item.kind}
+                          </span>
+                          {" · "}
+                          {item.title}
+                          {item.progress ? ` · ${item.progress}` : ""}
+                        </span>
+                        <Button
+                          type="button"
+                          size="icon-xs"
+                          variant="ghost"
+                          aria-label={`Drop ${item.title} from the shelf`}
+                          onClick={() => onRemoveReading(item.id)}
+                        >
+                          <Trash2 />
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Empty. Tell her a title in chat.
+                  </p>
+                )}
+              </div>
 
               <Separator />
 

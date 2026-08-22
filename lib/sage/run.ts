@@ -6,6 +6,12 @@ import { evaluateCalc } from "@/lib/calc"
 import { findSong, musicReply } from "@/lib/music"
 import { lookupPlace, parseMapOrigin } from "@/lib/maps"
 import { fetchNews, type NewsAsk } from "@/lib/news"
+import {
+  parseShelfLines,
+  runOtaku,
+  type OtakuAction,
+  type OtakuKind,
+} from "@/lib/otaku"
 import { fetchWeather } from "@/lib/weather"
 import {
   listWorkspace,
@@ -247,6 +253,28 @@ async function execute(
         ok: true,
         summary: "Environment snapshot.",
         detail: bits.join(" "),
+      }
+    }
+    if (call.name === "otaku") {
+      const action = (call.args.action || "search") as OtakuAction
+      const kind = (call.args.kind || "") as OtakuKind | ""
+      const progress = Number(call.args.progress)
+      const ran = await runOtaku(
+        {
+          action,
+          query: call.args.query || "",
+          kind: kind || undefined,
+          progressNum: Number.isFinite(progress) && progress > 0 ? progress : undefined,
+        },
+        parseShelfLines(input.memory?.reading)
+      )
+      return {
+        name: "otaku",
+        ok: true,
+        summary: ran.hit.title,
+        detail: ran.hit.snippet,
+        url: ran.hit.url,
+        reading: ran.reading,
       }
     }
     if (call.name === "flute") {

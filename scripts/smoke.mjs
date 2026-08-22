@@ -278,6 +278,35 @@ async function main() {
     localNews.body.slice(0, 200).replace(/\s+/g, " ")
   )
 
+  const otaku = await chat("where can I watch Frieren legally")
+  ok("otaku 200", otaku.status === 200, `mode ${otaku.mode} ${otaku.ms}ms`)
+  ok(
+    "otaku uses the otaku tool",
+    otaku.status === 200 && has(otaku.tools || "", "otaku"),
+    otaku.tools || otaku.body.slice(0, 120)
+  )
+  ok(
+    "otaku gives official links, not pirate rips",
+    otaku.status === 200 &&
+      (has(otaku.body, "AniList") ||
+        has(otaku.body, "Crunchyroll") ||
+        has(otaku.body, "anilist.co")) &&
+      !has(otaku.body, "gogoanime") &&
+      !has(otaku.body, "9anime") &&
+      !has(otaku.body, "kissanime"),
+    otaku.body.slice(0, 220).replace(/\s+/g, " ")
+  )
+  const mihon = await chat("tachiyomi mihon repository")
+  ok(
+    "mihon guide names official Mihon, not pirate repos",
+    mihon.status === 200 &&
+      has(mihon.body, "mihon") &&
+      has(mihon.body, "github.com/mihonapp") &&
+      !has(mihon.body, "keiyoushi") &&
+      !has(mihon.body, "tachiyomi-extensions"),
+    mihon.body.slice(0, 240).replace(/\s+/g, " ")
+  )
+
   const maps = await chat("directions to Charminar")
   ok("maps 200", maps.status === 200)
   ok(
