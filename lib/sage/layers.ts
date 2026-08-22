@@ -46,9 +46,15 @@ export const SAGE_LAYERS: SageLayer[] = [
   },
   {
     ability: "Use skills",
-    how: "Tool loop: weather, maps, calculator, music, reminders, tasks, GitHub, files, Python, lookup, flute, Google APIs",
+    how: "Tool loop: weather, news, maps, calculator, music, reminders, tasks, GitHub, files, Python, lookup, flute, Google APIs",
     status: "live",
-    note: "Sage core picks tools, then the model talks from the results. Flute notes come from the teaching book or a clip, not a guessed film score.",
+    note: "Sage core picks tools, then the model talks from the results. Flute notes come from the teaching book or a clip, not a guessed film score. News is live RSS — local if she knows your city, plus national and world.",
+  },
+  {
+    ability: "News",
+    how: "Google News RSS (BBC / The Hindu fallback). Chat: what's the news, news in Hyderabad, national news, world news, news about elections",
+    status: "live",
+    note: "Headlines with source links. She does not invent stories. Local needs a city — from your notes, or name one.",
   },
   {
     ability: "Calculator",

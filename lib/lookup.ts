@@ -16,6 +16,7 @@ import {
 } from "@/lib/identity"
 import { factsFromHits } from "@/lib/learn"
 import { lookupPlace } from "@/lib/maps"
+import { fetchNews, isNewsQuery, newsAsk } from "@/lib/news"
 import { isDirectionsQuery, isMapsQuery, isWeatherQuery, mapsQuery, weatherPlace } from "@/lib/skills"
 import { intendedMeaning } from "@/lib/typos"
 import { fetchWeather } from "@/lib/weather"
@@ -115,6 +116,25 @@ export async function lookupWeb(
     }
   }
 
+  if (isNewsQuery(intended)) {
+    searched = true
+    const ask = newsAsk(intended, placeHint)
+    googleUrl = googleSearchUrl(
+      ask.topic
+        ? `${ask.topic} news`
+        : ask.place
+          ? `${ask.place} news`
+          : "today news headlines"
+    )
+    try {
+      const news = await fetchNews(ask)
+      if (news) hits.push(news)
+      else searchFailed = true
+    } catch {
+      searchFailed = true
+    }
+  }
+
   if (isMapsQuery(intended)) {
     searched = true
     const dest = mapsQuery(intended, placeHint)
@@ -150,6 +170,7 @@ export async function lookupWeb(
     !hits.some(
       (hit) =>
         hit.source === "Weather" ||
+        hit.source === "News" ||
         hit.source === "Maps" ||
         hit.source === "GitHub" ||
         hit.source === "Maya"

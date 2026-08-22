@@ -144,7 +144,11 @@ export async function POST(request: Request) {
   const learned = body.learned ?? DEFAULT_LEARNED
   const personality = overlayPersonality(body.personality, learned)
   const memory = body.memory
-  const hometown = hometownFromNotes(memory?.notes)
+  const identity = readPublicIdentity(
+    [...(memory?.notes ?? []), ...(memory?.priorUserLines ?? [])],
+    personality.callMe
+  )
+  const hometown = hometownFromNotes(memory?.notes) || identity.city
   const lastPlace =
     body.lastPlace?.trim() || lastPlaceFromMessages(history.slice(0, -1))
   const origin =
@@ -159,10 +163,6 @@ export async function POST(request: Request) {
       : hometown
         ? { place: hometown }
         : undefined
-  const identity = readPublicIdentity(
-    [...(memory?.notes ?? []), ...(memory?.priorUserLines ?? [])],
-    personality.callMe
-  )
   const allowSearch = body.allowSearch !== false
 
   const sage = await runSage({
@@ -228,6 +228,7 @@ export async function POST(request: Request) {
       result.ok &&
       result.detail &&
       (result.name === "weather" ||
+        result.name === "news" ||
         result.name === "fetch_page" ||
         result.name === "maps" ||
         result.name === "calc" ||
@@ -254,6 +255,7 @@ export async function POST(request: Request) {
       "fetch_page",
       "observe",
       "weather",
+      "news",
       "maps",
       "calc",
       "music",

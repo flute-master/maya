@@ -251,6 +251,33 @@ async function main() {
     weather.body.slice(0, 220).replace(/\s+/g, " ")
   )
 
+  const news = await chat("what's the news")
+  ok("news 200", news.status === 200, `mode ${news.mode} ${news.ms}ms`)
+  ok(
+    "news uses the news tool",
+    news.status === 200 && has(news.tools || "", "news"),
+    news.tools || news.body.slice(0, 120)
+  )
+  ok(
+    "news is live or honest, not invented",
+    news.status === 200 &&
+      (has(news.body, "Live headlines") ||
+        has(news.body, "Google News") ||
+        has(news.body, "headline") ||
+        has(news.body, "News lookup failed") ||
+        has(news.body, "No headlines")),
+    news.body.slice(0, 220).replace(/\s+/g, " ")
+  )
+  const localNews = await chat("news in Hyderabad")
+  ok(
+    "local news names Hyderabad or is honest",
+    localNews.status === 200 &&
+      (has(localNews.body, "Hyderabad") ||
+        has(localNews.body, "Live headlines") ||
+        has(localNews.body, "News lookup failed")),
+    localNews.body.slice(0, 200).replace(/\s+/g, " ")
+  )
+
   const maps = await chat("directions to Charminar")
   ok("maps 200", maps.status === 200)
   ok(

@@ -5,6 +5,7 @@ import type { MemoryContext } from "@/lib/types"
 import { evaluateCalc } from "@/lib/calc"
 import { findSong, musicReply } from "@/lib/music"
 import { lookupPlace, parseMapOrigin } from "@/lib/maps"
+import { fetchNews, type NewsAsk } from "@/lib/news"
 import { fetchWeather } from "@/lib/weather"
 import {
   listWorkspace,
@@ -87,6 +88,25 @@ async function execute(
         ok: true,
         summary: hit.title,
         detail: hit.snippet,
+      }
+    }
+    if (call.name === "news") {
+      const ask: NewsAsk = {
+        scope: (call.args.scope as NewsAsk["scope"]) || "briefing",
+        place: call.args.place || input.hometown || "",
+        country: call.args.country || "IN",
+        topic: call.args.topic || "",
+      }
+      const hit = await fetchNews(ask)
+      if (!hit) {
+        return { name: "news", ok: false, summary: "News lookup failed." }
+      }
+      return {
+        name: "news",
+        ok: true,
+        summary: hit.title,
+        detail: hit.snippet,
+        url: hit.url,
       }
     }
     if (call.name === "maps") {

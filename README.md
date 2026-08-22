@@ -65,6 +65,7 @@ Ask in chat, or use the paperclip / monitor / mic on the composer.
 - **Remember** — notes and chats on this machine (`data/maya-memory.json`). Refresh does not wipe her. **New** archives a thread; it does not erase memory
 - **Look up** — DuckDuckGo, Wikipedia, public GitHub. If search fails she gives you a Google link. She does not drive Chrome
 - **Weather** — `weather in Hyderabad` (live from wttr.in)
+- **News** — `what's the news`, `news in Hyderabad`, `national news`, `world news`, or `news about elections`. Live headlines from Google News RSS (BBC / The Hindu if Google is quiet). Local if she knows your city or you name one. She does not invent stories.
 - **Maps** — `directions to Charminar` (links only; no Google login)
 - **Reminders** — `remind me in 10 minutes to drink water`. They fire in this tab, not the phone Clock app
 - **Stories / jokes / puns** — ask

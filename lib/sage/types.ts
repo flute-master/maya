@@ -2,6 +2,7 @@ export type ToolName =
   | "recall"
   | "lookup"
   | "weather"
+  | "news"
   | "fetch_page"
   | "python"
   | "files_list"

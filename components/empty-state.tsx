@@ -17,6 +17,10 @@ const STARTERS = [
     text: "What's the weather in Hyderabad right now?",
   },
   {
+    label: "News",
+    text: "What's the news? Local if you know my city, plus national and world.",
+  },
+  {
     label: "Run Python",
     text: "Run python: print(sum(range(10)))",
   },

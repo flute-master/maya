@@ -2,6 +2,7 @@ import { calcExpr, isCalcQuery } from "@/lib/calc"
 import { isFluteQuery } from "@/lib/flute"
 import { isMusicQuery, musicQuery } from "@/lib/music"
 import { extractHttpUrl } from "@/lib/search"
+import { isNewsQuery, newsAsk } from "@/lib/news"
 import {
   isDirectionsQuery,
   isMapsQuery,
@@ -178,6 +179,21 @@ export function planTools(
       name: "weather",
       args: { place: weatherPlace(text, hometown) || hometown || "" },
       reason: "Live weather.",
+      risk: "net",
+    })
+  }
+
+  if (isNewsQuery(text)) {
+    const ask = newsAsk(text, hometown)
+    add({
+      name: "news",
+      args: {
+        scope: ask.scope,
+        place: ask.place || "",
+        country: ask.country,
+        topic: ask.topic || "",
+      },
+      reason: "Live headlines. Local, national, and world — not a guess.",
       risk: "net",
     })
   }
