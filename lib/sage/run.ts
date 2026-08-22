@@ -2,6 +2,8 @@ import type { PublicIdentity } from "@/lib/identity"
 import { lookupWeb } from "@/lib/lookup"
 import { readWebPage } from "@/lib/search"
 import type { MemoryContext } from "@/lib/types"
+import { evaluateCalc } from "@/lib/calc"
+import { findSong, musicReply } from "@/lib/music"
 import { lookupPlace, parseMapOrigin } from "@/lib/maps"
 import { fetchWeather } from "@/lib/weather"
 import {
@@ -110,6 +112,29 @@ async function execute(
         summary: hit.title,
         detail: hit.snippet,
         url: hit.url,
+      }
+    }
+    if (call.name === "calc") {
+      const result = evaluateCalc(call.args.expr || "")
+      if (!result.ok) {
+        return { name: "calc", ok: false, summary: result.error }
+      }
+      return {
+        name: "calc",
+        ok: true,
+        summary: result.text,
+        detail: `${call.args.expr || "expression"} = ${result.text}`,
+      }
+    }
+    if (call.name === "music") {
+      const track = await findSong(call.args.query || "")
+      const reply = musicReply(track)
+      return {
+        name: "music",
+        ok: Boolean(track.url),
+        summary: reply.summary,
+        detail: reply.detail,
+        url: reply.url,
       }
     }
     if (call.name === "fetch_page") {

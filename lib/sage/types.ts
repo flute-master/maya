@@ -9,6 +9,8 @@ export type ToolName =
   | "files_write"
   | "observe"
   | "maps"
+  | "calc"
+  | "music"
   | "flute"
   | "google_calendar"
   | "google_gmail"

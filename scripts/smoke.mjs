@@ -111,6 +111,7 @@ async function main() {
     "/api/runtime",
     "/api/model",
     "/api/train",
+    "/api/music",
   ]) {
     const hit = await req(path)
     ok(`GET ${path}`, hit.response.ok, `status ${hit.response.status}`)
@@ -279,6 +280,31 @@ async function main() {
       has(takeThere.body, "Charminar") &&
       has(takeThere.body, "google.com/maps"),
     takeThere.body.slice(0, 220).replace(/\s+/g, " ")
+  )
+
+  const percent = await chat("Calculate 15% of 80")
+  ok(
+    "calc 15% of 80 is 12, no Python confirm",
+    percent.status === 200 &&
+      has(percent.body, "12") &&
+      has(percent.tools || "", "calc") &&
+      !percent.confirm,
+    percent.body.slice(0, 180).replace(/\s+/g, " ")
+  )
+  const times = await chat("what's 7 * 8")
+  ok(
+    "calc 7*8 is 56",
+    times.status === 200 && has(times.body, "56") && has(times.tools || "", "calc"),
+    times.body.slice(0, 160).replace(/\s+/g, " ")
+  )
+
+  const song = await chat("Play tum hi ho on YouTube")
+  ok(
+    "music returns a YouTube link",
+    song.status === 200 &&
+      has(song.tools || "", "music") &&
+      (has(song.body, "youtube.com") || has(song.body, "youtu.be")),
+    song.body.slice(0, 220).replace(/\s+/g, " ")
   )
 
   const joke = await chat("tell me a one-line joke")

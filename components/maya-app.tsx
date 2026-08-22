@@ -1,14 +1,21 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { RotateCcw, SlidersHorizontal } from "lucide-react"
+import { Calculator, Music2, RotateCcw, SlidersHorizontal } from "lucide-react"
 
+import { CalcSheet } from "@/components/calc-sheet"
 import { ChatThread, type FollowAlong } from "@/components/chat-thread"
 import { Composer } from "@/components/composer"
 import { EmptyState } from "@/components/empty-state"
+import {
+  loadNowPlaying,
+  MusicDock,
+  saveNowPlaying,
+} from "@/components/music-dock"
 import { PlannerDock } from "@/components/planner-dock"
 import { SettingsSheet } from "@/components/settings-sheet"
 import { VoiceDock } from "@/components/voice-dock"
+import type { MusicTrack } from "@/lib/music"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DEFAULT_LEARNED, updateLearned } from "@/lib/adapt"
@@ -67,6 +74,9 @@ export function MayaApp() {
   const [vault, setVault] = useState(bootVault)
   const [bootReady, setBootReady] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [calcOpen, setCalcOpen] = useState(false)
+  const [musicOpen, setMusicOpen] = useState(false)
+  const [track, setTrack] = useState<MusicTrack | null>(null)
   const [isSending, setIsSending] = useState(false)
   const [gpuOk, setGpuOk] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -114,6 +124,7 @@ export function MayaApp() {
         return keepLiveVault(current, next)
       })
     })
+    setTrack(loadNowPlaying())
     return () => {
       cancelled = true
     }
@@ -634,6 +645,19 @@ export function MayaApp() {
           } catch {
             /* ignore */
           }
+          try {
+            const packed = response.headers.get("X-Maya-Music")
+            if (packed) {
+              const next = JSON.parse(packed) as MusicTrack
+              if (next?.url) {
+                setTrack(next)
+                saveNowPlaying(next)
+                setMusicOpen(true)
+              }
+            }
+          } catch {
+            /* ignore bad music payload */
+          }
           const mapsUrl = response.headers.get("X-Maya-Maps")
           if (mapsUrl && /^https:\/\/(www\.)?google\.com\/maps\//.test(mapsUrl)) {
             openMapsWindow(mapsUrl, mapsWinRef.current)
@@ -906,6 +930,26 @@ export function MayaApp() {
             type="button"
             variant="ghost"
             size="sm"
+            onClick={() => setCalcOpen(true)}
+            aria-label="Open calculator"
+          >
+            <Calculator />
+            Calculator
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setMusicOpen(true)}
+            aria-label="Open music player"
+          >
+            <Music2 />
+            Music
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
             onClick={startOver}
             disabled={isSending}
             aria-label="Start a new chat. Memory stays."
@@ -958,6 +1002,11 @@ export function MayaApp() {
               const last = retryRef.current
               if (last) void send(last, true)
             }}
+            onPlayMusic={(next) => {
+              setTrack(next)
+              saveNowPlaying(next)
+              setMusicOpen(true)
+            }}
             onAllowTools={(pending) => {
               const last = retryRef.current
               if (!last) return
@@ -994,6 +1043,19 @@ export function MayaApp() {
         <p className="px-4 text-center text-xs text-muted-foreground">
           {personality.name} answered with the local Ollama model on this machine.
         </p>
+      ) : null}
+
+      {track ? (
+        <div className="mx-auto flex w-full max-w-2xl items-center gap-2 px-4 pb-1">
+          <button
+            type="button"
+            className="min-w-0 flex-1 truncate rounded-xl bg-card px-3 py-2 text-left text-sm ring-1 ring-foreground/8"
+            onClick={() => setMusicOpen(true)}
+          >
+            <span className="text-muted-foreground">Now playing · </span>
+            {track.title}
+          </button>
+        </div>
       ) : null}
 
       <VoiceDock audioRef={liveRef} status={voiceStatus} />
@@ -1069,6 +1131,16 @@ export function MayaApp() {
         onRemoveConversation={(id) =>
           setVault((current) => removeConversation(current, id))
         }
+      />
+      <CalcSheet open={calcOpen} onOpenChange={setCalcOpen} />
+      <MusicDock
+        open={musicOpen}
+        onOpenChange={setMusicOpen}
+        track={track}
+        onTrack={(next) => {
+          setTrack(next)
+          saveNowPlaying(next)
+        }}
       />
     </div>
   )

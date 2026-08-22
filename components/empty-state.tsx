@@ -34,6 +34,14 @@ const STARTERS = [
     label: "Take me there",
     text: "Take me to Charminar",
   },
+  {
+    label: "Calculate",
+    text: "Calculate 15% of 240",
+  },
+  {
+    label: "Play a song",
+    text: "Play tum hi ho on YouTube",
+  },
 ]
 
 export function EmptyState({

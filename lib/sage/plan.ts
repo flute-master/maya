@@ -1,4 +1,6 @@
+import { calcExpr, isCalcQuery } from "@/lib/calc"
 import { isFluteQuery } from "@/lib/flute"
+import { isMusicQuery, musicQuery } from "@/lib/music"
 import { extractHttpUrl } from "@/lib/search"
 import {
   isDirectionsQuery,
@@ -32,9 +34,7 @@ function wantsPython(text: string) {
     /\b(run python|execute python|in python|python sandbox)\b/.test(lower) ||
     /\b(analyze|plot|mean|average|sum of|count rows)\b.{0,40}\b(csv|tsv|json|data|file)\b/.test(
       lower
-    ) ||
-    /\bcalculate\b/.test(lower) ||
-    /\bwhat(?:'s| is) \d[\d\s+\-*/().%]{2,}\d/.test(lower)
+    )
   )
 }
 
@@ -126,8 +126,26 @@ export function planTools(
     })
   }
 
+  if (isCalcQuery(text) && !pythonBlock(text)) {
+    add({
+      name: "calc",
+      args: { expr: calcExpr(text) },
+      reason: "Local calculator. No Python confirm.",
+      risk: "none",
+    })
+  }
+
+  if (isMusicQuery(text)) {
+    add({
+      name: "music",
+      args: { query: musicQuery(text) },
+      reason: "Find a YouTube play link.",
+      risk: "net",
+    })
+  }
+
   const py = pythonBlock(text) || (wantsPython(text) ? mathAsPython(text) : null)
-  if (py) {
+  if (py && !calls.some((item) => item.name === "calc")) {
     add({
       name: "python",
       args: { code: py },

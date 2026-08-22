@@ -4,6 +4,7 @@ import { hitsForModel, lookupWeb, type Lookup } from "@/lib/lookup"
 import { ollamaReady, replyWithOllama } from "@/lib/ollama"
 import { confirmCopy, formatToolContext, runSage } from "@/lib/sage/run"
 import { modelNeedsWeb } from "@/lib/search"
+import { youtubeEmbedUrl } from "@/lib/music"
 import { hometownFromNotes, lastPlaceFromMessages } from "@/lib/skills"
 import { readPublicIdentity } from "@/lib/identity"
 import { replyWithTrained, skipTinyNet, trainedReady } from "@/lib/trained"
@@ -55,6 +56,7 @@ function streamHeaders(input: {
   tools?: unknown
   confirm?: unknown
   maps?: string
+  music?: string
 }) {
   const headers: Record<string, string> = {
     "Content-Type": "text/plain; charset=utf-8",
@@ -79,6 +81,10 @@ function streamHeaders(input: {
   if (input.maps) {
     headers["X-Maya-Maps"] = headerSafe(input.maps)
     expose.push("X-Maya-Maps")
+  }
+  if (input.music) {
+    headers["X-Maya-Music"] = headerSafe(input.music)
+    expose.push("X-Maya-Music")
   }
   headers["Access-Control-Expose-Headers"] = expose.join(", ")
   return headers
@@ -183,6 +189,17 @@ export async function POST(request: Request) {
     })),
   ]
   const mapsUrl = sage.results.find((item) => item.name === "maps" && item.url)?.url
+  const musicHit = sage.results.find((item) => item.name === "music" && item.url)
+  const videoId = musicHit?.url?.match(/[?&]v=([A-Za-z0-9_-]{11})/)?.[1]
+  const musicHeader = musicHit
+    ? JSON.stringify({
+        title: musicHit.summary,
+        url: musicHit.url,
+        videoId,
+        embed: videoId ? youtubeEmbedUrl(videoId, true) : undefined,
+        source: "YouTube",
+      })
+    : undefined
 
   if (sage.pending.length) {
     return new Response(localStream(confirmCopy(sage.pending)), {
@@ -192,6 +209,7 @@ export async function POST(request: Request) {
         tools: toolTrace,
         confirm: sage.pending,
         maps: mapsUrl,
+        music: musicHeader,
       }),
     })
   }
@@ -209,7 +227,11 @@ export async function POST(request: Request) {
     if (
       result.ok &&
       result.detail &&
-      (result.name === "weather" || result.name === "fetch_page" || result.name === "maps")
+      (result.name === "weather" ||
+        result.name === "fetch_page" ||
+        result.name === "maps" ||
+        result.name === "calc" ||
+        result.name === "music")
     ) {
       lookup.hits.unshift({
         title: result.summary,
@@ -233,6 +255,8 @@ export async function POST(request: Request) {
       "observe",
       "weather",
       "maps",
+      "calc",
+      "music",
       "flute",
       "google_calendar",
       "google_gmail",
@@ -329,6 +353,7 @@ export async function POST(request: Request) {
       learn: lookup.learn,
       tools: toolTrace.length ? toolTrace : undefined,
       maps: mapsUrl,
+      music: musicHeader,
     }),
   })
 }

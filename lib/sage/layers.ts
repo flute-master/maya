@@ -46,9 +46,21 @@ export const SAGE_LAYERS: SageLayer[] = [
   },
   {
     ability: "Use skills",
-    how: "Tool loop: weather, maps, reminders, tasks, GitHub, files, Python, lookup, flute, Google APIs",
+    how: "Tool loop: weather, maps, calculator, music, reminders, tasks, GitHub, files, Python, lookup, flute, Google APIs",
     status: "live",
     note: "Sage core picks tools, then the model talks from the results. Flute notes come from the teaching book or a clip, not a guessed film score.",
+  },
+  {
+    ability: "Calculator",
+    how: "Local expression evaluator — no Python confirm. Header Calculator keypad too",
+    status: "live",
+    note: "15% of 240, 23*17, sqrt, pi. Heavy data work still goes through Python.",
+  },
+  {
+    ability: "Music player",
+    how: "YouTube search + in-app embed. Chat: play <song>. Header Music",
+    status: "live",
+    note: "I drop a watch link at minimum. I cannot log into Spotify or Apple Music.",
   },
   {
     ability: "Flute teacher",

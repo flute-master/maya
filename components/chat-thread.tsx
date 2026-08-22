@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 
-import { MapPin, Square, Volume2 } from "lucide-react"
+import { MapPin, Music2, Square, Volume2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -30,6 +30,7 @@ export function ChatThread({
   onStopSpeak,
   follow,
   onAllowTools,
+  onPlayMusic,
 }: {
   messages: ChatMessage[]
   companionName: string
@@ -42,6 +43,13 @@ export function ChatThread({
   onAllowTools?: (
     pending: NonNullable<ChatMessage["pending"]>
   ) => void
+  onPlayMusic?: (track: {
+    title: string
+    url: string
+    videoId?: string
+    embed?: string
+    source: string
+  }) => void
 }) {
   const endRef = useRef<HTMLDivElement>(null)
 
@@ -124,6 +132,21 @@ export function ChatThread({
                 Open Google Maps
               </Button>
             ) : null}
+            {!mine && youtubeFrom(message.content) && onPlayMusic ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="mt-1"
+                onClick={() => {
+                  const found = youtubeFrom(message.content)
+                  if (found) onPlayMusic(found)
+                }}
+              >
+                <Music2 />
+                Play in Maya
+              </Button>
+            ) : null}
             {!mine && message.tools?.length ? (
               <p className="max-w-[min(100%,38rem)] px-1 text-[11px] text-muted-foreground">
                 Used {message.tools.map((tool) => tool.name).join(" · ")}
@@ -187,6 +210,23 @@ const URL_SPLIT = /(https?:\/\/[^\s<>"']+)/g
 function mapsLinkFrom(content: string) {
   const match = content.match(/https:\/\/(?:www\.)?google\.com\/maps\/[^\s<>"']+/i)
   return match?.[0]?.replace(/[),.;]+$/g, "") || null
+}
+
+function youtubeFrom(content: string) {
+  const watch = content.match(
+    /https:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})[^\s<>"']*/i
+  )
+  if (!watch?.[1]) return null
+  const id = watch[1]
+  const title =
+    content.match(/Playing:\s*([^\n]+)/i)?.[1]?.trim() || "YouTube"
+  return {
+    title,
+    url: `https://www.youtube.com/watch?v=${id}`,
+    videoId: id,
+    embed: `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1`,
+    source: "YouTube",
+  }
 }
 
 function LinkedText({ content }: { content: string }) {

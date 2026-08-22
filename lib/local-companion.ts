@@ -357,7 +357,7 @@ function identityReply(personality: Personality, seed: string, text: string) {
   const youName = you(personality)
   const askingDo = /what can you (actually )?do/.test(text.toLowerCase())
   const canDo = [
-    "On this machine I can: talk in this tab, remember notes, look up weather and the web, open Google Maps when you say take me there (I ask this browser for your location if I need a start point — I cannot drive Chrome), set reminders here, write stories and jokes, teach flute (bansuri and the other kinds), give sargam for a song you name or a clip you drop, run Python you allow in data/workspace, and read files you drop with the paperclip.",
+    "On this machine I can: talk in this tab, remember notes, look up weather and the web, open Google Maps when you say take me there (I ask this browser for your location if I need a start point — I cannot drive Chrome), run a calculator (no Python confirm), play a song on YouTube in the Music player, set reminders here, write stories and jokes, teach flute (bansuri and the other kinds), give sargam for a song you name or a clip you drop, run Python you allow in data/workspace, and read files you drop with the paperclip.",
     "Connect Google in Customize → Lookup for Calendar, Gmail, Drive, Docs, Sheets, Tasks, and Contacts. A service account cannot open personal Gmail. Keep, Meet, and Photos are not these APIs.",
     "I cannot take over your mouse or see screenshot pixels unless you describe them.",
   ].join("\n\n")
