@@ -10,6 +10,7 @@ import {
   isDirectionsQuery,
   isJokeFollowUp,
   isMapsQuery,
+  isNearbyMapsQuery,
   isWeatherQuery,
   mapsQuery,
 } from "../../lib/skills"
@@ -29,6 +30,16 @@ test("refresh clears the screen command", () => {
   assert.equal(isClearScreenCommand("new chat"), true)
   assert.equal(intendedMeaning("new chat").toLowerCase(), "new chat")
   assert.equal(isClearScreenCommand("weather in Hyderabad"), false)
+})
+
+test("restaurants near me is a Maps search", () => {
+  assert.equal(isNearbyMapsQuery("restaurants near me"), true)
+  assert.equal(isMapsQuery("restaurants near me"), true)
+  assert.equal(isDirectionsQuery("restaurants near me"), false)
+  assert.match(mapsQuery("restaurants near me") || "", /restaurants near me/i)
+  assert.equal(isMapsQuery("I ate at a restaurant yesterday"), false)
+  assert.equal(isNearbyMapsQuery("are you near me"), false)
+  assert.ok(planTools("restaurants near me").some((call) => call.name === "maps" && call.args.mode === "search"))
 })
 
 test("way to metro is a maps / directions ask", () => {

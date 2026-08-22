@@ -147,7 +147,7 @@ Tools run only when the line clearly asks. Typos still count (`wafa` → way to,
 | --- | --- | --- |
 | **Talk** (default) | Anything else. Jokes, opinions, “I feel stuck”, cricket, “who are you to me” | — |
 | **New chat** | `refresh` · `reload` · `clear` · `clear the screen` · `new chat` · `start over` · `reset chat` | The header loop button is the same idea. Memory stays. |
-| **Maps** | `take me to` · `take us to` · `way to` · `ways to` · `directions to` · `navigate to` · `how to get` · `how to reach` · `how do I get` · `route to` · `drive me to` · `drop me at` · `get me to` · `let’s go to` · `I want to go to` · `path to` · `uber me to` · `open maps` · `google maps` · `map of` · `show the map` · `where is … located` | `I took the metro` · `Miyapur Metro is crowded` · a place name alone |
+| **Maps** | `take me to` · `way to` · `directions to` · `navigate to` · `how to get` · `how to reach` · `route to` · `open maps` · `map of` · **`restaurants near me`** · `cafes nearby` · `hotels around me` · `what’s near me` · `find ATMs near me` | `I took the metro` · `I ate at a restaurant yesterday` · a place name alone |
 | **Music / YouTube** | Line starts with `play` · `song` · `music` · `gaana` · `youtube` · or contains `play …` · `put on` · `listen to` · `sunaao` / `suna do` · `open youtube` | `I love that song` · naming a track in a story |
 | **Weather** | `weather in` / `for` / `at` · `what’s the weather` · `forecast` · `how hot is it` · `will it rain` · `is it raining` · `temperature in` · `aqi` / `air quality` · bare `weather` | `the weather was awful yesterday` |
 | **News** | `what’s the news` · `headlines` · `news today` · `local news` · `national news` · `world news` · `news in` / `about` / `from` | `I have good news` · chatting about a story you already heard |
@@ -331,6 +331,8 @@ Take me to Charminar
 Way to Miyapur Metro
 Directions to Charminar
 Take me there
+Restaurants near me
+Cafes nearby
 ```
 
 She **opens Google Maps in a new tab** as soon as she recognizes a place. Typo `Wafa Miyapur Metro` is treated as `way to Miyapur Metro`. She does not drive Chrome or log into Google for maps. If a popup is blocked, use the Maps mark under her reply.

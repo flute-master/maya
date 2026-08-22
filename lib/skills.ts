@@ -55,6 +55,28 @@ export function isVaguePlace(place: string | undefined): boolean {
   return !place || VAGUE_PLACE.test(place.trim())
 }
 
+const NEAR_HERE =
+  /\b(near me|nearby|around me|around here|close to me|close by)\b/i
+const NEAR_PLACE =
+  /\b(restaurants?|cafes?|coffee shops?|food|eat|dining|hotels?|atms?|pharmac(?:y|ies)|hospitals?|clinics?|petrol|gas stations?|parking|grocer(?:y|ies)|supermarkets?|malls?|parks?|bars?|pubs?|temples?|mosques?|churches?|places?( to eat)?|lunch|dinner)\b/i
+
+/** “restaurants near me” — Maps search, not a story about a restaurant. */
+export function isNearbyMapsQuery(text: string): boolean {
+  const lower = intendedMeaning(text).toLowerCase()
+  if (!NEAR_HERE.test(lower)) return false
+  const words = lower.split(/\s+/).filter(Boolean).length
+  if (NEAR_PLACE.test(lower) && words <= 10) return true
+  if (
+    NEAR_PLACE.test(lower) &&
+    /\b(find|show|search|check|look for|open|where|any|best|good|map)\b/.test(lower)
+  ) {
+    return true
+  }
+  return /\b(find|show|search|check|look for|open|what(?:'s| is))\b.{0,24}\b(near me|nearby|around (me|here))\b/.test(
+    lower
+  )
+}
+
 export function isDirectionsQuery(text: string): boolean {
   const lower = intendedMeaning(text).toLowerCase()
   return /\b(take me( to)?|take us to|directions?( to)?|navigate to|route to|how do i get|how to get|how to reach|way to|ways to|drive me to|drop me( at| to)?|get me (there|to)|let'?s go to|i want to go to|bring me to|uber me to|path to)\b/.test(
@@ -66,6 +88,7 @@ export function isMapsQuery(text: string): boolean {
   const lower = intendedMeaning(text).toLowerCase()
   return (
     isDirectionsQuery(lower) ||
+    isNearbyMapsQuery(lower) ||
     /\b(google maps|on (the )?map|show (me )?the map|where is .+ (located|on the map)|open (google )?maps)\b/.test(
       lower
     ) ||
@@ -114,6 +137,14 @@ export function mapsQuery(
   lastPlace?: string
 ): string | undefined {
   text = intendedMeaning(text)
+  if (isNearbyMapsQuery(text)) {
+    const cleaned = tidyPlace(
+      text
+        .replace(/^(can you |could you |please |just )/i, "")
+        .replace(/\b(check|find|show me|show|search for|look for|open)\s+/i, "")
+    )
+    return cleaned || "places near me"
+  }
   const dest = text.match(
     /\b(?:directions?|navigate|route|take me|take us|drive me|drop me|bring me|uber me|get me|how do i get|how to get|how to reach|way to|ways to|path to|towards|let'?s go|i want to go)\s+(?:to\s+)?(.+)$/i
   )

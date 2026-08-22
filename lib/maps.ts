@@ -44,7 +44,8 @@ export async function lookupPlace(
 ): Promise<SearchHit | null> {
   const q = query.trim()
   if (q.length < 2) return null
-  const directions = options?.directions !== false
+  const nearby = /\b(near me|nearby|around me|around here)\b/i.test(q)
+  const directions = !nearby && options?.directions !== false
   const maps = googleMapsSearchUrl(q)
   const dirs = googleMapsDirUrl(q, options?.origin)
   const primary = directions ? dirs : maps
@@ -54,6 +55,20 @@ export async function lookupPlace(
       ? "I used this browser's location as the start."
       : `I started from ${options.origin.place}.`
     : "Google Maps will ask for your location when the window opens if I do not have a start point."
+
+  if (nearby) {
+    return {
+      title: q,
+      snippet: [
+        `Opening Google Maps for ${q}.`,
+        "Allow location when the map asks — that is how “near me” works. I cannot drive Chrome.",
+        `Google Maps: ${maps}`,
+        `OpenStreetMap: ${osmSearch}`,
+      ].join("\n"),
+      source: "Maps",
+      url: maps,
+    }
+  }
 
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), 6000)

@@ -83,6 +83,7 @@ const WORD_FIXES: Record<string, string> = {
   realy: "really",
   recieveing: "receiving",
   resturant: "restaurant",
+  resturants: "restaurants",
   seperately: "separately",
   "tommorow's": "tomorrow's",
   wierd: "weird",
