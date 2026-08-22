@@ -1,7 +1,15 @@
 "use client"
 
 import { useEffect, useRef, useState, type ReactNode } from "react"
-import { Download, Trash2, Upload } from "lucide-react"
+import {
+  Brain,
+  Download,
+  Flame,
+  Globe,
+  Mic,
+  Trash2,
+  Upload,
+} from "lucide-react"
 
 import { RoomPicker } from "@/components/room-picker"
 import { BONDS, isSage } from "@/lib/bonds"
@@ -281,12 +289,32 @@ export function SettingsSheet({
 
         <Tabs defaultValue="presence" className="min-h-0 flex-1 overflow-hidden p-0">
           <div className="px-4 pt-3">
-            <TabsList className="grid h-auto w-full grid-cols-3 group-data-horizontal/tabs:h-auto sm:grid-cols-5">
-              <TabsTrigger value="presence">Presence</TabsTrigger>
-              <TabsTrigger value="voice">Voice</TabsTrigger>
-              <TabsTrigger value="memory">Memory</TabsTrigger>
-              <TabsTrigger value="search">Lookup</TabsTrigger>
-              <TabsTrigger value="system">System</TabsTrigger>
+            <TabsList className="grid h-auto w-full grid-cols-5">
+              <TabsTrigger value="presence" title="Presence" aria-label="Presence">
+                <Flame />
+                <span className="sr-only">Presence</span>
+              </TabsTrigger>
+              <TabsTrigger value="voice" title="Voice" aria-label="Voice">
+                <Mic />
+                <span className="sr-only">Voice</span>
+              </TabsTrigger>
+              <TabsTrigger value="memory" title="Memory" aria-label="Memory">
+                <Brain />
+                <span className="sr-only">Memory</span>
+              </TabsTrigger>
+              <TabsTrigger value="search" title="Lookup" aria-label="Lookup">
+                <Globe />
+                <span className="sr-only">Lookup</span>
+              </TabsTrigger>
+              <TabsTrigger value="system" title="System" aria-label="System">
+                <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
+                  <path
+                    fill="currentColor"
+                    d="M4 5h6v6H4V5zm10 0h6v4h-6V5zM4 13h4v6H4v-6zm6-2h10v2H10v-2zm0 4h10v4H10v-4z"
+                  />
+                </svg>
+                <span className="sr-only">System</span>
+              </TabsTrigger>
             </TabsList>
           </div>
 

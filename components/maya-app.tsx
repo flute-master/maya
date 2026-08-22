@@ -1,7 +1,17 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Calculator, Music2, RotateCcw, SlidersHorizontal } from "lucide-react"
+import {
+  Calculator,
+  CloudOff,
+  Cpu,
+  Music2,
+  RotateCcw,
+  Search,
+  SlidersHorizontal,
+  Sparkles,
+  Wifi,
+} from "lucide-react"
 
 import { CalcSheet } from "@/components/calc-sheet"
 import { ChatThread, type FollowAlong } from "@/components/chat-thread"
@@ -12,6 +22,7 @@ import {
   MusicDock,
   saveNowPlaying,
 } from "@/components/music-dock"
+import { MayaMark } from "@/components/maya-mark"
 import { PlannerDock } from "@/components/planner-dock"
 import { SettingsSheet } from "@/components/settings-sheet"
 import type { MusicTrack } from "@/lib/music"
@@ -1060,27 +1071,71 @@ export function MayaApp() {
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="size-2 shrink-0 rounded-full bg-primary shadow-[0_0_12px_var(--primary)]" />
+            <MayaMark className="size-7 shrink-0 text-primary" />
             <h1 className="font-heading truncate text-lg font-medium tracking-tight">
               {personality.name}
             </h1>
-            <Badge variant="outline" className="hidden sm:inline-flex">
-              {!online
-                ? "Offline"
-                : mode === "sage"
-                  ? "Sage core"
-                  : mode === "search"
-                    ? "Looked up"
-                    : mode === "trained"
-                      ? "Trained net"
-                      : mode === "model"
-                        ? "Local model"
-                        : mode === "device"
-                          ? "On-device"
-                          : "On this machine"}
+            <Badge
+              variant="outline"
+              className="hidden sm:inline-flex gap-1"
+              title={
+                !online
+                  ? "Offline"
+                  : mode === "sage"
+                    ? "Sage core"
+                    : mode === "search"
+                      ? "Looked up"
+                      : mode === "trained"
+                        ? "Trained net"
+                        : mode === "model"
+                          ? "Local model"
+                          : mode === "device"
+                            ? "On-device"
+                            : "On this machine"
+              }
+            >
+              {!online ? (
+                <CloudOff className="size-3.5" />
+              ) : mode === "search" ? (
+                <Search className="size-3.5" />
+              ) : mode === "trained" || mode === "model" || mode === "device" ? (
+                <Cpu className="size-3.5" />
+              ) : mode === "sage" ? (
+                <Sparkles className="size-3.5" />
+              ) : (
+                <Wifi className="size-3.5" />
+              )}
+              <span className="sr-only">
+                {!online
+                  ? "Offline"
+                  : mode === "sage"
+                    ? "Sage core"
+                    : mode === "search"
+                      ? "Looked up"
+                      : mode === "trained"
+                        ? "Trained net"
+                        : mode === "model"
+                          ? "Local model"
+                          : mode === "device"
+                            ? "On-device"
+                            : "On this machine"}
+              </span>
             </Badge>
-            <Badge variant="secondary" className="hidden sm:inline-flex">
-              {PRESENCE_LABEL[presence]}
+            <Badge
+              variant="secondary"
+              className="hidden sm:inline-flex"
+              title={PRESENCE_LABEL[presence]}
+            >
+              <span
+                className={`size-1.5 rounded-full ${
+                  presence === "error"
+                    ? "bg-destructive"
+                    : presence === "idle"
+                      ? "bg-primary/70"
+                      : "bg-primary animate-pulse"
+                }`}
+              />
+              <span className="sr-only">{PRESENCE_LABEL[presence]}</span>
             </Badge>
           </div>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
@@ -1094,42 +1149,42 @@ export function MayaApp() {
           <Button
             type="button"
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={() => setCalcOpen(true)}
             aria-label="Open calculator"
+            title="Calculator"
           >
             <Calculator />
-            Calculator
           </Button>
           <Button
             type="button"
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={() => setMusicOpen(true)}
             aria-label="Open music player"
+            title="Music"
           >
             <Music2 />
-            Music
           </Button>
           <Button
             type="button"
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={startOver}
             aria-label="Start a new chat. Memory stays."
+            title="New chat"
           >
             <RotateCcw />
-            New chat
           </Button>
           <Button
             type="button"
             variant="outline"
-            size="sm"
+            size="icon"
             onClick={() => setSettingsOpen(true)}
             aria-label="Customize Maya"
+            title="Customize"
           >
             <SlidersHorizontal />
-            Customize
           </Button>
         </nav>
         </div>

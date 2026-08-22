@@ -21,9 +21,11 @@ export function RoomPicker({
             type="button"
             onClick={() => onPick(skin.id)}
             aria-pressed={selected}
+            title={skin.label}
+            aria-label={skin.label}
             className={
               compact
-                ? `rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                ? `rounded-full border p-1.5 transition-colors ${
                     selected
                       ? "border-primary bg-primary/15 text-foreground"
                       : "border-border bg-card text-muted-foreground hover:text-foreground"
@@ -37,11 +39,15 @@ export function RoomPicker({
           >
             <span className="inline-flex items-center gap-2">
               <span
-                className="size-2.5 shrink-0 rounded-full ring-1 ring-foreground/20"
+                className={
+                  compact
+                    ? "size-5 shrink-0 rounded-full ring-1 ring-foreground/20"
+                    : "size-2.5 shrink-0 rounded-full ring-1 ring-foreground/20"
+                }
                 style={{ background: skin.swatch }}
                 aria-hidden
               />
-              <span className={compact ? "" : "text-sm font-medium text-foreground"}>
+              <span className={compact ? "sr-only" : "text-sm font-medium text-foreground"}>
                 {skin.label}
               </span>
               {!compact && selected ? (

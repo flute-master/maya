@@ -1,73 +1,48 @@
 "use client"
 
-import { Sparkles } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
+import {
+  BookOpen,
+  Brain,
+  Calculator,
+  CalendarDays,
+  CloudSun,
+  Flame,
+  MapPin,
+  Music2,
+  Newspaper,
+  Scale,
+  ScrollText,
+  Sparkles,
+  Terminal,
+  Tv,
+} from "lucide-react"
 
+import { MayaMark } from "@/components/maya-mark"
 import { RoomPicker } from "@/components/room-picker"
 import { Button } from "@/components/ui/button"
 import type { AtmosphereId } from "@/lib/atmosphere"
-import { SAGE_SAMPLE } from "@/lib/speak"
 
-const STARTERS = [
-  {
-    label: "What do you remember",
-    text: "What do you remember about me?",
-  },
-  {
-    label: "Analyze",
-    text: "Analyze whether I should buy this laptop.",
-  },
-  {
-    label: "Plan my weekend",
-    text: "Plan my weekend.",
-  },
-  {
-    label: "Tell me a story",
-    text: "Write me a short story about a night bus in Hyderabad.",
-  },
-  {
-    label: "Weather",
-    text: "What's the weather in Hyderabad right now?",
-  },
-  {
-    label: "News",
-    text: "What's the news? Local if you know my city, plus national and world.",
-  },
-  {
-    label: "Manga / anime",
-    text: "Where can I read Frieren and watch the anime legally?",
-  },
-  {
-    label: "Mihon",
-    text: "Tachiyomi or Mihon — how do I read manga on my phone?",
-  },
-  {
-    label: "Run Python",
-    text: "Run python: print(sum(range(10)))",
-  },
-  {
-    label: "Calendar",
-    text: "What's on my Google Calendar today?",
-  },
-  {
-    label: "What can you do",
-    text: "What can you actually do on this machine?",
-  },
-  {
-    label: "Flute",
-    text: "Teach me flute. I am a beginner.",
-  },
-  {
-    label: "Take me there",
-    text: "Take me to Charminar",
-  },
-  {
-    label: "Calculate",
-    text: "Calculate 15% of 240",
-  },
-  {
-    label: "Play a song",
-    text: "Play tum hi ho on YouTube",
-  },
+const STARTERS: Array<{
+  label: string
+  text: string
+  icon: LucideIcon
+}> = [
+  { label: "Remember", text: "What do you remember about me?", icon: Brain },
+  { label: "Analyze", text: "Analyze whether I should buy this laptop.", icon: Scale },
+  { label: "Plan", text: "Plan my weekend.", icon: CalendarDays },
+  { label: "Story", text: "Write me a short story about a night bus in Hyderabad.", icon: ScrollText },
+  { label: "Weather", text: "What's the weather in Hyderabad right now?", icon: CloudSun },
+  { label: "News", text: "What's the news? Local if you know my city, plus national and world.", icon: Newspaper },
+  { label: "Manga", text: "Where can I read Frieren and watch the anime legally?", icon: BookOpen },
+  { label: "Mihon", text: "Tachiyomi or Mihon — how do I read manga on my phone?", icon: Tv },
+  { label: "Python", text: "Run python: print(sum(range(10)))", icon: Terminal },
+  { label: "Calendar", text: "What's on my Google Calendar today?", icon: CalendarDays },
+  { label: "Skills", text: "What can you actually do on this machine?", icon: Sparkles },
+  { label: "Flute", text: "Teach me flute. I am a beginner.", icon: Flame },
+  { label: "Maps", text: "Take me to Charminar", icon: MapPin },
+  { label: "Calc", text: "Calculate 15% of 240", icon: Calculator },
+  { label: "Music", text: "Play tum hi ho on YouTube", icon: Music2 },
 ]
 
 export function EmptyState({
@@ -101,30 +76,25 @@ export function EmptyState({
     <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-12 text-center">
       <div className="relative mb-8">
         <div className="pointer-events-none absolute inset-0 -m-10 rounded-full bg-primary/20 blur-3xl" />
-        <div className="relative flex size-16 items-center justify-center rounded-full bg-card ring-1 ring-foreground/10">
-          <Sparkles className="size-6 text-primary" />
+        <div className="relative flex size-16 items-center justify-center rounded-full bg-card text-primary ring-1 ring-foreground/10">
+          <MayaMark className="size-10" />
         </div>
       </div>
       <h1 className="font-heading text-4xl font-medium tracking-tight text-foreground sm:text-5xl">
         {name}
       </h1>
       <div className="mt-5 flex w-full flex-col items-center gap-2">
-        <p className="text-xs text-muted-foreground">The room</p>
-        <RoomPicker
-          compact
-          value={atmosphere}
-          onPick={onAtmosphere}
-        />
+        <RoomPicker compact value={atmosphere} onPick={onAtmosphere} />
       </div>
       <p className="mt-4 max-w-sm text-base leading-7 text-muted-foreground">
         {returning
           ? `You're back${who ? `, ${who}` : ""}. I still have us — pick up wherever.`
-          : "Inner sage. Always with you. I think, I stay, I use tools on this machine — lookup, files, Python you allow, reminders. I do not take over your desktop. A local model answers when one is running."}
+          : "Inner sage. Always with you. Tools on this machine. I do not take over your desktop."}
       </p>
       <p className="mt-3 max-w-sm text-sm text-muted-foreground">
         {modelReady
-          ? `Local model live${modelName ? `: ${modelName}` : ""}. World facts still get a lookup when the network is on.`
-          : "She answers now. The optional on-device brain (~0.9 GB, Chrome/Edge) downloads in the background only if you ask — or install Ollama later."}
+          ? `Local model live${modelName ? `: ${modelName}` : ""}.`
+          : "She answers now. Load a local brain later if you want."}
       </p>
       {onLoadDevice ? (
         <Button
@@ -133,16 +103,10 @@ export function EmptyState({
           className="mt-3"
           onClick={onLoadDevice}
         >
-          Load on-device brain
+          <Brain />
+          <span className="sr-only">Load on-device brain</span>
         </Button>
       ) : null}
-      <p className="font-heading mt-6 max-w-sm text-sm leading-6 text-foreground/90">
-        “{SAGE_SAMPLE}”
-      </p>
-      <p className="mt-2 max-w-sm text-xs text-muted-foreground">
-        Inner sage, Indian English — not the anime character. Spoken replies
-        stay on unless you mute them in the composer.
-      </p>
       {past.length > 0 ? (
         <div className="mt-6 flex w-full flex-col gap-2">
           {past.map((item) => (
@@ -153,23 +117,30 @@ export function EmptyState({
               className="h-auto justify-start truncate rounded-xl px-3 py-2 text-left"
               onClick={() => onOpenPast(item.id)}
             >
-              Continue: {item.title}
+              {item.title}
             </Button>
           ))}
         </div>
       ) : null}
-      <div className="mt-8 flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-center">
-        {STARTERS.map((starter) => (
-          <Button
-            key={starter.label}
-            type="button"
-            variant="outline"
-            className="h-auto rounded-full px-4 py-2.5 text-left whitespace-normal"
-            onClick={() => onStart(starter.text)}
-          >
-            {starter.label}
-          </Button>
-        ))}
+      <div className="mt-8 grid w-full grid-cols-3 gap-2 sm:grid-cols-5">
+        {STARTERS.map((starter) => {
+          const Icon = starter.icon
+          return (
+            <button
+              key={starter.label}
+              type="button"
+              title={starter.text}
+              aria-label={starter.label}
+              onClick={() => onStart(starter.text)}
+              className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-card px-2 py-3 text-foreground transition-colors hover:border-primary/50 hover:bg-primary/10"
+            >
+              <Icon className="size-5 text-primary" aria-hidden />
+              <span className="text-[10px] font-medium tracking-wide text-muted-foreground">
+                {starter.label}
+              </span>
+            </button>
+          )
+        })}
       </div>
     </div>
   )

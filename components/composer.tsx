@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from "react"
-import { ArrowUp, Mic, Monitor, Paperclip, Square } from "lucide-react"
+import { ArrowUp, Mic, Monitor, Paperclip, Square, Volume2, VolumeOff } from "lucide-react"
 
 import { Button, buttonVariants } from "@/components/ui/button"
 import { canListen, startListening, type ListenHandle } from "@/lib/listen"
@@ -249,22 +249,25 @@ export function Composer({
           {speaking ? (
             <Button
               type="button"
-              size="xs"
+              size="icon-xs"
               variant="ghost"
               onClick={onStopSpeak}
+              aria-label="Stop voice"
+              title="Stop voice"
             >
               <Square />
-              Stop voice
             </Button>
           ) : null}
           <Button
             type="button"
-            size="xs"
+            size="icon-xs"
             variant={speakReplies ? "secondary" : "ghost"}
             aria-pressed={speakReplies}
+            aria-label={speakReplies ? "Spoken replies on" : "Text only"}
+            title={speakReplies ? "Spoken replies on" : "Text only"}
             onClick={() => onSpeakRepliesChange(!speakReplies)}
           >
-            {speakReplies ? "Spoken replies on" : "Text only"}
+            {speakReplies ? <Volume2 /> : <VolumeOff />}
           </Button>
         </div>
       </div>
