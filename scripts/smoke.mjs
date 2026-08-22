@@ -201,10 +201,12 @@ async function main() {
 
   const sendMail = await chat("send an email to test@example.com subject: hi")
   ok(
-    "gmail send asks before writing",
+    "gmail send is honest",
     sendMail.status === 200 &&
-      Boolean(sendMail.confirm && has(sendMail.confirm, "google_gmail")) &&
-      has(sendMail.body, "Allow"),
+      !has(sendMail.body, "Sent mail") &&
+      (has(sendMail.body, "Connect Google") ||
+        (Boolean(sendMail.confirm && has(sendMail.confirm, "google_gmail")) &&
+          has(sendMail.body, "Allow"))),
     sendMail.body.slice(0, 180).replace(/\s+/g, " ")
   )
 

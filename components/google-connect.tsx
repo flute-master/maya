@@ -172,7 +172,13 @@ export function GoogleConnect({
           />
         </Field>
         <div className="flex flex-wrap gap-2">
-          <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => void saveClient()}>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={busy || !clientId.trim() || !clientSecret.trim()}
+            onClick={() => void saveClient()}
+          >
             Save client
           </Button>
           <Button type="button" size="sm" disabled={busy} onClick={() => void connect()}>

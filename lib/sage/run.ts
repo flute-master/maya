@@ -22,6 +22,7 @@ import type {
 } from "@/lib/sage/types"
 import { runFluteTool } from "@/lib/flute"
 import { runGoogleTool } from "@/lib/google/apps"
+import { googleStatus } from "@/lib/google/auth"
 import { indexDocuments, retrieve } from "@/lib/sage/vectors"
 
 function approved(call: ToolCall, granted: ToolApproval[]) {
@@ -233,8 +234,25 @@ export async function runSage(input: {
   const granted = input.approved ?? []
   const pending: PendingConfirm[] = []
   const runnable: ToolCall[] = []
+  const status = calls.some((call) => call.name.startsWith("google_"))
+    ? await googleStatus()
+    : null
   for (const call of calls) {
     if (needsAsk(call, input.trust) && !approved(call, granted)) {
+      const googleReady =
+        call.name === "google_gmail"
+          ? Boolean(status?.canGmail)
+          : call.name === "google_calendar"
+            ? Boolean(status?.canCalendar)
+            : call.name === "google_tasks"
+              ? Boolean(status?.canTasks)
+              : call.name.startsWith("google_")
+                ? Boolean(status?.canDrive)
+                : true
+      if (call.name.startsWith("google_") && !googleReady) {
+        runnable.push(call)
+        continue
+      }
       pending.push({
         name: call.name,
         args: call.args,

@@ -263,7 +263,7 @@ export function SettingsSheet({
 
         <Tabs defaultValue="presence" className="min-h-0 flex-1 overflow-hidden p-0">
           <div className="px-4 pt-3">
-            <TabsList className="grid h-auto w-full grid-cols-2 sm:grid-cols-4">
+            <TabsList className="grid h-auto w-full grid-cols-2 group-data-horizontal/tabs:h-auto sm:grid-cols-4">
               <TabsTrigger value="presence">Presence</TabsTrigger>
               <TabsTrigger value="voice">Voice</TabsTrigger>
               <TabsTrigger value="memory">Memory</TabsTrigger>

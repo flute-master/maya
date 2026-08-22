@@ -831,7 +831,7 @@ export function MayaApp() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <header className="flex items-center justify-between gap-3 border-b border-border/80 px-4 py-3">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border/80 px-4 py-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="size-2 shrink-0 rounded-full bg-primary shadow-[0_0_12px_var(--primary)]" />
@@ -864,7 +864,7 @@ export function MayaApp() {
             variant="ghost"
             size="sm"
             onClick={startOver}
-            disabled={empty && !error}
+            disabled={isSending}
             aria-label="Start a new chat. Memory stays."
           >
             <RotateCcw />

@@ -324,7 +324,7 @@ export function Composer({
               className="pointer-events-none"
               tabIndex={-1}
               multiple
-              accept=".txt,.md,.csv,.json,.py,.ts,.js,.html,.css,.log,.wav,.mp3,.m4a,.ogg,audio/*"
+              accept=".txt,.md,.csv,.json,.py,.ts,.js,.html,.css,.log,.png,.jpg,.jpeg,.webp,.gif,.wav,.mp3,.m4a,.ogg,audio/*,image/*"
               onChange={(event) => {
                 const list = event.target.files
                 event.target.value = ""
@@ -362,10 +362,10 @@ export function Composer({
           <button
             type="submit"
             aria-label="Send"
+            disabled={!filled}
             className={cn(
               buttonVariants({ size: "icon-lg" }),
-              "ml-auto rounded-full",
-              !filled && "opacity-60"
+              "ml-auto rounded-full"
             )}
           >
             <ArrowUp />
