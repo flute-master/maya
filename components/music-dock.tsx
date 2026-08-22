@@ -93,7 +93,7 @@ export function MusicDock({
         <SheetHeader className="border-b border-border">
           <SheetTitle className="flex items-center gap-2">
             <YouTubeMark className="size-6" />
-            <span className="sr-only">Music</span>
+            Music
           </SheetTitle>
           <SheetDescription>
             Free YouTube player. Say “play tum hi ho” in chat, or search here. Not

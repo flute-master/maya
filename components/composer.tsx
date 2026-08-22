@@ -320,12 +320,10 @@ export function Composer({
             title="Attach a file Maya can read or hear"
             aria-label="Add files to Maya's workspace"
           >
-            <Paperclip className="pointer-events-none" />
+            <Paperclip />
             <input
               type="file"
-              hidden
-              className="pointer-events-none"
-              tabIndex={-1}
+              className="absolute inset-0 cursor-pointer opacity-0"
               multiple
               accept=".txt,.md,.csv,.json,.py,.ts,.js,.html,.css,.log,.png,.jpg,.jpeg,.webp,.gif,.wav,.mp3,.m4a,.ogg,audio/*,image/*"
               onChange={(event) => {

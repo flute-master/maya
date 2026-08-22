@@ -140,7 +140,7 @@ export function GoogleConnect({
     <div className="rounded-xl bg-card p-3 ring-1 ring-foreground/8">
       <p className="flex items-center gap-2 text-sm font-medium">
         <GoogleMark className="size-4" />
-        <span className="sr-only">Google apps</span>
+        Google apps
       </p>
       <p className="mt-1 text-sm text-muted-foreground">
         A service account cannot open your personal Gmail or Calendar. Connect

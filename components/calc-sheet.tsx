@@ -69,7 +69,7 @@ export function CalcSheet({
         <SheetHeader className="border-b border-border">
           <SheetTitle className="flex items-center gap-2">
             <Calculator className="size-5" />
-            <span className="sr-only">Calculator</span>
+            Calculator
           </SheetTitle>
           <SheetDescription>
             Local, instant, no Python confirm. You can also type “calculate 15% of

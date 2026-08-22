@@ -1072,7 +1072,9 @@ export function MayaApp() {
         <div className="min-w-0">
           <div className="flex items-center gap-2" title={personality.name}>
             <MayaMark className="size-9 shrink-0 text-primary" />
-            <h1 className="sr-only">{personality.name}</h1>
+            <h1 className="font-heading truncate text-lg font-medium tracking-tight">
+              {personality.name}
+            </h1>
             <Badge
               variant="outline"
               className="hidden sm:inline-flex gap-1"

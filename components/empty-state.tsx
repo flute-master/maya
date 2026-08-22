@@ -86,7 +86,9 @@ export function EmptyState({
           <MayaMark className="size-12" />
         </div>
       </div>
-      <h1 className="sr-only">{name}</h1>
+      <h1 className="font-heading text-4xl font-medium tracking-tight text-foreground sm:text-5xl">
+        {name}
+      </h1>
       <div className="mt-5 flex w-full flex-col items-center gap-2">
         <RoomPicker compact value={atmosphere} onPick={onAtmosphere} />
       </div>
@@ -104,11 +106,13 @@ export function EmptyState({
         <Button
           type="button"
           variant="outline"
+          size="icon"
           className="mt-3"
           onClick={onLoadDevice}
+          title="Load on-device brain"
+          aria-label="Load on-device brain"
         >
           <Brain />
-          <span className="sr-only">Load on-device brain</span>
         </Button>
       ) : null}
       {past.length > 0 ? (

@@ -290,7 +290,7 @@ export function SettingsSheet({
         <SheetHeader className="border-b border-border">
           <SheetTitle className="flex items-center gap-2">
             <MayaMark className="size-6 text-primary" />
-            <span className="sr-only">Customize {personality.name}</span>
+            Customize
           </SheetTitle>
           <SheetDescription>
             Shape how she shows up. Changes apply to the next message.
@@ -1022,7 +1022,7 @@ export function SettingsSheet({
                   <DuckDuckGoMark className="size-4" />
                   <WikipediaMark className="size-4" />
                   <GitHubMark className="size-4" />
-                  <span className="sr-only">Look up world facts</span>
+                  Look up
                 </p>
                   <p className="mt-1 text-sm text-muted-foreground">
                     On by default. She searches DuckDuckGo, Wikipedia, and
