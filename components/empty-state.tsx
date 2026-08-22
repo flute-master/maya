@@ -2,7 +2,9 @@
 
 import { Sparkles } from "lucide-react"
 
+import { RoomPicker } from "@/components/room-picker"
 import { Button } from "@/components/ui/button"
+import type { AtmosphereId } from "@/lib/atmosphere"
 import { SAGE_SAMPLE } from "@/lib/speak"
 
 const STARTERS = [
@@ -54,6 +56,8 @@ export function EmptyState({
   modelReady,
   modelName,
   onLoadDevice,
+  atmosphere,
+  onAtmosphere,
 }: {
   name: string
   callMe: string
@@ -64,6 +68,8 @@ export function EmptyState({
   modelReady?: boolean
   modelName?: string | null
   onLoadDevice?: () => void
+  atmosphere: AtmosphereId
+  onAtmosphere: (id: AtmosphereId) => void
 }) {
   const who = callMe.trim()
 
@@ -105,6 +111,14 @@ export function EmptyState({
         Press play on Maya&apos;s voice below to hear her. Inner sage, Indian
         English — not the anime character.
       </p>
+      <div className="mt-6 flex w-full flex-col items-center gap-2">
+        <p className="text-xs text-muted-foreground">The room</p>
+        <RoomPicker
+          compact
+          value={atmosphere}
+          onPick={onAtmosphere}
+        />
+      </div>
       {past.length > 0 ? (
         <div className="mt-6 flex w-full flex-col gap-2">
           {past.map((item) => (

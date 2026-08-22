@@ -1017,6 +1017,13 @@ export function MayaApp() {
             setVault((current) => ({ ...current, activeId: id }))
           }
           onStart={send}
+          atmosphere={vault.prefs.atmosphere ?? "hearth"}
+          onAtmosphere={(atmosphere) =>
+            setVault((current) => ({
+              ...current,
+              prefs: { ...current.prefs, atmosphere },
+            }))
+          }
         />
       ) : (
         <div className="min-h-0 flex-1 overflow-y-auto">

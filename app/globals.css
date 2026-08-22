@@ -193,7 +193,32 @@ html.atmosphere-ink body {
       720px 420px at 50% -22%,
       color-mix(in oklch, var(--primary) 12%, transparent),
       transparent 58%
+    ),
+    radial-gradient(
+      900px 600px at 50% 120%,
+      color-mix(in oklch, oklch(0.2 0.02 80) 40%, transparent),
+      transparent 50%
     );
+}
+
+html.atmosphere-veil .font-heading {
+  letter-spacing: 0.04em;
+}
+
+html.atmosphere-ink .font-heading {
+  letter-spacing: 0.08em;
+}
+
+html.atmosphere-veil body::after,
+html.atmosphere-ink body::after {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  opacity: 0.11;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/></svg>");
 }
 
 @layer base {
