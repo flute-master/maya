@@ -96,7 +96,7 @@ function fixToken(raw: string): string {
   if (!m) return raw;
   const [, lead, core, trail] = m;
   if (!core) return raw;
-  const collapsed = core.replace(/(.)\1{2,}/g, "$1$1");
+  const collapsed = core.replace(/([A-Za-z])\1{2,}/g, "$1$1");
   const key = collapsed.toLowerCase();
   const mapped = WORD_FIXES[key];
   if (!mapped) {

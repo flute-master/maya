@@ -2,7 +2,7 @@ import type { PublicIdentity } from "@/lib/identity"
 import { lookupWeb } from "@/lib/lookup"
 import { readWebPage } from "@/lib/search"
 import type { MemoryContext } from "@/lib/types"
-import { lookupPlace } from "@/lib/maps"
+import { lookupPlace, parseMapOrigin } from "@/lib/maps"
 import { fetchWeather } from "@/lib/weather"
 import {
   listWorkspace,
@@ -88,7 +88,19 @@ async function execute(
       }
     }
     if (call.name === "maps") {
-      const hit = await lookupPlace(call.args.query || "")
+      const dest = (call.args.query || "").trim()
+      if (dest.length < 2) {
+        return {
+          name: "maps",
+          ok: false,
+          summary:
+            "Where should I take you? Name a place, or say “take me to Charminar”. I can use this browser's location as the start.",
+        }
+      }
+      const hit = await lookupPlace(dest, {
+        origin: parseMapOrigin(call.args),
+        directions: call.args.mode !== "search",
+      })
       if (!hit) {
         return { name: "maps", ok: false, summary: "Could not build map links." }
       }
@@ -97,6 +109,7 @@ async function execute(
         ok: true,
         summary: hit.title,
         detail: hit.snippet,
+        url: hit.url,
       }
     }
     if (call.name === "fetch_page") {
@@ -223,11 +236,13 @@ export async function runSage(input: {
   text: string
   memory?: MemoryContext
   hometown?: string
+  lastPlace?: string
+  origin?: { lat?: string; lon?: string; place?: string }
   identity?: PublicIdentity
   trust: SageTrust
   approved?: ToolApproval[]
 }): Promise<SageRun> {
-  const calls = planTools(input.text, input.hometown)
+  const calls = planTools(input.text, input.hometown, input.lastPlace, input.origin)
   if (calls.some((call) => call.name === "recall")) {
     await refreshVectors(input.memory)
   }

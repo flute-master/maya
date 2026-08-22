@@ -1,6 +1,12 @@
 import { isFluteQuery } from "@/lib/flute"
 import { extractHttpUrl } from "@/lib/search"
-import { isMapsQuery, isWeatherQuery, mapsQuery, weatherPlace } from "@/lib/skills"
+import {
+  isDirectionsQuery,
+  isMapsQuery,
+  isWeatherQuery,
+  mapsQuery,
+  weatherPlace,
+} from "@/lib/skills"
 import { skipTinyNet } from "@/lib/trained"
 import { intendedMeaning } from "@/lib/typos"
 import type { ToolCall } from "@/lib/sage/types"
@@ -61,7 +67,9 @@ function readTarget(text: string): string | null {
 
 export function planTools(
   raw: string,
-  hometown?: string
+  hometown?: string,
+  lastPlace?: string,
+  origin?: { lat?: string; lon?: string; place?: string }
 ): ToolCall[] {
   const text = intendedMeaning(raw)
   const lower = text.toLowerCase()
@@ -157,10 +165,17 @@ export function planTools(
   }
 
   if (isMapsQuery(text)) {
+    const dest = mapsQuery(text, hometown, lastPlace)
     add({
       name: "maps",
-      args: { query: mapsQuery(text, hometown) || text },
-      reason: "Maps links. She cannot drive Chrome.",
+      args: {
+        query: dest || "",
+        mode: isDirectionsQuery(text) ? "dir" : "search",
+        originLat: origin?.lat || "",
+        originLon: origin?.lon || "",
+        originPlace: origin?.place || (!origin?.lat && hometown ? hometown : ""),
+      },
+      reason: "Open Google Maps. She cannot drive Chrome.",
       risk: "net",
     })
   }

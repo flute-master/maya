@@ -32,6 +32,7 @@ export type ToolResult = {
   ok: boolean
   summary: string
   detail?: string
+  url?: string
 }
 
 export type PendingConfirm = {

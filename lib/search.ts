@@ -89,7 +89,7 @@ export function searchQueryFor(text: string): string | null {
   }
 
   if (
-    /\b(weather in|weather for|forecast|temperature in|news about|stock price|who won|latest on|current (price|score|population|president)|tell me about|explain|directions to|navigate to|map of)\b/i.test(
+    /\b(weather in|weather for|forecast|temperature in|news about|stock price|who won|latest on|current (price|score|population|president)|tell me about|explain|directions to|navigate to|take me|map of)\b/i.test(
       t
     )
   ) {

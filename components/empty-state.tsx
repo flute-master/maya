@@ -30,6 +30,10 @@ const STARTERS = [
     label: "Flute",
     text: "Teach me flute. I am a beginner.",
   },
+  {
+    label: "Take me there",
+    text: "Take me to Charminar",
+  },
 ]
 
 export function EmptyState({

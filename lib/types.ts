@@ -131,6 +131,8 @@ export type ChatRequestBody = {
   allowFileWrite?: boolean
   allowGoogleWrite?: boolean
   approved?: Array<{ name: string; args?: Record<string, string> }>
+  origin?: { lat?: number; lon?: number }
+  lastPlace?: string
 }
 
 export type MayaExport = {

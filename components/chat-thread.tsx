@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 
-import { Square, Volume2 } from "lucide-react"
+import { MapPin, Square, Volume2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -109,6 +109,21 @@ export function ChatThread({
                 )
               ) : null}
             </div>
+            {!mine && mapsLinkFrom(message.content) ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="mt-1"
+                onClick={() => {
+                  const href = mapsLinkFrom(message.content)
+                  if (href) window.open(href, "maya-maps", "noopener,noreferrer")
+                }}
+              >
+                <MapPin />
+                Open Google Maps
+              </Button>
+            ) : null}
             {!mine && message.tools?.length ? (
               <p className="max-w-[min(100%,38rem)] px-1 text-[11px] text-muted-foreground">
                 Used {message.tools.map((tool) => tool.name).join(" · ")}
@@ -168,6 +183,11 @@ export function ChatThread({
 }
 
 const URL_SPLIT = /(https?:\/\/[^\s<>"']+)/g
+
+function mapsLinkFrom(content: string) {
+  const match = content.match(/https:\/\/(?:www\.)?google\.com\/maps\/[^\s<>"']+/i)
+  return match?.[0]?.replace(/[),.;]+$/g, "") || null
+}
 
 function LinkedText({ content }: { content: string }) {
   const parts = content.split(URL_SPLIT)

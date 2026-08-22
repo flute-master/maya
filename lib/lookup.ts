@@ -16,7 +16,7 @@ import {
 } from "@/lib/identity"
 import { factsFromHits } from "@/lib/learn"
 import { lookupPlace } from "@/lib/maps"
-import { isMapsQuery, isWeatherQuery, mapsQuery, weatherPlace } from "@/lib/skills"
+import { isDirectionsQuery, isMapsQuery, isWeatherQuery, mapsQuery, weatherPlace } from "@/lib/skills"
 import { intendedMeaning } from "@/lib/typos"
 import { fetchWeather } from "@/lib/weather"
 import type { SearchHit } from "@/lib/types"
@@ -121,7 +121,10 @@ export async function lookupWeb(
     if (dest) {
       googleUrl = googleSearchUrl(`${dest} map`)
       try {
-        const maps = await lookupPlace(dest)
+        const maps = await lookupPlace(dest, {
+          origin: placeHint ? { place: placeHint } : undefined,
+          directions: isDirectionsQuery(intended),
+        })
         if (maps) hits.unshift(maps)
         else searchFailed = true
       } catch {

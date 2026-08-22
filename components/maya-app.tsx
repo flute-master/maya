@@ -28,7 +28,9 @@ import {
   speakLine,
   stopSpeaking,
 } from "@/lib/speak"
-import { hometownFromNotes } from "@/lib/skills"
+import { hometownFromNotes, isDirectionsQuery, isMapsQuery, lastPlaceFromMessages, mapsQuery } from "@/lib/skills"
+import { googleMapsDirUrl, googleMapsSearchUrl } from "@/lib/maps"
+import { openMapsWindow, readBrowserOrigin } from "@/lib/geo"
 import { readPublicIdentity } from "@/lib/identity"
 import { intendedMeaning } from "@/lib/typos"
 import { canRunOnDevice } from "@/lib/webgpu"
@@ -90,6 +92,8 @@ export function MayaApp() {
   const vaultRef = useRef(vault)
   const sendingLock = useRef(false)
   const sendGen = useRef(0)
+  const lastDestRef = useRef<string | null>(null)
+  const mapsWinRef = useRef<Window | null>(null)
   vaultRef.current = vault
 
   const personality = vault.personality
@@ -337,6 +341,13 @@ export function MayaApp() {
       retryRef.current = trimmed
       setError(null)
       setIsSending(true)
+      if (isMapsQuery(trimmed)) {
+        try {
+          mapsWinRef.current = window.open("about:blank", "maya-maps")
+        } catch {
+          mapsWinRef.current = null
+        }
+      }
 
       const approved =
         typeof retry === "object" ? retry.approved : undefined
@@ -460,6 +471,24 @@ export function MayaApp() {
           return
         }
 
+        const hometownNow = hometownFromNotes(
+          snapshot.notes.map((note) => note.text)
+        )
+        const lastPlace =
+          lastDestRef.current || lastPlaceFromMessages(existing) || undefined
+        let origin: { lat: number; lon: number } | undefined
+        if (isMapsQuery(trimmed)) {
+          origin = (await readBrowserOrigin()) ?? undefined
+          const dest = mapsQuery(trimmed, hometownNow, lastPlace)
+          if (dest) {
+            lastDestRef.current = dest
+            const url = isDirectionsQuery(trimmed)
+              ? googleMapsDirUrl(dest, origin)
+              : googleMapsSearchUrl(dest)
+            openMapsWindow(url, mapsWinRef.current)
+          }
+        }
+
         const memory = buildMemoryContext(
           { ...snapshot, notes: mergeFacts(snapshot.notes, facts), learned },
           nextMessages
@@ -567,6 +596,8 @@ export function MayaApp() {
               allowFileWrite: snapshot.prefs.allowFileWrite === true,
               allowGoogleWrite: snapshot.prefs.allowGoogleWrite === true,
               approved,
+              origin,
+              lastPlace,
             }),
           })
 
@@ -602,6 +633,18 @@ export function MayaApp() {
             }
           } catch {
             /* ignore */
+          }
+          const mapsUrl = response.headers.get("X-Maya-Maps")
+          if (mapsUrl && /^https:\/\/(www\.)?google\.com\/maps\//.test(mapsUrl)) {
+            openMapsWindow(mapsUrl, mapsWinRef.current)
+          } else if (isMapsQuery(trimmed) && mapsWinRef.current && !mapsWinRef.current.closed) {
+            try {
+              if (mapsWinRef.current.location.href === "about:blank") {
+                mapsWinRef.current.close()
+              }
+            } catch {
+              /* window already left about:blank */
+            }
           }
           try {
             const packed = response.headers.get("X-Maya-Confirm")

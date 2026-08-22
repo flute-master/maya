@@ -43,13 +43,17 @@ async function req(path, init = {}) {
 
 async function chat(text, extra = {}) {
   const started = Date.now()
+  const { history, ...rest } = extra
   const { response, raw, headers } = await req("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      messages: [{ role: "user", content: text }],
+      messages: [
+        ...(Array.isArray(history) ? history : []),
+        { role: "user", content: text },
+      ],
       personality,
-      ...extra,
+      ...rest,
     }),
   })
   return {
@@ -252,6 +256,29 @@ async function main() {
     "maps includes a Maps link",
     has(maps.body, "google.com/maps") || has(maps.body, "openstreetmap"),
     maps.body.slice(0, 220).replace(/\s+/g, " ")
+  )
+  const takeMe = await chat("take me to Charminar")
+  ok(
+    "take me includes a Google Maps directions link",
+    takeMe.status === 200 && has(takeMe.body, "google.com/maps/dir"),
+    takeMe.body.slice(0, 220).replace(/\s+/g, " ")
+  )
+  const takeThere = await chat("take me there", {
+    history: [
+      { role: "user", content: "directions to Charminar" },
+      {
+        role: "assistant",
+        content:
+          "Google Maps: https://www.google.com/maps/dir/?api=1&destination=Charminar",
+      },
+    ],
+  })
+  ok(
+    "take me there reuses the last place",
+    takeThere.status === 200 &&
+      has(takeThere.body, "Charminar") &&
+      has(takeThere.body, "google.com/maps"),
+    takeThere.body.slice(0, 220).replace(/\s+/g, " ")
   )
 
   const joke = await chat("tell me a one-line joke")

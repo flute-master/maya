@@ -41,33 +41,93 @@ export function weatherPlace(text: string, hometown?: string): string | undefine
   return hometown
 }
 
-export function isMapsQuery(text: string): boolean {
+const VAGUE_PLACE =
+  /^(there|here|it|that|this|that place|this place|the place|same place|over there)$/i
+
+export function isVaguePlace(place: string | undefined): boolean {
+  return !place || VAGUE_PLACE.test(place.trim())
+}
+
+export function isDirectionsQuery(text: string): boolean {
   const lower = text.toLowerCase()
-  return (
-    /\b(google maps|on (the )?map|show (me )?the map|directions? to|navigate to|route to|take me to|how do i get to|how to get to|where is .+ (located|on the map))\b/.test(
-      lower
-    ) ||
-    /^(map of|maps for|find on maps?|open maps)\b/.test(lower)
+  return /\b(take me|directions?|navigate|route|how do i get|how to get|drive me|drop me|get me (there|to)|let'?s go|i want to go|bring me|uber me|take us)\b/.test(
+    lower
   )
 }
 
-export function mapsQuery(text: string, hometown?: string): string | undefined {
+export function isMapsQuery(text: string): boolean {
+  const lower = text.toLowerCase()
+  return (
+    isDirectionsQuery(lower) ||
+    /\b(google maps|on (the )?map|show (me )?the map|where is .+ (located|on the map)|open (google )?maps)\b/.test(
+      lower
+    ) ||
+    /^(map of|maps for|find on maps?)\b/.test(lower)
+  )
+}
+
+function tidyPlace(raw: string) {
+  return raw
+    .replace(/\b(please|by (car|bus|metro|walk|walking|bike)|from here|from my location)\b/gi, "")
+    .replace(/[?.!]+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+export function lastPlaceFromMessages(
+  messages: Array<{ role?: string; content?: string }> | undefined
+): string | undefined {
+  if (!messages?.length) return undefined
+  for (const message of [...messages].reverse()) {
+    const text = String(message.content || "").trim()
+    if (!text) continue
+    const destParam = text.match(/[?&](?:destination|query)=([^&\s]+)/i)
+    if (destParam?.[1]) {
+      try {
+        const place = tidyPlace(decodeURIComponent(destParam[1].replace(/\+/g, " ")))
+        if (place.length > 1 && !/^https?:/i.test(place)) return place
+      } catch {
+        /* ignore bad encoding */
+      }
+    }
+    const found = text.match(/\bI found ([^\n]+)/i)
+    if (found?.[1]) {
+      const place = tidyPlace(found[1].split(".")[0] || "")
+      if (place.length > 1 && !/^https?:/i.test(place)) return place
+    }
+    const dest = mapsQuery(text)
+    if (dest && !isVaguePlace(dest) && !/^https?:/i.test(dest)) return dest
+  }
+  return undefined
+}
+
+export function mapsQuery(
+  text: string,
+  hometown?: string,
+  lastPlace?: string
+): string | undefined {
   const dest = text.match(
-    /\b(?:directions?|navigate|route|take me|how do i get|how to get)\s+(?:to\s+)?(.+)$/i
+    /\b(?:directions?|navigate|route|take me|take us|drive me|drop me|bring me|uber me|get me|how do i get|how to get|let'?s go|i want to go)\s+(?:to\s+)?(.+)$/i
   )
   if (dest?.[1]) {
-    return dest[1]
-      .replace(/\b(please|by (car|bus|metro|walk|walking))\b/gi, "")
-      .replace(/[?.!]+$/g, "")
-      .trim()
+    const place = tidyPlace(dest[1])
+    if (isVaguePlace(place) || /^https?:/i.test(place)) return lastPlace || hometown
+    return place || lastPlace || hometown
+  }
+  if (
+    /^(take me there|take me|take us there|directions|navigate|let'?s go|get me there)\.?$/i.test(
+      text.trim()
+    )
+  ) {
+    return lastPlace || hometown
   }
   const mapped = text.match(
     /\b(?:map of|maps for|on (?:the )?map|google maps)\s*:?\s*(.+)$/i
   )
-  if (mapped?.[1]) return mapped[1].replace(/[?.!]+$/g, "").trim()
+  if (mapped?.[1]) return tidyPlace(mapped[1])
   const where = text.match(/\bwhere is\s+(.+?)(?:\s+located|\s+on the map)?$/i)
   if (where?.[1]) {
-    const place = where[1].replace(/[?.!]+$/g, "").trim()
+    const place = tidyPlace(where[1])
     return hometown ? `${place}, ${hometown}` : place
   }
   return undefined

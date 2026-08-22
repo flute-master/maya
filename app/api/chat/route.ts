@@ -4,7 +4,7 @@ import { hitsForModel, lookupWeb, type Lookup } from "@/lib/lookup"
 import { ollamaReady, replyWithOllama } from "@/lib/ollama"
 import { confirmCopy, formatToolContext, runSage } from "@/lib/sage/run"
 import { modelNeedsWeb } from "@/lib/search"
-import { hometownFromNotes } from "@/lib/skills"
+import { hometownFromNotes, lastPlaceFromMessages } from "@/lib/skills"
 import { readPublicIdentity } from "@/lib/identity"
 import { replyWithTrained, skipTinyNet, trainedReady } from "@/lib/trained"
 import type {
@@ -54,6 +54,7 @@ function streamHeaders(input: {
   learn?: string[]
   tools?: unknown
   confirm?: unknown
+  maps?: string
 }) {
   const headers: Record<string, string> = {
     "Content-Type": "text/plain; charset=utf-8",
@@ -74,6 +75,10 @@ function streamHeaders(input: {
   if (input.confirm) {
     headers["X-Maya-Confirm"] = headerSafe(JSON.stringify(input.confirm))
     expose.push("X-Maya-Confirm")
+  }
+  if (input.maps) {
+    headers["X-Maya-Maps"] = headerSafe(input.maps)
+    expose.push("X-Maya-Maps")
   }
   headers["Access-Control-Expose-Headers"] = expose.join(", ")
   return headers
@@ -134,6 +139,20 @@ export async function POST(request: Request) {
   const personality = overlayPersonality(body.personality, learned)
   const memory = body.memory
   const hometown = hometownFromNotes(memory?.notes)
+  const lastPlace =
+    body.lastPlace?.trim() || lastPlaceFromMessages(history.slice(0, -1))
+  const origin =
+    body.origin &&
+    Number.isFinite(body.origin.lat) &&
+    Number.isFinite(body.origin.lon)
+      ? {
+          lat: String(body.origin.lat),
+          lon: String(body.origin.lon),
+          place: hometown,
+        }
+      : hometown
+        ? { place: hometown }
+        : undefined
   const identity = readPublicIdentity(
     [...(memory?.notes ?? []), ...(memory?.priorUserLines ?? [])],
     personality.callMe
@@ -144,6 +163,8 @@ export async function POST(request: Request) {
     text: last.content,
     memory,
     hometown,
+    lastPlace,
+    origin,
     identity,
     trust: {
       allowSearch,
@@ -161,6 +182,7 @@ export async function POST(request: Request) {
       summary: `needs permission: ${item.reason}`,
     })),
   ]
+  const mapsUrl = sage.results.find((item) => item.name === "maps" && item.url)?.url
 
   if (sage.pending.length) {
     return new Response(localStream(confirmCopy(sage.pending)), {
@@ -169,6 +191,7 @@ export async function POST(request: Request) {
         engine: "sage",
         tools: toolTrace,
         confirm: sage.pending,
+        maps: mapsUrl,
       }),
     })
   }
@@ -192,7 +215,7 @@ export async function POST(request: Request) {
         title: result.summary,
         snippet: result.detail,
         source: result.name,
-        url: "",
+        url: result.url || "",
       })
       lookup.searched = true
     }
@@ -305,6 +328,7 @@ export async function POST(request: Request) {
       engine,
       learn: lookup.learn,
       tools: toolTrace.length ? toolTrace : undefined,
+      maps: mapsUrl,
     }),
   })
 }
