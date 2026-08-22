@@ -3,7 +3,12 @@
 import { setSpeechStop, stopAllAudio } from "@/lib/audio-bus"
 import { forSpokenText, spokenChunks } from "@/lib/spoken-text"
 
-export type SpeakOptions = {
+export type VoiceHints = {
+  langHints?: string[]
+  nameHints?: string[]
+}
+
+export type SpeakOptions = VoiceHints & {
   voiceURI?: string
   sage?: boolean
   onBoundary?: (charIndex: number) => void
@@ -15,8 +20,12 @@ function allVoices(): SpeechSynthesisVoice[] {
   return window.speechSynthesis.getVoices()
 }
 
+function normalizeLang(value: string) {
+  return value.toLowerCase().replace(/_/g, "-")
+}
+
 export function isLikelyIndianVoice(voice: SpeechSynthesisVoice) {
-  const lang = voice.lang.toLowerCase()
+  const lang = normalizeLang(voice.lang)
   const name = voice.name.toLowerCase()
   return (
     lang.startsWith("en-in") ||
@@ -35,7 +44,12 @@ function isLikelyMale(voice: SpeechSynthesisVoice) {
     name.includes("male") ||
     name.includes("ravi") ||
     name.includes("hemant") ||
-    name.includes("prabhat")
+    name.includes("prabhat") ||
+    name.includes("david") ||
+    name.includes("daniel") ||
+    name.includes("alex") ||
+    name.includes("fred") ||
+    name.includes("tom")
   )
 }
 
@@ -45,15 +59,79 @@ export function indianWomanVoices(): SpeechSynthesisVoice[] {
     .sort((a, b) => a.name.localeCompare(b.name))
 }
 
-export function pickSpokenVoice(preferredURI?: string) {
+export function listSpokenVoices() {
+  const groups = new Map<string, SpeechSynthesisVoice[]>()
+  for (const voice of allVoices()) {
+    const key = voice.lang || "other"
+    const list = groups.get(key) ?? []
+    list.push(voice)
+    groups.set(key, list)
+  }
+  return [...groups.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([lang, voices]) => ({
+      lang,
+      voices: voices.sort((a, b) => a.name.localeCompare(b.name)),
+    }))
+}
+
+function scoreVoice(
+  voice: SpeechSynthesisVoice,
+  langHints: string[],
+  nameNeedles: string[]
+) {
+  let score = 0
+  const lang = normalizeLang(voice.lang)
+  const name = voice.name.toLowerCase()
+
+  for (const hint of langHints) {
+    const wanted = normalizeLang(hint)
+    if (lang === wanted) score += 14
+    else if (lang.startsWith(`${wanted}-`)) score += 12
+    else if (wanted.includes("-") && lang.startsWith(wanted.split("-")[0] ?? "")) {
+      const region = wanted.split("-")[1]
+      if (region && lang.includes(`-${region}`)) score += 11
+      else score += 4
+    } else if (lang.startsWith(wanted.slice(0, 2))) score += 3
+  }
+
+  if (nameNeedles.some((needle) => name.includes(needle.toLowerCase()))) {
+    score += 8
+  }
+  if (isLikelyMale(voice)) score -= 5
+  if (voice.localService) score += 1
+  if (voice.default) score += 1
+  return score
+}
+
+export function pickSpokenVoice(preferredURI?: string, hints?: VoiceHints) {
   const voices = allVoices()
   if (preferredURI) {
     const match = voices.find((voice) => voice.voiceURI === preferredURI)
     if (match) return match
   }
+
+  const langHints = hints?.langHints ?? []
+  const nameNeedles = hints?.nameHints ?? []
+  if (langHints.length || nameNeedles.length) {
+    let best: SpeechSynthesisVoice | null = null
+    let bestScore = 0
+    for (const voice of voices) {
+      const score = scoreVoice(voice, langHints, nameNeedles)
+      if (score > bestScore) {
+        bestScore = score
+        best = voice
+      }
+    }
+    if (best) return best
+  }
+
   const indian = indianWomanVoices()
   const heera = indian.find((voice) => /heera|veena|shruti/i.test(voice.name))
-  return heera || indian[0] || null
+  const english = voices.filter((voice) =>
+    normalizeLang(voice.lang).startsWith("en")
+  )
+  return heera || indian[0] || english[0] || voices[0] || null
 }
 
 export function canSpeak() {
@@ -75,7 +153,10 @@ export function speakLine(text: string, options: SpeakOptions | string = {}) {
 
   stopAllAudio()
   const generation = ++speakGeneration
-  const voice = pickSpokenVoice(opts.voiceURI)
+  const voice = pickSpokenVoice(opts.voiceURI, {
+    langHints: opts.langHints,
+    nameHints: opts.nameHints,
+  })
   const rate = opts.sage ? 0.98 : 1.04
   const pitch = opts.sage ? 1.0 : 1.03
   let index = 0
@@ -93,7 +174,7 @@ export function speakLine(text: string, options: SpeakOptions | string = {}) {
       utterance.voice = voice
       utterance.lang = voice.lang
     } else {
-      utterance.lang = "en-IN"
+      utterance.lang = opts.langHints?.[0] ?? "en-IN"
     }
     utterance.rate = rate
     utterance.pitch = pitch

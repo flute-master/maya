@@ -127,7 +127,7 @@ Live speech uses the same Indian-English voice if Python can run `edge-tts`:
 pip install -r requirements-voice.txt
 ```
 
-Otherwise she uses the computer’s speech engine (on Windows, Heera is the usual Indian English voice). Customize → Voice picks writing style (Ananya, Diya, Meera, Kavya, Isha, Simran).
+Otherwise she uses the computer’s speech engine. Customize → Voice picks a writing voice and accent (North India, Britain, Europe, the US, Australia, and a few further Englishes). Auto spoken-instrument picks the closest engine voice for that accent. Recorded Hear clips are original Indian English; other accents preview through this computer’s voices. Not celebrities, not an anime character.
 
 ---
 

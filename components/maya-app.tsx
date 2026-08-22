@@ -35,6 +35,7 @@ import {
   speakLine,
   stopSpeaking,
 } from "@/lib/speak"
+import { voiceById } from "@/lib/voices"
 import { hometownFromNotes, isDirectionsQuery, isMapsQuery, lastPlaceFromMessages, mapsQuery } from "@/lib/skills"
 import { googleMapsDirUrl, googleMapsSearchUrl } from "@/lib/maps"
 import { openMapsWindow, readBrowserOrigin } from "@/lib/geo"
@@ -254,8 +255,11 @@ export function MayaApp() {
         }
       }
 
+      const chosen = voiceById(personality.voiceId)
       const started = speakLine(text, {
         voiceURI: vault.prefs.spokenVoiceURI,
+        langHints: chosen.langHints,
+        nameHints: chosen.nameHints,
         sage,
         onBoundary: (charIndex) => setFollow({ messageId, charIndex }),
         onEnd: () =>
@@ -270,7 +274,7 @@ export function MayaApp() {
       setFollow(null)
       setVoiceStatus("Press play on Maya's voice. Live speech did not start.")
     },
-    [sage, vault.prefs.spokenVoiceURI]
+    [sage, vault.prefs.spokenVoiceURI, personality.voiceId]
   )
 
   const fireReminder = useCallback(

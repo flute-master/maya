@@ -409,7 +409,8 @@ export function SettingsSheet({
                 sage={isSage(personality)}
                 personality={personality}
                 prefs={prefs}
-                onPick={(voice) =>
+                onPick={(voice) => {
+                  onPrefsChange({ ...prefs, spokenVoiceURI: "" })
                   patch(
                     (personality.bondId ?? "sage") === "sage"
                       ? {
@@ -423,7 +424,7 @@ export function SettingsSheet({
                           traits: voice.traits,
                         }
                   )
-                }
+                }}
                 onSpokenVoice={(spokenVoiceURI) =>
                   onPrefsChange({ ...prefs, spokenVoiceURI })
                 }
