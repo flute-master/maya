@@ -49,7 +49,7 @@ export function VoiceDock({
         <audio
           ref={audioRef}
           controls
-          preload="auto"
+          preload="none"
           playsInline
           src="/clips/sage.mp3"
           className="w-full"

@@ -165,21 +165,32 @@ export function MayaApp() {
 
   useEffect(() => {
     let cancelled = false
-    fetch("/api/model")
-      .then(async (response) => {
-        const data = (await response.json()) as {
-          available?: boolean
-          using?: string | null
-        }
-        if (cancelled) return
-        setModelReady(Boolean(data.available))
-        setModelName(data.using ?? null)
-      })
-      .catch(() => {
-        if (!cancelled) setModelReady(false)
-      })
+    const start = () => {
+      void fetch("/api/model")
+        .then(async (response) => {
+          const data = (await response.json()) as {
+            available?: boolean
+            using?: string | null
+          }
+          if (cancelled) return
+          setModelReady(Boolean(data.available))
+          setModelName(data.using ?? null)
+        })
+        .catch(() => {
+          if (!cancelled) setModelReady(false)
+        })
+    }
+    if (typeof requestIdleCallback === "function") {
+      const idle = requestIdleCallback(start)
+      return () => {
+        cancelled = true
+        cancelIdleCallback(idle)
+      }
+    }
+    const timeout = window.setTimeout(start, 600)
     return () => {
       cancelled = true
+      window.clearTimeout(timeout)
     }
   }, [])
 
@@ -898,7 +909,8 @@ export function MayaApp() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border/80 px-4 py-3">
+      <header className="relative z-40 shrink-0 border-b border-border/80 bg-background/95 backdrop-blur-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="size-2 shrink-0 rounded-full bg-primary shadow-[0_0_12px_var(--primary)]" />
@@ -925,7 +937,10 @@ export function MayaApp() {
             {describePresence(personality)}
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-1.5">
+        <nav
+          className="relative z-40 flex flex-wrap items-center justify-end gap-1.5"
+          aria-label="Maya"
+        >
           <Button
             type="button"
             variant="ghost"
@@ -951,7 +966,6 @@ export function MayaApp() {
             variant="ghost"
             size="sm"
             onClick={startOver}
-            disabled={isSending}
             aria-label="Start a new chat. Memory stays."
           >
             <RotateCcw />
@@ -962,13 +976,16 @@ export function MayaApp() {
             variant="outline"
             size="sm"
             onClick={() => setSettingsOpen(true)}
+            aria-label="Customize Maya"
           >
             <SlidersHorizontal />
             Customize
           </Button>
+        </nav>
         </div>
       </header>
 
+      <div className="relative z-0 min-h-0 flex-1 overflow-y-auto">
       {empty ? (
         <EmptyState
           name={personality.name}
@@ -1021,6 +1038,7 @@ export function MayaApp() {
           />
         </div>
       )}
+      </div>
 
       {mode === "sage" && !empty ? (
         <p className="px-4 text-center text-xs text-muted-foreground">

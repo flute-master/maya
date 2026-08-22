@@ -70,7 +70,7 @@ export function EmptyState({
   return (
     <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-12 text-center">
       <div className="relative mb-8">
-        <div className="absolute inset-0 -m-10 rounded-full bg-primary/20 blur-3xl" />
+        <div className="pointer-events-none absolute inset-0 -m-10 rounded-full bg-primary/20 blur-3xl" />
         <div className="relative flex size-16 items-center justify-center rounded-full bg-card ring-1 ring-foreground/10">
           <Sparkles className="size-6 text-primary" />
         </div>
@@ -86,7 +86,7 @@ export function EmptyState({
       <p className="mt-3 max-w-sm text-sm text-muted-foreground">
         {modelReady
           ? `Local model live${modelName ? `: ${modelName}` : ""}. World facts still get a lookup when the network is on.`
-          : "No computer model yet. Load the free on-device brain (Chrome/Edge, ~0.9 GB once) or install Ollama. She still answers either way."}
+          : "She answers now. The optional on-device brain (~0.9 GB, Chrome/Edge) downloads in the background only if you ask — or install Ollama later."}
       </p>
       {onLoadDevice ? (
         <Button

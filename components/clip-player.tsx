@@ -68,7 +68,7 @@ export function ClipPlayer({
           ref={innerRef}
           src={src}
           controls
-          preload="auto"
+          preload="none"
           playsInline
           className="w-full"
           onPlay={(event) => {
