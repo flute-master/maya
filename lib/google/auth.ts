@@ -1,6 +1,11 @@
 import { createSign } from "node:crypto"
-import { mkdir, readFile, unlink, writeFile } from "node:fs/promises"
+import { access, mkdir, readFile, unlink, writeFile } from "node:fs/promises"
+import { dirname } from "node:path"
 
+import {
+  desktopKeyPaths,
+  serviceAccountCandidatePaths,
+} from "@/lib/google/desktop-key"
 import {
   GOOGLE_DIR,
   GOOGLE_SCOPES,
@@ -56,13 +61,7 @@ export async function clearOAuthToken() {
   await unlink(OAUTH_STATE_FILE).catch(() => undefined)
 }
 
-export async function readServiceAccount() {
-  const key = await readJson<ServiceAccountKey>(SERVICE_ACCOUNT_FILE)
-  if (!key?.client_email || !key.private_key) return null
-  return key
-}
-
-export async function saveServiceAccount(raw: unknown) {
+export function parseServiceAccount(raw: unknown): ServiceAccountKey {
   if (!raw || typeof raw !== "object") {
     throw new Error("That is not a Google service-account JSON key.")
   }
@@ -73,12 +72,69 @@ export async function saveServiceAccount(raw: unknown) {
   if (key.type && key.type !== "service_account") {
     throw new Error("Upload a service account key, not an OAuth client file.")
   }
+  return key
+}
+
+async function writeKeyFile(path: string, key: ServiceAccountKey) {
+  await mkdir(dirname(path), { recursive: true })
+  await writeFile(path, JSON.stringify(key, null, 2), "utf8")
+}
+
+export async function placeServiceAccountOnDesktop(key?: ServiceAccountKey) {
+  const resolved = key || (await readServiceAccount())
+  if (!resolved) {
+    throw new Error("No service-account key is loaded yet.")
+  }
+  const written: string[] = []
+  const failed: string[] = []
+  for (const path of desktopKeyPaths()) {
+    try {
+      await writeKeyFile(path, resolved)
+      written.push(path)
+    } catch {
+      failed.push(path)
+    }
+  }
+  if (!written.length) {
+    throw new Error(
+      "Could not write the key to Desktop. On WSL, drop maya-google-service-account.json on your Windows Desktop, or upload it in Customize."
+    )
+  }
+  return { email: resolved.client_email, written, failed }
+}
+
+export async function readServiceAccount() {
+  const fromEnv = process.env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim()
+  if (fromEnv) {
+    try {
+      return parseServiceAccount(JSON.parse(fromEnv))
+    } catch {
+      /* fall through to files */
+    }
+  }
+  for (const path of serviceAccountCandidatePaths()) {
+    const key = await readJson<ServiceAccountKey>(path)
+    if (!key?.client_email || !key.private_key) continue
+    if (path !== SERVICE_ACCOUNT_FILE) {
+      await writeJson(SERVICE_ACCOUNT_FILE, key).catch(() => undefined)
+    }
+    return key
+  }
+  return null
+}
+
+export async function saveServiceAccount(raw: unknown) {
+  const key = parseServiceAccount(raw)
   await writeJson(SERVICE_ACCOUNT_FILE, key)
+  await placeServiceAccountOnDesktop(key).catch(() => undefined)
   return key.client_email
 }
 
 export async function clearServiceAccount() {
   await unlink(SERVICE_ACCOUNT_FILE).catch(() => undefined)
+  for (const path of desktopKeyPaths()) {
+    await unlink(path).catch(() => undefined)
+  }
 }
 
 export function redirectUriFromRequest(request: Request) {
@@ -265,16 +321,31 @@ export async function googleAccess(prefer: "oauth" | "any" = "any"): Promise<Goo
   return sa
 }
 
+async function existingDesktopCopies() {
+  const found: string[] = []
+  for (const path of desktopKeyPaths()) {
+    try {
+      await access(path)
+      found.push(path)
+    } catch {
+      /* missing */
+    }
+  }
+  return found
+}
+
 export async function googleStatus() {
   const client = await readOAuthClient()
   const oauth = await readOAuthToken()
   const sa = await readServiceAccount()
+  const desktopCopies = await existingDesktopCopies()
   const connected = Boolean(oauth?.refreshToken || (oauth && oauth.expiry > Date.now()))
   return {
     hasClient: Boolean(client),
     connected,
     email: oauth?.email ?? null,
     serviceAccount: sa?.client_email ?? null,
+    desktopCopies,
     canGmail: connected,
     canCalendar: connected || Boolean(sa),
     canDrive: connected || Boolean(sa),
@@ -283,7 +354,7 @@ export async function googleStatus() {
     note: connected
       ? `Signed in as ${oauth?.email || "your Google account"}.`
       : sa
-        ? `Service account ${sa.client_email} is loaded. The key is not enough — share your Google Calendar with that email as “Make changes to events”. It cannot open personal Gmail.`
+        ? `Service account ${sa.client_email} is loaded${desktopCopies.length ? " and copied to Desktop for testing" : ""}. The key is not enough — share your Google Calendar with that email as “Make changes to events”. It cannot open personal Gmail.`
         : "Not connected. Paste a free OAuth client, then Connect Google — a service account cannot open @gmail.com mail.",
   }
 }

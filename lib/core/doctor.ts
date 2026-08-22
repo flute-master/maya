@@ -131,7 +131,9 @@ export async function runDoctor(): Promise<{
   })
 
   const google = await exists(join(process.cwd(), "data", "google-oauth.json")).catch(() => false)
-  const sa = await exists(join(process.cwd(), "data", "google-service-account.json"))
+  const saFile = await exists(join(process.cwd(), "data", "google-service-account.json"))
+  const { readServiceAccount } = await import("@/lib/google/auth")
+  const sa = saFile || Boolean(await readServiceAccount())
   add({
     name: "Google",
     ok: true,

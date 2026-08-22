@@ -22,6 +22,8 @@ type GoogleStatus = {
   connected?: boolean
   email?: string | null
   serviceAccount?: string | null
+  desktopCopies?: string[]
+  written?: string[]
   canGmail?: boolean
   canCalendar?: boolean
   canDrive?: boolean
@@ -141,6 +143,31 @@ export function GoogleConnect({
     }
   }
 
+  async function copyToDesktop() {
+    setBusy(true)
+    setHint(null)
+    try {
+      const response = await fetch("/api/google/service-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ placeOnDesktop: true }),
+      })
+      const data = (await response.json()) as GoogleStatus
+      if (!response.ok) throw new Error(data.error || "Could not copy the key.")
+      setStatus(data)
+      const where = (data.written || data.desktopCopies || []).join(" · ")
+      setHint(
+        where
+          ? `Copied the service-account JSON to Desktop for testing: ${where}`
+          : "Tried to copy the key to Desktop."
+      )
+    } catch (caught) {
+      setHint(caught instanceof Error ? caught.message : "Could not copy to Desktop.")
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <div className="rounded-xl bg-card p-3 ring-1 ring-foreground/8">
       <p className="flex items-center gap-2 text-sm font-medium">
@@ -247,19 +274,46 @@ export function GoogleConnect({
       </label>
       {status?.serviceAccount ? (
         <div className="mt-2 space-y-2">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="break-all text-xs text-muted-foreground">{status.serviceAccount}</p>
-            <Button
-              type="button"
-              size="xs"
-              variant="ghost"
-              onClick={() => {
-                void fetch("/api/google/service-account", { method: "DELETE" }).then(load)
-              }}
-            >
-              Remove key
-            </Button>
+            <div className="flex flex-wrap gap-1">
+              <Button
+                type="button"
+                size="xs"
+                variant="outline"
+                disabled={busy}
+                onClick={() => void copyToDesktop()}
+              >
+                Copy to Desktop
+              </Button>
+              <Button
+                type="button"
+                size="xs"
+                variant="outline"
+                disabled={busy}
+                onClick={() => {
+                  window.location.href = "/api/google/service-account?download=1"
+                }}
+              >
+                Save JSON
+              </Button>
+              <Button
+                type="button"
+                size="xs"
+                variant="ghost"
+                onClick={() => {
+                  void fetch("/api/google/service-account", { method: "DELETE" }).then(load)
+                }}
+              >
+                Remove key
+              </Button>
+            </div>
           </div>
+          {status.desktopCopies?.length ? (
+            <p className="break-all text-xs text-muted-foreground">
+              On Desktop for testing: {status.desktopCopies.join(" · ")}
+            </p>
+          ) : null}
           {status.calendarWritable ? (
             <p className="text-xs text-muted-foreground">
               {status.shareHint || "Calendar share looks writable. Reminders can land there."}

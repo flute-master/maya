@@ -21,7 +21,8 @@
     "restore": "node scripts/restore.mjs",
     "test": "npx tsx --test --test-concurrency=1 tests/unit/*.test.ts tests/security/*.test.ts",
     "eval": "node scripts/eval.mjs",
-    "mcp": "npx tsx mcp/server/index.ts"
+    "mcp": "npx tsx mcp/server/index.ts",
+    "google:desktop": "npx tsx scripts/google-desktop-key.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

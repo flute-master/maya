@@ -524,9 +524,11 @@ It **cannot** open personal Gmail. For inbox and Contacts you still need OAuth (
    - Skip extra roles unless your org requires them.
 4. Open that service account → **Keys → Add key → Create new key → JSON**.
 5. The browser downloads a JSON file. That file is a **private key**.
-   - Either upload it in Customize → Lookup (“Service account JSON”), or
-   - Copy it to `data/google-service-account.json` in the project folder.
-6. `google-service-account.example.json` shows the **shape** only. Do not put a real `private_key` in git.
+   - Upload it in Customize → Lookup (“Service account JSON”), or
+   - Copy it to `data/google-service-account.json` in the project folder, or
+   - Drop it on your **Desktop** as `maya-google-service-account.json` (Windows Desktop works from WSL).
+   - If the key is already loaded in this app, Customize → **Copy to Desktop** / **Save JSON**, or `npm run google:desktop`.
+6. `google-service-account.example.json` shows the **shape** only. Do not put a real `private_key` in git. The live key is gitignored.
 7. **Share the actual data with the robot email** (this step is the one people skip — the JSON key cannot see your calendar until you do):
    - Google Calendar → Settings (gear) → Settings → your calendar → Share with specific people → add `maya@….iam.gserviceaccount.com`.
    - For **reminders** the permission must be **Make changes to events**. “See all event details” is read-only.
