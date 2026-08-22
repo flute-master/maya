@@ -2,7 +2,7 @@ import { writeWorkspaceFile } from "@/lib/sage/files"
 
 export const runtime = "nodejs"
 
-const MAX_JSON = 2_500_000
+const MAX_JSON = 12_000_000
 
 export async function GET() {
   const { listWorkspace } = await import("@/lib/sage/files")

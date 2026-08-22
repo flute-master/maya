@@ -210,6 +210,7 @@ export async function POST(request: Request) {
       "observe",
       "weather",
       "maps",
+      "flute",
       "google_calendar",
       "google_gmail",
       "google_drive",

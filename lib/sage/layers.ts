@@ -46,9 +46,15 @@ export const SAGE_LAYERS: SageLayer[] = [
   },
   {
     ability: "Use skills",
-    how: "Tool loop: weather, maps, reminders, tasks, GitHub, files, Python, lookup, Google APIs",
+    how: "Tool loop: weather, maps, reminders, tasks, GitHub, files, Python, lookup, flute, Google APIs",
     status: "live",
-    note: "Sage core picks tools, then the model talks from the results.",
+    note: "Sage core picks tools, then the model talks from the results. Flute notes come from the teaching book or a clip, not a guessed film score.",
+  },
+  {
+    ability: "Flute teacher",
+    how: "Kinds of flutes, beginner lessons, sargam/Western notes for teaching tunes, pitch-read a clip you drop",
+    status: "live",
+    note: "I will not print a full copyrighted film arrangement. Name a teaching tune, or paperclip a short recording of you playing.",
   },
   {
     ability: "Analyze data",

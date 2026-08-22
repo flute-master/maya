@@ -678,8 +678,8 @@ export function MayaApp() {
     const saved: string[] = []
     try {
       for (const file of files.slice(0, 6)) {
-        if (file.size > 2_000_000) {
-          setError(`${file.name} is larger than 2 MB.`)
+        if (file.size > 8_000_000) {
+          setError(`${file.name} is larger than 8 MB.`)
           continue
         }
         const base64 = await blobToBase64(file)
@@ -705,8 +705,13 @@ export function MayaApp() {
     }
     if (saved.length) {
       setError(null)
+      const audio = saved.filter((name) =>
+        /\.(wav|mp3|m4a|aac|ogg|webm|flac)$/i.test(name)
+      )
       void send(
-        `I added ${saved.join(", ")} to your workspace. List your files and tell me what you have.`
+        audio.length
+          ? `I added ${saved.join(", ")} to your workspace. Give me the notes in this clip.`
+          : `I added ${saved.join(", ")} to your workspace. List your files and tell me what you have.`
       )
     }
   }

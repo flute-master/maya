@@ -1,3 +1,4 @@
+import { isFluteQuery } from "@/lib/flute"
 import { extractHttpUrl } from "@/lib/search"
 import { isMapsQuery, isWeatherQuery, mapsQuery, weatherPlace } from "@/lib/skills"
 import { skipTinyNet } from "@/lib/trained"
@@ -308,6 +309,29 @@ export function planTools(
       name: "google_people",
       args: { action: "search", query: who.trim().slice(0, 80) },
       reason: "Search Google Contacts.",
+      risk: "none",
+    })
+  }
+
+  if (isFluteQuery(text) || /\.(wav|mp3|m4a|ogg|webm)\b/i.test(text)) {
+    const hear =
+      /\b(clip|recording|this (audio|file|take)|notes in (this|the)|transcribe|what notes)\b/i.test(
+        lower
+      ) || /\.(wav|mp3|m4a|ogg|webm)\b/i.test(text)
+    const kinds = /\b(kinds?|types?|which flute|vs|piccolo|shakuhachi|dizi|concert flute)\b/i.test(
+      lower
+    )
+    add({
+      name: "flute",
+      args: {
+        action: hear ? "hear" : kinds ? "kinds" : "auto",
+        query: text.slice(0, 240),
+      },
+      reason: hear
+        ? "Read pitches from a flute clip."
+        : kinds
+          ? "Explain flute kinds."
+          : "Flute notes or a lesson.",
       risk: "none",
     })
   }

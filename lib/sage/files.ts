@@ -2,7 +2,7 @@ import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises"
 import { basename, join, relative, resolve, sep } from "node:path"
 
 export const WORKSPACE = join(process.cwd(), "data", "workspace")
-const MAX_BYTES = 2_000_000
+const MAX_BYTES = 8_000_000
 
 function assertInside(path: string) {
   const root = resolve(WORKSPACE)
@@ -38,9 +38,11 @@ export async function listWorkspace() {
       bytes: info.size,
       kind: name.toLowerCase().match(/\.(png|jpe?g|gif|webp)$/)
         ? "image"
-        : name.toLowerCase().match(/\.(csv|tsv|json|txt|md|py)$/)
-          ? "data"
-          : "file",
+        : name.toLowerCase().match(/\.(wav|mp3|m4a|aac|ogg|webm|flac)$/)
+          ? "audio"
+          : name.toLowerCase().match(/\.(csv|tsv|json|txt|md|py)$/)
+            ? "data"
+            : "file",
     })
   }
   return rows.sort((a, b) => a.name.localeCompare(b.name))
@@ -50,10 +52,10 @@ export async function readWorkspaceFile(name: string) {
   const full = assertInside(join(WORKSPACE, safeFileName(name)))
   const info = await stat(full)
   if (info.size > MAX_BYTES) {
-    throw new Error("File is larger than 2 MB.")
+    throw new Error("File is larger than 8 MB.")
   }
   const lower = name.toLowerCase()
-  if (/\.(png|jpe?g|gif|webp|pdf|zip)$/.test(lower)) {
+  if (/\.(png|jpe?g|gif|webp|pdf|zip|wav|mp3|m4a|aac|ogg|webm|flac)$/.test(lower)) {
     return {
       name: safeFileName(name),
       binary: true,

@@ -69,6 +69,7 @@ Ask in chat, or use the paperclip / monitor / mic on the composer.
 - **Python** — `Run python: print(sum(range(10)))`. She asks first. Sandbox is `data/workspace`
 - **Files** — paperclip drops a file into that sandbox. Monitor saves a screen still (she cannot see pixels without a vision model)
 - **Google apps** — Customize → Lookup → Connect Google (free Cloud project + OAuth). Then `What's on my Google Calendar today?`, `unread email`, `search drive`, `open my google doc`, or `google sheets`. A **service account cannot open personal Gmail**; it only sees calendars and Drive files you share with its email. Keep, Meet, and Photos Library are not these APIs.
+- **Flute** — `Teach me flute`, `kinds of flute`, `notes for Twinkle`, or paperclip a short clip and say `notes for this clip`. Teaching tunes and ragas (Bhupali, Yaman, Bhairav) get sargam + fingerings. She will not dump a full copyrighted film score.
 
 Customize → Lookup lists what is live, partial, or not this app.
 

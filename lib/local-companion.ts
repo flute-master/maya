@@ -357,7 +357,7 @@ function identityReply(personality: Personality, seed: string, text: string) {
   const youName = you(personality)
   const askingDo = /what can you (actually )?do/.test(text.toLowerCase())
   const canDo = [
-    "On this machine I can: talk in this tab, remember notes, look up weather and the web, drop Maps links (I cannot drive Chrome), set reminders here, write stories and jokes, run Python you allow in data/workspace, and read files you drop with the paperclip.",
+    "On this machine I can: talk in this tab, remember notes, look up weather and the web, drop Maps links (I cannot drive Chrome), set reminders here, write stories and jokes, teach flute (bansuri and the other kinds), give sargam for a song you name or a clip you drop, run Python you allow in data/workspace, and read files you drop with the paperclip.",
     "Connect Google in Customize → Lookup for Calendar, Gmail, Drive, Docs, Sheets, Tasks, and Contacts. A service account cannot open personal Gmail. Keep, Meet, and Photos are not these APIs.",
     "I cannot take over your mouse or see screenshot pixels unless you describe them.",
   ].join("\n\n")
@@ -373,7 +373,7 @@ function identityReply(personality: Personality, seed: string, text: string) {
     return [
       intro,
       stance,
-      "If I need a fact from the world, I look it up live — weather, news, maps, and your public GitHub if I have a handle — and I say so. Connect Google in Customize → Lookup for Calendar, Gmail, Drive, Docs, Sheets, Tasks, and Contacts. A service account cannot open personal Gmail. Keep, Meet, and Photos are not these APIs. I cannot drive Chrome, take over your mouse, or see a screenshot without you describing it.",
+      "If I need a fact from the world, I look it up live — weather, news, maps, and your public GitHub if I have a handle — and I say so. I teach flute: kinds, lessons, sargam for teaching tunes, and pitches from a clip you drop. Connect Google in Customize → Lookup for Calendar, Gmail, Drive, Docs, Sheets, Tasks, and Contacts. A service account cannot open personal Gmail. Keep, Meet, and Photos are not these APIs. I cannot drive Chrome, take over your mouse, or see a screenshot without you describing it.",
       close(personality, seed),
     ].join("\n\n")
   }

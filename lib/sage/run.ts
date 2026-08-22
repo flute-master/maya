@@ -20,6 +20,7 @@ import type {
   ToolCall,
   ToolResult,
 } from "@/lib/sage/types"
+import { runFluteTool } from "@/lib/flute"
 import { runGoogleTool } from "@/lib/google/apps"
 import { indexDocuments, retrieve } from "@/lib/sage/vectors"
 
@@ -187,6 +188,15 @@ async function execute(
         ok: true,
         summary: "Environment snapshot.",
         detail: bits.join(" "),
+      }
+    }
+    if (call.name === "flute") {
+      const ran = await runFluteTool(call.args)
+      return {
+        name: "flute",
+        ok: ran.ok,
+        summary: ran.summary,
+        detail: ran.detail,
       }
     }
     if (call.name.startsWith("google_")) {

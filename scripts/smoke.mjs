@@ -313,6 +313,31 @@ async function main() {
   })
   ok("lookup POST", lookup.response.ok, `status ${lookup.response.status}`)
 
+  const lesson = await chat("Teach me flute. I am a beginner.")
+  ok(
+    "flute lesson",
+    lesson.status === 200 && has(lesson.body, "bansuri") && has(lesson.tools || "", "flute"),
+    lesson.body.slice(0, 160).replace(/\s+/g, " ")
+  )
+  const twinkle = await chat("notes for Twinkle Twinkle")
+  ok(
+    "flute twinkle sargam",
+    twinkle.status === 200 && has(twinkle.body, "Sa Sa Pa Pa"),
+    twinkle.body.slice(0, 160).replace(/\s+/g, " ")
+  )
+  const kinds = await chat("kinds of flute")
+  ok(
+    "flute kinds",
+    kinds.status === 200 && has(kinds.body, "Bansuri") && has(kinds.body, "Concert"),
+    kinds.body.slice(0, 160).replace(/\s+/g, " ")
+  )
+  const clip = await chat("notes for this clip")
+  ok(
+    "flute clip pitches",
+    clip.status === 200 && (has(clip.body, "Sa(G4)") || has(clip.body, "No audio")),
+    clip.body.slice(0, 180).replace(/\s+/g, " ")
+  )
+
   console.log("")
   console.log(`${results.length - failed}/${results.length} passed`)
   if (failed) process.exit(1)
