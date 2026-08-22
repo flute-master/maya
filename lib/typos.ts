@@ -121,10 +121,11 @@ function fixToken(raw: string): string {
 
 /** Best-effort intended meaning. Original chat bubble is left as typed. */
 export function intendedMeaning(text: string): string {
-  return text
+  const tokens = text
     .split(/(\s+)/)
     .map((part) => (/\s/.test(part) ? part : fixToken(part)))
     .join("")
+  return tokens.replace(/^\s*wafa(?:\s+to)?\b/i, "way to")
 }
 
 /** Rewrite only the latest user turn for search, memory, and the model. */

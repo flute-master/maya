@@ -351,8 +351,8 @@ export function SettingsSheet({
                 <div>
                   <p className="text-sm font-medium">Sage Mode</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Assessment first, then the answer. She will not invent a
-                    gap-filling fact to sound complete. Off = shorter, ordinary
+                    Honest about gaps on decisions and facts. Jokes and banter
+                    stay ordinary talk — no Assessment wrapper. Off = shorter
                     replies.
                   </p>
                 </div>

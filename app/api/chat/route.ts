@@ -13,6 +13,7 @@ import type {
   ChatRequestBody,
   Personality,
 } from "@/lib/types"
+import { stripSageChrome } from "@/lib/mind"
 import { syncVaultFacts } from "@/lib/db/store"
 
 export const runtime = "nodejs"
@@ -361,7 +362,7 @@ export async function POST(request: Request) {
   }
 
   const usedSearch = lookup.searched && lookup.hits.length > 0
-  const text =
+  const text = stripSageChrome(
     trainedText ||
     ollamaText ||
     replyLocally(history, personality, memory, {
@@ -372,6 +373,7 @@ export async function POST(request: Request) {
       googleUrl: lookup.googleUrl,
       toolResults: sage.results,
     })
+  )
 
   const engine = trainedText
     ? "trained"

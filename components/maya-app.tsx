@@ -51,9 +51,10 @@ import {
   speakInto,
   speakLine,
   stopSpeaking,
+  unlockSpeech,
 } from "@/lib/speak"
 import { voiceById } from "@/lib/voices"
-import { hometownFromNotes, isDirectionsQuery, isMapsQuery, lastPlaceFromMessages, mapsQuery } from "@/lib/skills"
+import { hometownFromNotes, isClearScreenCommand, isDirectionsQuery, isMapsQuery, lastPlaceFromMessages, mapsQuery } from "@/lib/skills"
 import { googleMapsDirUrl, googleMapsSearchUrl } from "@/lib/maps"
 import { openMapsWindow, readBrowserOrigin } from "@/lib/geo"
 import { readPublicIdentity } from "@/lib/identity"
@@ -246,42 +247,8 @@ export function MayaApp() {
     async (text: string, messageId: string) => {
       const audio = liveRef.current
       stopSpeaking()
+      unlockSpeech()
       setFollow({ messageId, charIndex: 0 })
-
-      if (audio) {
-        audio.muted = true
-        try {
-          await audio.play()
-        } catch {
-          /* unlock */
-        }
-        audio.pause()
-        audio.muted = false
-        audio.ontimeupdate = () => {
-          if (!audio.duration || Number.isNaN(audio.duration)) return
-          const charIndex = Math.min(
-            text.length,
-            Math.floor((audio.currentTime / audio.duration) * text.length)
-          )
-          setFollow({ messageId, charIndex })
-        }
-        audio.onended = () => {
-          setFollow((current) =>
-            current?.messageId === messageId ? null : current
-          )
-          restoreSample(audio)
-          setPresence("idle")
-        }
-        try {
-          const result = await speakInto(audio, text, sage)
-          if (result === "playing" || result === "ready") {
-            setPresence(result === "playing" ? "speaking" : "idle")
-            return
-          }
-        } catch {
-          /* use the browser engine next */
-        }
-      }
 
       const chosen = voiceById(personality.voiceId)
       const started = speakLine(text, {
@@ -300,6 +267,33 @@ export function MayaApp() {
       if (started) {
         setPresence("speaking")
         return
+      }
+
+      if (audio) {
+        audio.ontimeupdate = () => {
+          if (!audio.duration || Number.isNaN(audio.duration)) return
+          const charIndex = Math.min(
+            text.length,
+            Math.floor((audio.currentTime / audio.duration) * text.length)
+          )
+          setFollow({ messageId, charIndex })
+        }
+        audio.onended = () => {
+          setFollow((current) =>
+            current?.messageId === messageId ? null : current
+          )
+          restoreSample(audio)
+          setPresence("idle")
+        }
+        try {
+          const result = await speakInto(audio, text, sage)
+          if (result === "playing") {
+            setPresence("speaking")
+            return
+          }
+        } catch {
+          /* nothing else to try */
+        }
       }
       setFollow(null)
       setPresence("idle")
@@ -426,12 +420,25 @@ export function MayaApp() {
         return
       }
 
+      const meaning = intendedMeaning(trimmed)
+      if (isClearScreenCommand(trimmed) || isClearScreenCommand(meaning)) {
+        abortRef.current?.abort()
+        haltVoice()
+        setVault((current) => startFreshConversation(current))
+        setError(null)
+        setIsSending(false)
+        setPresence("idle")
+        setTicks([])
+        return
+      }
+
       abortRef.current?.abort()
       sendingLock.current = true
       const gen = ++sendGen.current
 
       try {
         haltVoice()
+        unlockSpeech()
       } catch {
         /* sending still works if voice teardown fails */
       }
@@ -443,7 +450,8 @@ export function MayaApp() {
       setIsSending(true)
       setPresence("thinking")
       setTicks(["Understanding request", "Checking memory"])
-      if (isMapsQuery(trimmed)) {
+      const mapsAsk = isMapsQuery(meaning) || isMapsQuery(trimmed)
+      if (mapsAsk) {
         try {
           mapsWinRef.current = window.open("about:blank", "maya-maps")
         } catch {
@@ -588,15 +596,23 @@ export function MayaApp() {
         const lastPlace =
           lastDestRef.current || lastPlaceFromMessages(existing) || undefined
         let origin: { lat: number; lon: number } | undefined
-        if (isMapsQuery(trimmed)) {
-          origin = (await readBrowserOrigin()) ?? undefined
-          const dest = mapsQuery(trimmed, hometownNow, lastPlace)
+        if (mapsAsk) {
+          const dest =
+            mapsQuery(meaning, hometownNow, lastPlace) ||
+            mapsQuery(trimmed, hometownNow, lastPlace)
           if (dest) {
             lastDestRef.current = dest
-            const url = isDirectionsQuery(trimmed)
-              ? googleMapsDirUrl(dest, origin)
+            const firstUrl = isDirectionsQuery(meaning) || isDirectionsQuery(trimmed)
+              ? googleMapsDirUrl(dest)
               : googleMapsSearchUrl(dest)
-            openMapsWindow(url, mapsWinRef.current)
+            openMapsWindow(firstUrl, mapsWinRef.current)
+            void readBrowserOrigin(900).then((here) => {
+              if (!here) return
+              origin = here
+              if (isDirectionsQuery(meaning) || isDirectionsQuery(trimmed)) {
+                openMapsWindow(googleMapsDirUrl(dest, here), mapsWinRef.current)
+              }
+            })
           }
         }
 

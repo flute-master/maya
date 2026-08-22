@@ -50,7 +50,7 @@ export function isVaguePlace(place: string | undefined): boolean {
 
 export function isDirectionsQuery(text: string): boolean {
   const lower = text.toLowerCase()
-  return /\b(take me|directions?|navigate|route|how do i get|how to get|drive me|drop me|get me (there|to)|let'?s go|i want to go|bring me|uber me|take us)\b/.test(
+  return /\b(take me|directions?|navigate|route|how do i get|how to get|how to reach|way to|ways to|drive me|drop me|get me (there|to)|let'?s go|i want to go|bring me|uber me|take us|path to|towards)\b/.test(
     lower
   )
 }
@@ -62,7 +62,11 @@ export function isMapsQuery(text: string): boolean {
     /\b(google maps|on (the )?map|show (me )?the map|where is .+ (located|on the map)|open (google )?maps)\b/.test(
       lower
     ) ||
-    /^(map of|maps for|find on maps?)\b/.test(lower)
+    /^(map of|maps for|find on maps?)\b/.test(lower) ||
+    /\b(metro station|railway station|bus stand|bus station|airport)\b/.test(lower) ||
+    (/\bmetro\b/.test(lower) &&
+      !/\b(comic|manga|anime|music|news)\b/.test(lower) &&
+      lower.split(/\s+/).length <= 8)
   )
 }
 
@@ -107,7 +111,7 @@ export function mapsQuery(
   lastPlace?: string
 ): string | undefined {
   const dest = text.match(
-    /\b(?:directions?|navigate|route|take me|take us|drive me|drop me|bring me|uber me|get me|how do i get|how to get|let'?s go|i want to go)\s+(?:to\s+)?(.+)$/i
+    /\b(?:directions?|navigate|route|take me|take us|drive me|drop me|bring me|uber me|get me|how do i get|how to get|how to reach|way to|ways to|path to|towards|let'?s go|i want to go)\s+(?:to\s+)?(.+)$/i
   )
   if (dest?.[1]) {
     const place = tidyPlace(dest[1])
@@ -130,7 +134,44 @@ export function mapsQuery(
     const place = tidyPlace(where[1])
     return hometown ? `${place}, ${hometown}` : place
   }
+  if (
+    /\b(metro|station|airport|bus stand)\b/i.test(text) &&
+    text.trim().split(/\s+/).length <= 8
+  ) {
+    return tidyPlace(text)
+  }
   return undefined
+}
+
+export function isClearScreenCommand(text: string): boolean {
+  return /^(refresh|reload|clear(?:\s+(?:the\s+)?(?:screen|chat|thread))?|new chat|start over|reset chat)\.?$/i.test(
+    text.trim()
+  )
+}
+
+export function isJokeFollowUp(
+  text: string,
+  history?: Array<{ role?: string; content?: string }>
+): boolean {
+  const lower = text.trim().toLowerCase()
+  if (
+    /\b(another (one|joke)|tell another|one more joke|worse|not funny|that sucked|try again|funnier|a better joke)\b/.test(
+      lower
+    )
+  ) {
+    return true
+  }
+  const recentJoke = (history ?? [])
+    .filter((message) => message.role === "user")
+    .slice(-8)
+    .some((message) => {
+      const line = String(message.content || "").toLowerCase()
+      return /\bjokes?\b|make me laugh|be funny/.test(line)
+    })
+  if (!recentJoke) return false
+  return /^(yes|yeah|yep|ok|okay|sure|more|again|lol|lmao|haha|another)[.!]?$/i.test(
+    lower
+  ) || /^(that'?s )?(terrible|bad|awful|lame|mid|not funny)[.!]?$/i.test(lower)
 }
 
 export function isCreativeQuery(text: string): boolean {
@@ -140,7 +181,7 @@ export function isCreativeQuery(text: string): boolean {
       lower
     ) ||
     /^(a |another )?(story|joke|pun|satire)\b/.test(lower) ||
-    /\b(tell me a joke|make me laugh|be funny|write a story|once upon)\b/.test(
+    /\b(tell me a joke|make me laugh|be funny|write a story|once upon|another joke)\b/.test(
       lower
     )
   )

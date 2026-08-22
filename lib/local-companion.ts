@@ -7,8 +7,14 @@ import type {
 } from "@/lib/types"
 import { isSage } from "@/lib/bonds"
 import { prefersBrief } from "@/lib/adapt"
-import { renderRemember, renderSage } from "@/lib/mind"
-import { creativeKind, creativeTopic } from "@/lib/skills"
+import { renderRemember } from "@/lib/mind"
+import {
+  creativeKind,
+  creativeTopic,
+  isCreativeQuery,
+  isJokeFollowUp,
+  isMapsQuery,
+} from "@/lib/skills"
 import { creativeReply } from "@/lib/creative"
 import { relevantMemories } from "@/lib/recall"
 import { intendedMeaning } from "@/lib/typos"
@@ -288,12 +294,17 @@ function questionReply(
 
 function memoryAside(latest: string, memory: MemoryContext | undefined) {
   if (!memory) return ""
+  if (latest.trim().split(/\s+/).length < 8) return ""
+  if (isMapsQuery(latest) || isCreativeQuery(latest) || isJokeFollowUp(latest)) {
+    return ""
+  }
   const hits = relevantMemories(memory, latest, 2)
   if (!hits.length) return ""
   if (!memory.notes.length) return ""
   const line = hits[0]
   if (!line) return ""
   if (!memory.notes.some((note) => note === line)) return ""
+  if (/^Recent thread:/i.test(line)) return ""
   return `I still have this from before: "${line}"`
 }
 
@@ -712,10 +723,15 @@ export function replyLocally(
     return `${hindiOpen}${looked}`.trim()
   }
 
-  const creative = creativeKind(text)
+  const jokeAgain = isJokeFollowUp(text, messages)
+  const creative = jokeAgain ? "joke" : creativeKind(text)
   if (creative) {
-    const piece = creativeReply(creative, creativeTopic(text), seed)
-    return `${hindiOpen}${aside ? `${aside}\n\n` : ""}${piece}`.trim()
+    const piece = creativeReply(
+      creative,
+      jokeAgain ? "another try" : creativeTopic(text),
+      `${seed}|again|${messages.length}`
+    )
+    return `${hindiOpen}${piece}`.trim()
   }
 
   let body = ""
@@ -829,29 +845,12 @@ export function replyLocally(
       body = questionReply(personality, text, seed)
       break
     default:
-      body = isSage(personality)
-        ? named(
-            personality,
-            pick(seed, [
-              `I'm with you. Keep going if there's more, or tell me if you want me to think this through.`,
-              `Okay. I'm here. Do you want a take, a plan, or just someone staying with this?`,
-              `I hear you. What would actually help — thinking it out, a call, or company?`,
-            ])
-          )
-        : genericReply(personality, text, messages, seed)
+      body = genericReply(personality, text, messages, seed)
   }
 
   let combined = `${hindiOpen}${aside ? `${aside}\n\n` : ""}${body}`.trim()
   if (prefersBrief(extras?.learned)) {
     combined = combined.split(/\n\n/).slice(0, 2).join("\n\n")
   }
-  const sageWrap =
-    memory?.sageMode !== false &&
-    isSage(personality) &&
-    intent !== "greeting" &&
-    intent !== "thanks" &&
-    intent !== "goodbye" &&
-    intent !== "remember"
-  if (sageWrap) return renderSage(combined)
   return combined
 }

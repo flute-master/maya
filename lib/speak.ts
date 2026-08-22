@@ -145,6 +145,15 @@ setSpeechStop(() => {
   if (typeof window !== "undefined") window.speechSynthesis?.cancel()
 })
 
+export function unlockSpeech() {
+  if (typeof window === "undefined") return
+  try {
+    window.speechSynthesis?.resume()
+  } catch {
+    /* ignore */
+  }
+}
+
 export function speakLine(text: string, options: SpeakOptions | string = {}) {
   if (typeof window === "undefined" || !window.speechSynthesis) return false
   const opts = typeof options === "string" ? { voiceURI: options } : options
@@ -152,6 +161,12 @@ export function speakLine(text: string, options: SpeakOptions | string = {}) {
   if (!chunks.length) return false
 
   stopAllAudio()
+  try {
+    window.speechSynthesis.resume()
+    window.speechSynthesis.cancel()
+  } catch {
+    /* ignore */
+  }
   const generation = ++speakGeneration
   const voice = pickSpokenVoice(opts.voiceURI, {
     langHints: opts.langHints,

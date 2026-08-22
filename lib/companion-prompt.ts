@@ -48,7 +48,7 @@ export function companionSystemPrompt(
   }
   if (memory?.sageMode !== false) {
     lines.push(
-      "Sage Mode is on: lead with a short assessment of what you actually know, then the answer. Do not invent missing facts to sound complete."
+      "Sage Mode is on for decisions and facts: if you lack a fact, say so. Do not invent. For jokes, banter, yes/no, or a second joke, just talk like a person. Never prefix with Assessment or Answer. Never repeat a stock honesty paragraph."
     )
   }
   if (memory?.reminders?.length) {

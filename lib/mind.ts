@@ -377,14 +377,17 @@ export function renderChamber(objective: string, extras: {
 }
 
 export function renderSage(body: string) {
-  const trimmed = body.trim()
-  return [
-    "Assessment",
-    "I used what I actually have — memory, tools, or an honest gap. I did not decorate a guess.",
-    "",
-    "Answer",
-    trimmed,
-  ].join("\n")
+  return body.trim()
+}
+
+/** Drop the old Assessment/Answer chrome if a model copies it. */
+export function stripSageChrome(text: string) {
+  return text
+    .replace(
+      /^Assessment\s*\r?\nI used what I actually have[^\n]*\r?\n+(?:Answer\s*\r?\n)?/i,
+      ""
+    )
+    .trim()
 }
 
 export function renderRemember(facts: MindFact[], notes: string[]) {

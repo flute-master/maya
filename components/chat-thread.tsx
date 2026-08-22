@@ -71,7 +71,7 @@ export function ChatThread({
           >
             <div
               className={cn(
-                "max-w-[min(100%,38rem)] rounded-2xl px-4 py-3 text-[0.95rem] leading-7 whitespace-pre-wrap",
+                "min-w-0 max-w-[min(100%,38rem)] overflow-hidden break-words [overflow-wrap:anywhere] rounded-2xl px-4 py-3.5 text-[0.95rem] leading-7 whitespace-pre-wrap",
                 mine
                   ? "bg-primary text-primary-foreground rounded-br-md"
                   : "bg-card text-card-foreground ring-1 ring-foreground/8 rounded-bl-md"
@@ -271,7 +271,9 @@ function FollowText({
   content: string
   charIndex: number | null
 }) {
-  if (charIndex == null) return <LinkedText content={content} />
+  if (charIndex == null || /https?:\/\//i.test(content)) {
+    return <LinkedText content={content} />
+  }
   const start = Math.max(0, Math.min(charIndex, content.length))
   let end = start
   while (end < content.length && !/\s/.test(content[end] ?? "")) end += 1
