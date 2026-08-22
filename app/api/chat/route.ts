@@ -13,6 +13,7 @@ import type {
   ChatRequestBody,
   Personality,
 } from "@/lib/types"
+import { syncVaultFacts } from "@/lib/db/store"
 
 export const runtime = "nodejs"
 
@@ -195,6 +196,14 @@ export async function POST(request: Request) {
     },
     approved: body.approved,
   })
+
+  if (memory?.mindFacts?.length) {
+    try {
+      syncVaultFacts(memory.mindFacts)
+    } catch {
+      /* sqlite must not break chat */
+    }
+  }
 
   const toolTrace = [
     ...sage.results.map((item) => ({ name: item.name, summary: item.summary })),

@@ -1,0 +1,20 @@
+[
+  {
+    "input": "What is my favorite color?",
+    "expected": "unknown",
+    "memory": [],
+    "category": "memory"
+  },
+  {
+    "input": "What do you remember about me?",
+    "expected": "unknown",
+    "memory": [],
+    "category": "memory"
+  },
+  {
+    "input": "Where do I live?",
+    "expected": "Hyderabad",
+    "memory": ["I live in Hyderabad"],
+    "category": "memory"
+  }
+]

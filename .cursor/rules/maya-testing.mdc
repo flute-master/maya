@@ -1,0 +1,13 @@
+---
+description: Maya testing — unit, security, smoke, evals, doctor
+alwaysApply: true
+---
+
+Testing rules:
+
+- New skills get a typed module plus a unit or smoke check.
+- Permission and path-policy changes need `npm test`.
+- After chat/tool changes, `npm run smoke` against the running server.
+- Evals in `tests/evals/` measure memory honesty and hallucination offline.
+- `npm run doctor` must pass the offline core (Node, SQLite, workspace, Python, vault).
+- Do not add paid API tests. Network tests may skip when offline.

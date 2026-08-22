@@ -1,0 +1,7 @@
+[
+  {
+    "input": "Who are you to me?",
+    "must_include": ["Maya"],
+    "must_not": ["Raphael"]
+  }
+]

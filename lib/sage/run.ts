@@ -34,19 +34,12 @@ import { runGoogleTool } from "@/lib/google/apps"
 import { googleStatus } from "@/lib/google/auth"
 import { indexDocuments, retrieve } from "@/lib/sage/vectors"
 import { mindAsk, runMind } from "@/lib/mind"
+import { emitMaya } from "@/lib/core/events"
+import { decidePermission } from "@/lib/permissions/engine"
+import { listAudit, writeAudit } from "@/lib/db/store"
 
 function approved(call: ToolCall, granted: ToolApproval[]) {
   return granted.some((item) => item.name === call.name)
-}
-
-function needsAsk(call: ToolCall, trust: SageTrust) {
-  if (call.name.startsWith("google_") && call.risk === "write") {
-    return !trust.allowGoogleWrite
-  }
-  if (call.risk === "code") return !trust.allowPython
-  if (call.risk === "write") return !trust.allowFileWrite
-  if (call.risk === "net") return !trust.allowSearch
-  return false
 }
 
 export async function refreshVectors(memory?: MemoryContext) {
@@ -239,13 +232,24 @@ async function execute(
       }
     }
     if (call.name === "mind") {
+      const ask = mindAsk(call.args.query || "")
       const ran = await runMind({
-        ask: mindAsk(call.args.query || ""),
+        ask,
         facts: input.memory?.mindFacts ?? [],
         notes: input.memory?.notes ?? [],
         reminders: input.memory?.reminders ?? [],
         tasks: input.memory?.tasks ?? [],
         plans: input.memory?.mindPlans ?? [],
+        auditLines:
+          ask.action === "audit"
+            ? listAudit(16).map((row) => {
+                const tool = row.tool_name || row.event_type
+                const flag = row.allowed === 0 ? "denied" : row.allowed === 1 ? "ok" : ""
+                return `• ${row.created_at.slice(11, 16)} ${tool}${
+                  flag ? ` (${flag})` : ""
+                }${row.result_summary ? ` — ${row.result_summary}` : ""}`
+              })
+            : undefined,
       })
       return {
         name: "mind",
@@ -343,6 +347,7 @@ export async function runSage(input: {
   if (calls.some((call) => call.name === "recall")) {
     await refreshVectors(input.memory)
   }
+  emitMaya("THINKING_STARTED", input.text.slice(0, 80))
   const granted = input.approved ?? []
   const pending: PendingConfirm[] = []
   const runnable: ToolCall[] = []
@@ -350,7 +355,30 @@ export async function runSage(input: {
     ? await googleStatus()
     : null
   for (const call of calls) {
-    if (needsAsk(call, input.trust) && !approved(call, granted)) {
+    emitMaya("TOOL_REQUESTED", call.name)
+    const decision = decidePermission({
+      tool: call.name,
+      action: call.args.action,
+      reason: call.reason,
+      trust: input.trust,
+      approved: approved(call, granted),
+    })
+    if (!decision.allow && !decision.pending) {
+      writeAudit({
+        event_type: "permission",
+        tool_name: call.name,
+        allowed: false,
+        result_summary: decision.reason,
+      })
+      pending.push({
+        name: call.name,
+        args: call.args,
+        reason: decision.reason,
+        risk: call.risk,
+      })
+      continue
+    }
+    if (decision.pending) {
       const googleReady =
         call.name === "google_gmail"
           ? Boolean(status?.canGmail)
@@ -365,17 +393,18 @@ export async function runSage(input: {
         runnable.push(call)
         continue
       }
-      pending.push({
-        name: call.name,
-        args: call.args,
-        reason: call.reason,
-        risk: call.risk,
+      emitMaya("PERMISSION_REQUIRED", call.name)
+      writeAudit({
+        event_type: "permission",
+        tool_name: call.name,
+        allowed: false,
+        input_summary: call.reason,
+        result_summary: decision.reason,
       })
-    } else if (call.risk === "net" && !input.trust.allowSearch) {
       pending.push({
         name: call.name,
         args: call.args,
-        reason: "Lookup is off in Customize.",
+        reason: decision.reason,
         risk: call.risk,
       })
     } else {
@@ -384,7 +413,17 @@ export async function runSage(input: {
   }
   const results: ToolResult[] = []
   for (const call of runnable) {
-    results.push(await execute(call, input))
+    emitMaya("TOOL_STARTED", call.name)
+    const result = await execute(call, input)
+    results.push(result)
+    emitMaya("TOOL_COMPLETED", call.name)
+    writeAudit({
+      event_type: "tool",
+      tool_name: call.name,
+      allowed: true,
+      input_summary: call.reason,
+      result_summary: result.summary,
+    })
   }
   const retrieved =
     results.find((item) => item.name === "recall" && item.detail)?.detail

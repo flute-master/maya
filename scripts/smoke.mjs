@@ -96,6 +96,21 @@ async function main() {
     ok("JS chunk listed on homepage", false, "no /_next/static/chunks match")
   }
 
+  const core = await req("/api/core")
+  ok("GET /api/core", core.response.ok, `status ${core.response.status}`)
+  ok(
+    "core names offline skills",
+    Boolean(core.json?.offline?.ready?.includes("mind")) &&
+      Boolean(core.json?.skills?.total >= 8),
+    JSON.stringify(core.json?.skills || {}).slice(0, 120)
+  )
+  const doctor = await req("/api/core?view=doctor")
+  ok(
+    "doctor runs offline",
+    doctor.response.ok && (doctor.json?.doctor?.healthy ?? 0) >= 3,
+    `healthy ${doctor.json?.doctor?.healthy}`
+  )
+
   const hear = await req("/hear.html")
   ok("GET /hear.html", hear.response.ok && has(hear.raw, "play"), `status ${hear.response.status}`)
   const clip = await req("/clips/sage.mp3")
@@ -554,6 +569,17 @@ async function main() {
       has(today.body, "Kubernetes") &&
       has(today.body, "vision"),
     today.body.slice(0, 200).replace(/\s+/g, " ")
+  )
+
+  const audit = await chat("What did you access today?")
+  ok(
+    "audit log is honest",
+    audit.status === 200 &&
+      (has(audit.body, "accessed") ||
+        has(audit.body, "audit") ||
+        has(audit.body, "tool") ||
+        has(audit.body, "Nothing is on the audit")),
+    audit.body.slice(0, 180).replace(/\s+/g, " ")
   )
 
   const skills = await chat("What skills do you have?")

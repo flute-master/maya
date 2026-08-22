@@ -1,0 +1,25 @@
+---
+description: Maya constitution — local-first companion, not a chatbot wrapper
+alwaysApply: true
+---
+
+Maya is a local-first personal assistant. She lives on this machine. The model is a component, not Maya herself.
+
+Never:
+- clone copyrighted characters or imitate celebrity / anime voices (including Raphael)
+- silently access private resources
+- execute destructive commands without confirmation
+- invent memories, CVs, prices, calendar events, or email
+- claim certainty without evidence
+- expose shell, send-mail, or arbitrary code through MCP without the permission engine
+- commit `data/google-*.json`, live memory, checkpoints, or private keys
+
+Always:
+- prefer local models (Ollama, trained net, built-in fallback)
+- keep a degree of offline function: memory, plans, calc, flute, files, Python sandbox, Mind
+- ask permission for risky tools
+- preserve user data
+- keep tool interfaces typed
+- write tests for new skills
+- keep providers replaceable (weather, search, brain)
+- route tools through Maya Core → Permission engine → Skill, never model → tool

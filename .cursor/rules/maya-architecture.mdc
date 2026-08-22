@@ -1,0 +1,22 @@
+---
+description: Maya v2 architecture — runtime, skills, SQLite, MCP as an interface
+alwaysApply: true
+---
+
+Architecture rules:
+
+1. UI must not call external APIs directly. Chat goes through `/api/chat` → Maya Runtime / Sage.
+2. MayaRuntime (and Sage) communicate with the permission engine, then tools.
+3. Tools are registered through `lib/skills/registry.ts` and `skills/<name>/`.
+4. Every tool has an explicit policy in `lib/permissions/policies.ts`.
+5. Dangerous tools require confirmation. Shell stays disabled.
+6. Brain implementations live behind `lib/core/brain.ts`. Swap Ollama without touching Memory or UI.
+7. Structured state (memories, tasks, plans, audit) uses SQLite at `data/maya.db`.
+8. Conversations still persist in the vault JSON (`data/maya-memory.json`) until a later migration.
+9. Do not introduce PostgreSQL or a vector database unless explicitly requested.
+10. MCP (`mcp/server`) is an external interface to Maya, not the internal architecture.
+11. Never expose secrets to the model.
+12. Never execute arbitrary shell commands.
+13. Preserve existing chat, voice, rooms, and smoke behavior during migrations.
+14. Prefer wrapping current modules as skills over rewriting the Next.js app as Vite.
+15. Offline skills must keep working when Ollama and the network are down.

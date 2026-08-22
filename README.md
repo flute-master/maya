@@ -83,6 +83,30 @@ Ask in chat, or use the paperclip / monitor / mic on the composer.
 
 Customize → Lookup lists what is live, partial, or not this app.
 
+- **System** — Customize → System. Brain, skill count, permission table, doctor, recent access
+- **Audit** — `What did you access today?`
+- **Knowledge** — drop notes in `data/knowledge/`. Local text search before the internet
+
+### Offline
+
+Without Ollama and without the network she still: talks (built-in engine), remembers, plans, calculates, teaches flute, reads/writes the sandbox (writes ask), and runs Python you allow. Weather, news, maps, music, and Google need the net — she says so instead of inventing.
+
+### Maya Core (v2.1)
+
+The model does not control tools. Flow: UI → Runtime / Sage → permission engine → skill → result → brain.
+
+- SQLite: `data/maya.db` (memories, tasks, plans, audit). Chats stay in `data/maya-memory.json` for now
+- Skills: `skills/<name>/` wrapping the existing providers
+- MCP for Cursor: `.cursor/mcp.json` → `npx tsx mcp/server/index.ts`. No shell. Python still asks
+- Rules: `.cursor/rules/` (constitution, architecture, security, testing)
+
+```bash
+npm run doctor    # offline diagnostics
+npm test          # permissions + path policy
+npm run eval      # honesty harness
+npm run backup    # db + knowledge + vault, no Google keys
+```
+
 She still cannot drive Chrome or take over your mouse.
 
 ### Connect Google (free)

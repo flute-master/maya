@@ -38,6 +38,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { VoicePicker } from "@/components/voice-picker"
 import { SageLayers } from "@/components/sage-layers"
 import { GoogleConnect } from "@/components/google-connect"
+import { SystemPanel } from "@/components/system-panel"
 
 export function SettingsSheet({
   open,
@@ -280,11 +281,12 @@ export function SettingsSheet({
 
         <Tabs defaultValue="presence" className="min-h-0 flex-1 overflow-hidden p-0">
           <div className="px-4 pt-3">
-            <TabsList className="grid h-auto w-full grid-cols-2 group-data-horizontal/tabs:h-auto sm:grid-cols-4">
+            <TabsList className="grid h-auto w-full grid-cols-3 group-data-horizontal/tabs:h-auto sm:grid-cols-5">
               <TabsTrigger value="presence">Presence</TabsTrigger>
               <TabsTrigger value="voice">Voice</TabsTrigger>
               <TabsTrigger value="memory">Memory</TabsTrigger>
               <TabsTrigger value="search">Lookup</TabsTrigger>
+              <TabsTrigger value="system">System</TabsTrigger>
             </TabsList>
           </div>
 
@@ -1164,6 +1166,17 @@ export function SettingsSheet({
                 </Button>
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent
+            value="system"
+            className="min-h-0 overflow-y-auto px-4 py-4"
+          >
+            <p className="mb-3 text-xs text-muted-foreground">
+              Developer panel. SQLite, skills, permissions, doctor. The model
+              does not control this.
+            </p>
+            <SystemPanel />
           </TabsContent>
         </Tabs>
       </SheetContent>

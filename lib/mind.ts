@@ -44,6 +44,7 @@ export type MindAction =
   | "continue"
   | "analyze"
   | "skills"
+  | "audit"
 
 export type MindAsk = {
   action: MindAction
@@ -122,7 +123,12 @@ export function isMindQuery(text: string) {
     /\b(analyze whether|analyse whether|analysis chamber|should i (buy|get|take|learn|do|move|quit))\b/.test(
       lower
     ) ||
-    /\b(what (skills|tools) do you have|inspect your skills)\b/.test(lower)
+    /\b(what (skills|tools) do you have|inspect your skills)\b/.test(
+      lower
+    ) ||
+    /\b(what did you (access|do|run|use)( today)?|audit log|what did i access)\b/.test(
+      lower
+    )
   )
 }
 
@@ -155,6 +161,9 @@ export function mindAsk(text: string): MindAsk {
   }
   if (/\b(what (skills|tools) do you have|inspect your skills)\b/.test(lower)) {
     return { action: "skills", query: text }
+  }
+  if (/\b(what did you (access|do|run|use)|audit log|what did i access)\b/.test(lower)) {
+    return { action: "audit", query: text }
   }
   return { action: "plan", query: text }
 }
@@ -481,6 +490,7 @@ export async function runMind(input: {
   reminders: string[]
   tasks: string[]
   plans: MindPlan[]
+  auditLines?: string[]
 }): Promise<{
   text: string
   facts?: MindFact[]
@@ -505,6 +515,15 @@ export async function runMind(input: {
   }
   if (input.ask.action === "skills") {
     return { text: renderSkills() }
+  }
+  if (input.ask.action === "audit") {
+    const lines = input.auditLines ?? []
+    if (!lines.length) {
+      return { text: "Nothing is on the audit log yet. I do not invent activity." }
+    }
+    return {
+      text: ["What I actually accessed — not a vibe.", ...lines].join("\n"),
+    }
   }
   if (input.ask.action === "analyze") {
     const objective = input.ask.query

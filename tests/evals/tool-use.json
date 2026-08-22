@@ -1,0 +1,5 @@
+[
+  { "input": "What's the weather in Hyderabad?", "tool": "weather" },
+  { "input": "Run python: print(1)", "tool": "python" },
+  { "input": "What do you remember about me?", "tool": "mind" }
+]

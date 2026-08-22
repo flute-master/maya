@@ -130,8 +130,20 @@ export const SAGE_LAYERS: SageLayer[] = [
   },
   {
     ability: "Safety",
-    how: "Python and file writes ask before they run. Workspace is sandboxed",
+    how: "Permission engine + audit log. Python and file writes ask. Workspace is sandboxed",
     status: "live",
-    note: "Allow once, or turn on always-allow in Customize → Lookup.",
+    note: "Maya Core decides. The model does not. Allow once, or always-allow in Customize → Lookup. Ask “what did you access today?”",
+  },
+  {
+    ability: "SQLite core",
+    how: "data/maya.db for memories, tasks, plans, permissions, audit. Vault JSON still holds chats",
+    status: "live",
+    note: "Works offline. No Postgres. No vector DB.",
+  },
+  {
+    ability: "MCP",
+    how: "stdio server at mcp/server. Cursor talks to Maya through typed tools",
+    status: "live",
+    note: "Interface, not the brain. No shell. Python still asks.",
   },
 ]

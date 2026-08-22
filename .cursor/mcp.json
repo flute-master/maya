@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "maya": {
+      "command": "npx",
+      "args": ["--yes", "tsx", "mcp/server/index.ts"],
+      "env": {
+        "MAYA_MCP_MODE": "stdio"
+      }
+    }
+  }
+}

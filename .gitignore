@@ -54,5 +54,9 @@ __pycache__/
 /data/workspace/**
 !/data/workspace/.gitkeep
 /data/google-*.json
+/data/maya.db
+/data/maya.db-wal
+/data/maya.db-shm
+/data/backups/
 /public/maya.zip
 
