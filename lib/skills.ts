@@ -18,8 +18,12 @@ export function hometownFromNotes(notes: string[] | undefined): string | undefin
 
 export function isWeatherQuery(text: string): boolean {
   const lower = intendedMeaning(text).toLowerCase()
-  return /\b(weather|forecast|temperature|humidity|aqi|air quality|will it rain|is it raining|how hot|how cold)\b/.test(
-    lower
+  return (
+    /\b(what(?:'s| is) the weather|weather (in|for|at|like|today|now|tomorrow|outside)|forecast( for| in)?|how (hot|cold) is it|will it rain|is it raining)\b/.test(
+      lower
+    ) ||
+    /^(weather|forecast|temperature|aqi)[.!?]?$/.test(lower) ||
+    /\b(temperature|humidity|aqi|air quality) (in|for|at|today|now)\b/.test(lower)
   )
 }
 
@@ -53,7 +57,7 @@ export function isVaguePlace(place: string | undefined): boolean {
 
 export function isDirectionsQuery(text: string): boolean {
   const lower = intendedMeaning(text).toLowerCase()
-  return /\b(take me|directions?|navigate|route|how do i get|how to get|how to reach|way to|ways to|drive me|drop me|get me (there|to)|let'?s go|i want to go|bring me|uber me|take us|path to|towards)\b/.test(
+  return /\b(take me( to)?|take us to|directions?( to)?|navigate to|route to|how do i get|how to get|how to reach|way to|ways to|drive me to|drop me( at| to)?|get me (there|to)|let'?s go to|i want to go to|bring me to|uber me to|path to)\b/.test(
     lower
   )
 }
@@ -65,11 +69,7 @@ export function isMapsQuery(text: string): boolean {
     /\b(google maps|on (the )?map|show (me )?the map|where is .+ (located|on the map)|open (google )?maps)\b/.test(
       lower
     ) ||
-    /^(map of|maps for|find on maps?)\b/.test(lower) ||
-    /\b(metro station|railway station|bus stand|bus station|airport)\b/.test(lower) ||
-    (/\bmetro\b/.test(lower) &&
-      !/\b(comic|manga|anime|music|news)\b/.test(lower) &&
-      lower.split(/\s+/).length <= 8)
+    /^(map of|maps for|find on maps?)\b/.test(lower)
   )
 }
 
@@ -137,12 +137,6 @@ export function mapsQuery(
   if (where?.[1]) {
     const place = tidyPlace(where[1])
     return hometown ? `${place}, ${hometown}` : place
-  }
-  if (
-    /\b(metro|station|airport|bus stand)\b/i.test(text) &&
-    text.trim().split(/\s+/).length <= 8
-  ) {
-    return tidyPlace(text)
   }
   return undefined
 }

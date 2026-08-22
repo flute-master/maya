@@ -79,7 +79,7 @@ export function searchQueryFor(text: string): string | null {
   if (NOT_SEARCH.some((pattern) => pattern.test(lower))) return null
 
   const explicit = t.match(
-    /\b(?:look(?:\s+this)?\s+up|search(?:\s+the web)?(?:\s+for)?|google|browse|use the browser|find out(?:\s+about)?|check(?:\s+the web)?(?:\s+for)?)\s*[:\-]?\s*(.+)$/i
+    /\b(?:look(?:\s+this)?\s+up|search(?:\s+the web)?(?:\s+for)?|google this|browse|use the browser|find out(?:\s+about)?|check the web(?:\s+for)?)\s*[:\-]?\s*(.+)$/i
   )
   if (explicit?.[1]) {
     const query = cleanQuery(explicit[1])
@@ -89,29 +89,9 @@ export function searchQueryFor(text: string): string | null {
   }
 
   if (
-    /\b(weather in|weather for|forecast|temperature in|news about|stock price|who won|latest on|current (price|score|population|president)|tell me about|explain|directions to|navigate to|take me|map of)\b/i.test(
+    /\b(look(?:\s+this)?\s+up|search the web|google this|stock price|who won|latest on|current (price|score|population|president))\b/i.test(
       t
     )
-  ) {
-    return cleanQuery(t)
-  }
-
-  const factual =
-    /^(what is|what's|whats|who is|who's|whos|when did|when was|where is|where's|wheres|how many|how much|how does|how do i|how can i|why is|why does|why did|what are(?! my)|which)\b/i.test(
-      lower
-    )
-  const markedQuestion =
-    t.includes("?") &&
-    t.length >= 12 &&
-    !/\b(feel|lonely|sad|anxious|should i stay)\b/.test(lower)
-
-  if (
-    (factual || markedQuestion) &&
-    !/^(what's (wrong|up|going)|what is (wrong|going)|who is she|who are we|what are my)\b/i.test(
-      lower
-    ) &&
-    !/\bmy\b/.test(lower) &&
-    t.length < 240
   ) {
     return cleanQuery(t)
   }

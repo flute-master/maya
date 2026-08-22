@@ -10,8 +10,14 @@ import {
   isDirectionsQuery,
   isJokeFollowUp,
   isMapsQuery,
+  isWeatherQuery,
   mapsQuery,
 } from "../../lib/skills"
+import { isFluteQuery } from "../../lib/flute"
+import { isMindQuery } from "../../lib/mind"
+import { isOtakuQuery } from "../../lib/otaku"
+import { planTools } from "../../lib/sage/plan"
+import { searchQueryFor } from "../../lib/search"
 import { intendedMeaning } from "../../lib/typos"
 import { replyLocally } from "../../lib/local-companion"
 import { skipTinyNet } from "../../lib/trained"
@@ -136,6 +142,33 @@ test("smart-now does not get a wander line", () => {
   assert.doesNotMatch(text, /better would look like/i)
   assert.doesNotMatch(text, /decision or a feeling/i)
   assert.match(text, /maya/i)
+})
+
+test("casual talk does not fire features", () => {
+  assert.equal(isMapsQuery("I took the metro yesterday"), false)
+  assert.equal(isMapsQuery("Miyapur Metro is crowded"), false)
+  assert.equal(isMusicQuery("I love that song"), false)
+  assert.equal(isWeatherQuery("the weather was awful yesterday"), false)
+  assert.equal(isOtakuQuery("I watched anime last night"), false)
+  assert.equal(isFluteQuery("I saw a flute in a shop"), false)
+  assert.equal(isMindQuery("good morning"), false)
+  assert.equal(searchQueryFor("Why did the chicken cross the road?"), null)
+  assert.equal(searchQueryFor("what is love"), null)
+  assert.ok(planTools("I took the metro yesterday").length === 0)
+  assert.ok(planTools("I watched anime last night").length === 0)
+})
+
+test("features fire only when asked", () => {
+  assert.equal(isMapsQuery("way to miyapur metro"), true)
+  assert.equal(isMapsQuery("take me to Charminar"), true)
+  assert.equal(isMusicQuery("play tum hi ho"), true)
+  assert.equal(isMusicQuery("song kesariya"), true)
+  assert.equal(isWeatherQuery("weather in Hyderabad"), true)
+  assert.equal(isOtakuQuery("Where can I read Frieren and watch the anime legally?"), true)
+  assert.equal(isFluteQuery("Teach me flute. I am a beginner."), true)
+  assert.ok(planTools("way to miyapur metro").some((call) => call.name === "maps"))
+  assert.ok(planTools("play tum hi ho").some((call) => call.name === "music"))
+  assert.equal(planTools("so you are smart now").length, 0)
 })
 
 test("generic assistant sludge is rejected", () => {

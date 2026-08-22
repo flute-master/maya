@@ -115,7 +115,6 @@ export function isMindQuery(text: string) {
     /\b(what am i (supposed to do|doing) today|what(?:'s| is) on (my )?(plate|agenda) today)\b/.test(
       lower
     ) ||
-    /^(good morning)\b/.test(lower) ||
     /\b(make a plan|plan my|plan a|continue the plan|continue (my )?plan|next step in the plan)\b/.test(
       lower
     ) ||

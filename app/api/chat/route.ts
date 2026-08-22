@@ -318,25 +318,9 @@ export async function POST(request: Request) {
   )
   const toolAnswered = Boolean(toolHeavy || grounded || googleRan)
 
-  let trainedText: string | null = null
-  if (
-    !toolAnswered &&
-    !skipTiny &&
-    body.useTrained !== false &&
-    (await trainedReady())
-  ) {
-    trainedText = await replyWithTrained({
-      messages: history,
-      personality,
-      memory,
-      hits,
-    })
-  }
-
-  let ollamaText =
-    trainedText || toolAnswered
-      ? null
-      : await replyWithOllama({
+  let ollamaText = toolAnswered
+    ? null
+    : await replyWithOllama({
           messages: history,
           personality,
           memory,
@@ -363,10 +347,26 @@ export async function POST(request: Request) {
     if (retry) ollamaText = retry
   }
 
+  let trainedText: string | null = null
+  if (
+    !ollamaText &&
+    !toolAnswered &&
+    !skipTiny &&
+    body.useTrained !== false &&
+    (await trainedReady())
+  ) {
+    trainedText = await replyWithTrained({
+      messages: history,
+      personality,
+      memory,
+      hits,
+    })
+  }
+
   const usedSearch = lookup.searched && lookup.hits.length > 0
   const text = stripSageChrome(
-    trainedText ||
     ollamaText ||
+    trainedText ||
     replyLocally(history, personality, memory, {
       learned,
       searchHits: lookup.hits,
@@ -377,10 +377,10 @@ export async function POST(request: Request) {
     })
   )
 
-  const engine = trainedText
-    ? "trained"
-    : ollamaText
-      ? "ollama"
+  const engine = ollamaText
+    ? "ollama"
+    : trainedText
+      ? "trained"
       : sage.results.length
         ? "sage"
         : "local"
@@ -389,10 +389,10 @@ export async function POST(request: Request) {
       ? "sage"
       : usedSearch || lookup.searched
         ? "search"
-        : trainedText
-          ? "trained"
-          : ollamaText
-            ? "model"
+        : ollamaText
+          ? "model"
+          : trainedText
+            ? "trained"
             : "offline"
 
   return new Response(localStream(text), {

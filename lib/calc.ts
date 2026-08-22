@@ -5,7 +5,7 @@ const FUNCS = new Set(["sqrt", "sin", "cos", "tan", "log", "ln", "abs"])
 export function isCalcQuery(text: string): boolean {
   const lower = text.toLowerCase().trim()
   if (/\b(run python|execute python|python sandbox)\b/.test(lower)) return false
-  if (/^open (the )?calculator\b/.test(lower) || /\bcalculator\b/.test(lower)) {
+  if (/^open (the )?calculator\b/.test(lower) || /\b(open|use) (the )?calculator\b/.test(lower)) {
     return true
   }
   if (/\b(\d+(?:\.\d+)?)\s*%\s*of\b/.test(lower)) return true

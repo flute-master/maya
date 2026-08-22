@@ -12,7 +12,6 @@ import {
   mapsQuery,
   weatherPlace,
 } from "@/lib/skills"
-import { skipTinyNet } from "@/lib/trained"
 import { intendedMeaning } from "@/lib/typos"
 import type { ToolCall } from "@/lib/sage/types"
 
@@ -83,21 +82,21 @@ export function planTools(
     }
   }
 
-  const smallTalk =
-    /^(hi|hey|hello|thanks|thank you|ok|okay|yo|good night|bye)\b/.test(lower) &&
-    text.length < 48
-
-  if (!smallTalk && text.length > 12 && !skipTinyNet(text)) {
+  if (
+    /\b(search (your )?(memory|notes|chats)|look in (your )?memory|what do you remember|what did i (say|tell you))\b/.test(
+      lower
+    )
+  ) {
     add({
       name: "recall",
       args: { query: text.slice(0, 240) },
-      reason: "Search memory, chats, and files.",
+      reason: "They asked to search memory.",
       risk: "none",
     })
   }
 
   if (
-    /\b(what(?:'s| is) in your (?:files|workspace)|list (?:your )?files|workspace)\b/.test(
+    /\b(what(?:'s| is) in your (?:files|workspace)|list (?:your )?files)\b/.test(
       lower
     )
   ) {
@@ -232,7 +231,7 @@ export function planTools(
   }
 
   if (
-    /\b(observe|what do you see|look at (my )?screen|screenshot|environment)\b/.test(
+    /\b(observe (the )?(screen|workspace)|what do you see|look at (my )?screen|screenshot)\b/.test(
       lower
     )
   ) {

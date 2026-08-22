@@ -27,17 +27,15 @@ export function isMusicQuery(text: string): boolean {
   const lower = intendedMeaning(text).toLowerCase().trim()
   if (/\bflute\b/.test(lower) || /\bpython\b/.test(lower)) return false
   if (
-    /^(play|music|song|gaana|gana|youtube)$/.test(lower) ||
+    /^(play|music|song|gaana|gana|youtube)\b/.test(lower) ||
     /^open (the )?(music player|youtube|player)\b/.test(lower)
   ) {
     return true
   }
   return (
-    /\b(put on|listen to|music player|now playing|youtube|gaana|sunaao|suna do|sunao)\b/.test(
-      lower
-    ) ||
-    /\bplay\s+\S+/.test(lower) ||
-    /\b(song|track|album)\s+\S+/.test(lower)
+    /\b(put on|listen to|sunaao|suna do|sunao)\b/.test(lower) ||
+    /\bplay\s+(the\s+)?(song|track|album|music)\b/.test(lower) ||
+    /\bplay\s+\S+/.test(lower)
   )
 }
 

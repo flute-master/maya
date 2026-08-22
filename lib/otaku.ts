@@ -37,20 +37,18 @@ export function isOtakuQuery(text: string): boolean {
   const lower = text.toLowerCase()
   if (/\b(flute|python|weather|calendar|gmail)\b/.test(lower)) return false
   return (
-    /\b(manga|manhwa|manhua|anime|otaku|weeb|seinen|shounen|shonen|light novel|web novel|\bln\b|\bwn\b)\b/.test(
+    /\b(tachiyomi|mihon|komga|kavita)\b/.test(lower) ||
+    /\b(where (can|do) i (read|watch)|official (manga|anime) links?|legal (manga|anime)|manga links?|novel links?|episode links?)\b/.test(
       lower
     ) ||
-    /\b(tachiyomi|mihon|komga|kavita|anilist|myanimelist)\b/.test(lower) ||
+    /\b(what am i (reading|watching)|my (manga|anime|novel)s?( list| shelf)?|show (my )?shelf|otaku shelf)\b/.test(
+      lower
+    ) ||
+    /\b(any updates|updates on (my )?(manga|anime|reading|shelf))\b/.test(lower) ||
     (/\b(chapter|episode|ch\.?\s*\d+|ep\.?\s*\d+)\b/.test(lower) &&
-      /\b(read|watch|catch|caught|finished|reading|watching|shelf)\b/.test(
+      /\b(read|watch|caught|finished|reading|watching|shelf|remember)\b/.test(
         lower
       )) ||
-    /\b(where (can|do) i (read|watch)|manga links?|novel links?|episode links?)\b/.test(
-      lower
-    ) ||
-    /\b(what am i (reading|watching)|my (manga|anime|novel)s?|any updates on (my )?(manga|anime|reading|shelf))\b/.test(
-      lower
-    ) ||
     /\b(extension repos?itor(y|ies)|manga repos?itor(y|ies))\b/.test(lower)
   )
 }

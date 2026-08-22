@@ -11,11 +11,13 @@ const AUDIO = /\.(wav|mp3|m4a|aac|ogg|webm|flac)$/i
 export function isFluteQuery(text: string) {
   const lower = text.toLowerCase()
   return (
-    /\b(flute|bansuri|venu|piccolo|shakuhachi|dizi|quena|sargam|swar|alankar|riyaz|fingering)\b/.test(
+    /\b(teach me (to play |the )?(flute|bansuri)|flute lesson|kinds of flute|notes for|sargam for|how to (play|hold) (the )?(flute|bansuri)|riyaz)\b/.test(
       lower
     ) ||
-    /\b(teach me (to play|the )?(flute|bansuri)|notes for|how to play)\b/.test(lower) ||
-    Boolean(findTune(lower))
+    /\b(flute|bansuri).{0,24}\b(teach|lesson|notes|beginner|kinds?|types?|sargam|fingering)\b/.test(
+      lower
+    ) ||
+    /\b(teach|lesson|notes|kinds?|sargam).{0,24}\b(flute|bansuri)\b/.test(lower)
   )
 }
 
