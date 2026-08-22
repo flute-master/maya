@@ -1,3 +1,4 @@
+import { readBrainInstall, startBrainInstall } from "@/lib/brain-setup"
 import { buildModelfile, modelCreateCommands } from "@/lib/modelfile"
 import { ollamaReady, ollamaStatus } from "@/lib/ollama"
 import type { Personality } from "@/lib/types"
@@ -12,19 +13,24 @@ function isPersonality(value: unknown): value is Personality {
 
 export async function GET() {
   const status = await ollamaStatus()
+  const install = readBrainInstall()
   return Response.json({
     available: Boolean(status.using),
     using: status.using,
     models: status.models,
     url: status.url,
+    install,
     hint: status.using
-      ? `${status.using} is ready. Maya will use it for replies.`
-      : "Ollama is not running. Install it, pull a model, then restart Maya. Until then she uses the built-in engine.",
+      ? `${status.using} is ready. That is the offline brain. Load it with OLLAMA_MODEL=maya npm run dev. See BRAIN.md.`
+      : install.running
+        ? install.step || "Downloading the offline brain…"
+        : "No local model yet. One-time: npm run brain — or click Install offline brain if Ollama is running. Until then she uses the built-in engine. BRAIN.md has the load steps.",
   })
 }
 
 export async function POST(request: Request) {
   let body: {
+    action?: unknown
     personality?: unknown
     notes?: unknown
     baseModel?: unknown
@@ -33,6 +39,18 @@ export async function POST(request: Request) {
     body = (await request.json()) as typeof body
   } catch {
     return Response.json({ error: "Could not read that." }, { status: 400 })
+  }
+
+  if (body.action === "install") {
+    const started = startBrainInstall(
+      typeof body.baseModel === "string" && body.baseModel.trim()
+        ? body.baseModel.trim()
+        : "llama3.2"
+    )
+    if (!started.ok) {
+      return Response.json({ error: started.error, ...readBrainInstall() }, { status: 409 })
+    }
+    return Response.json({ ok: true, pid: started.pid, ...readBrainInstall() })
   }
 
   if (!isPersonality(body.personality)) {

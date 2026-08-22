@@ -44,6 +44,8 @@ npm run dev
 
 Open **http://127.0.0.1:43217**
 
+**Offline brain (one-time, ~2 GB):** [BRAIN.md](./BRAIN.md) — `npm run brain` then `OLLAMA_MODEL=maya npm run dev`.
+
 You should see `package.json` in that folder. There is no extra `maya/maya`.
 
 Hard-refresh after an update: **Ctrl+Shift+R**.
@@ -522,46 +524,39 @@ She will not invent events or an inbox. If she is not connected she tells you to
 
 ---
 
-## Brain (Ollama, trained net, on-device)
+## Brain (offline, one-time download)
 
-Two layers. You do **not** need to train Llama from zero. She answers even if none of these are installed (built-in engine).
+**Full load steps:** [BRAIN.md](./BRAIN.md)
 
-### 1. Ollama (best quality on a laptop)
-
-Install [Ollama](https://ollama.com), then from this folder:
+You do **not** train Llama from your chats. The smart offline talker is a **one-time download**. Ever-learning is memory + an optional tiny net.
 
 ```bash
-ollama pull llama3.2
-ollama create maya -f Modelfile
+npm run brain        # download llama3.2 once, bake model `maya`
+npm run brain:load   # check it is there, print how to start
+OLLAMA_MODEL=maya npm run dev
 ```
 
-If `http://127.0.0.1:11434` is up, she prefers the **maya** model. Customize → Lookup → Download Modelfile bakes your current notes into a new Modelfile; then run the printed `ollama create` commands.
+Open http://127.0.0.1:43217 — Customize → Lookup should say `maya` is ready. Same panel: **Install offline brain**.
 
-WSL sometimes cannot see Windows Ollama. Then:
+WSL if Windows Ollama is the host:
 
 ```bash
 export OLLAMA_URL=http://127.0.0.1:11434
 OLLAMA_MODEL=maya npm run dev
 ```
 
-### 2. Small net you train (honest “from scratch”)
-
-Random weights, laptop CPU, about two minutes. It will not become Llama.
+**Ever-learning tiny net** (optional, ~2 min CPU):
 
 ```bash
 pip install -r requirements-train.txt
-python3 train/train.py
+npm run brain:train
 ```
 
-Or Customize → Lookup → **Train from chats**. Toggle **Use trained net** if you want her to try that checkpoint first.
+Or Customize → Lookup → Train from chats. It will not become Llama.
 
-### 3. On-device (phones / no Ollama)
+**Phone:** Customize → Lookup → Load on-device brain (Chrome/Edge, ~0.9 GB once, then offline in that browser).
 
-Chrome or Edge with WebGPU. First load downloads about **0.9 GB** once, then works offline in that browser. Customize → Lookup → Load on-device brain, or the brain mark on the empty screen when no local model is up.
-
-iPhone Safari usually cannot load it. Use the laptop’s Ollama over Wi‑Fi instead.
-
-**Prefer order she actually uses:** grounded tools (weather, calc, Google, …) → optional trained net (skipped when tools or small talk dominate) → Ollama `maya` → built-in engine. On a phone without Ollama, the on-device model is the extra path.
+**Prefer order:** tools (weather, maps, YouTube, …) → tiny trained net (plain talk only) → Ollama `maya` → built-in engine.
 
 ---
 

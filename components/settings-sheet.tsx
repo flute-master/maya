@@ -138,15 +138,20 @@ export function SettingsSheet({
           available?: boolean
           using?: string | null
           hint?: string
+          install?: { running?: boolean; step?: string; error?: string | null }
         }
         if (cancelled) return
         setModelReady(Boolean(data.available))
+        setModelBusy(Boolean(data.install?.running))
         setModelHint(
-          data.hint ||
-            (data.using
-              ? `${data.using} is ready.`
-              : "Ollama is not running on this machine.")
+          data.install?.running
+            ? data.install.step || data.hint || "Downloading the offline brain…"
+            : data.hint ||
+                (data.using
+                  ? `${data.using} is ready.`
+                  : "Ollama is not running on this machine.")
         )
+        if (data.install?.error) setModelError(data.install.error)
       })
       .catch(() => {
         if (cancelled) return
@@ -235,6 +240,32 @@ export function SettingsSheet({
     }, 2000)
     return () => window.clearInterval(timer)
   }, [open, trainBusy])
+
+  useEffect(() => {
+    if (!open || !modelBusy) return
+    const timer = window.setInterval(() => {
+      void fetch("/api/model")
+        .then(async (response) => {
+          const data = (await response.json()) as {
+            available?: boolean
+            using?: string | null
+            hint?: string
+            install?: { running?: boolean; step?: string; error?: string | null }
+          }
+          setModelReady(Boolean(data.available))
+          setModelBusy(Boolean(data.install?.running))
+          setModelHint(
+            data.install?.running
+              ? data.install.step || "Downloading…"
+              : data.hint ||
+                (data.using ? `${data.using} is ready.` : "Install finished. Restart if needed.")
+          )
+          if (data.install?.error) setModelError(data.install.error)
+        })
+        .catch(() => undefined)
+    }, 2500)
+    return () => window.clearInterval(timer)
+  }, [open, modelBusy])
 
   async function downloadModelfile() {
     setModelBusy(true)
@@ -1041,12 +1072,13 @@ export function SettingsSheet({
               </div>
 
               <div className="rounded-xl bg-card p-3 ring-1 ring-foreground/8">
-                <p className="text-sm font-medium">Train from scratch</p>
+                <p className="text-sm font-medium">Ever-learning tiny net</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  A real transformer, random weights, trained on the seed
-                  dialogues plus your chats. About two minutes on a laptop
-                  CPU. It will not become Llama. A giant model from zero
-                  still needs a GPU farm. This one is yours.
+                  Optional extra. Random weights, trained on seed dialogues
+                  plus your chats, about two minutes on a laptop CPU. It
+                  will not become Llama. The smart offline talker is the
+                  one-time Ollama download above. This net is yours and
+                  stays on this machine.
                 </p>
                 <p className="mt-2 text-sm whitespace-pre-wrap">{trainHint}</p>
                 {trainError ? (
@@ -1108,9 +1140,9 @@ export function SettingsSheet({
               </div>
 
               <div className="rounded-xl bg-card p-3 ring-1 ring-foreground/8">
-                <p className="text-sm font-medium">Ollama (smarter backup)</p>
+                <p className="text-sm font-medium">Offline brain (one-time download)</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  If the trained net is off or missing, she can still use{" "}
+                  About 2 GB, once. Downloads Llama 3.2 through{" "}
                   <a
                     href="https://ollama.com"
                     className="underline underline-offset-2"
@@ -1118,8 +1150,13 @@ export function SettingsSheet({
                     rel="noreferrer"
                   >
                     Ollama
-                  </a>
-                  . Pull llama3.2, then bake personality into a Modelfile.
+                  </a>{" "}
+                  and bakes it as <span className="font-medium text-foreground">maya</span>.
+                  After that she talks offline. Ever-learning is memory plus
+                  the tiny net above — not retraining Llama from your chats.
+                  Terminal: <span className="font-medium text-foreground">npm run brain</span>{" "}
+                  then <span className="font-medium text-foreground">npm run brain:load</span>.
+                  Full steps in BRAIN.md.
                 </p>
                 <p
                   className={`mt-2 text-sm whitespace-pre-wrap ${modelReady ? "text-foreground" : "text-muted-foreground"}`}
@@ -1129,16 +1166,53 @@ export function SettingsSheet({
                 {modelError ? (
                   <p className="mt-2 text-sm text-destructive">{modelError}</p>
                 ) : null}
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="mt-3"
-                  disabled={modelBusy}
-                  onClick={() => void downloadModelfile()}
-                >
-                  {modelBusy ? "Building…" : "Download Modelfile"}
-                </Button>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={modelBusy}
+                    onClick={() => {
+                      setModelBusy(true)
+                      setModelError(null)
+                      setModelHint("Starting one-time download…")
+                      void fetch("/api/model", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ action: "install" }),
+                      })
+                        .then(async (response) => {
+                          const data = (await response.json()) as {
+                            error?: string
+                            step?: string
+                          }
+                          if (!response.ok) {
+                            throw new Error(data.error || "Could not start the download.")
+                          }
+                          setModelHint(data.step || "Downloading llama3.2, then baking maya…")
+                        })
+                        .catch((caught: unknown) => {
+                          setModelBusy(false)
+                          setModelError(
+                            caught instanceof Error
+                              ? caught.message
+                              : "Could not start the download."
+                          )
+                        })
+                    }}
+                  >
+                    {modelBusy ? "Installing…" : modelReady ? "Update offline brain" : "Install offline brain"}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={modelBusy}
+                    onClick={() => void downloadModelfile()}
+                  >
+                    {modelBusy ? "Building…" : "Download Modelfile"}
+                  </Button>
+                </div>
               </div>
 
               <div className="rounded-xl bg-card p-3 ring-1 ring-foreground/8">

@@ -20,9 +20,12 @@ if [[ -f "$ROOT/Modelfile" ]]; then
 fi
 
 echo
-echo "Maya's brain is ready. From the project folder:"
+echo "Maya's offline brain is ready (one-time download)."
+echo "Load it:"
 echo "  OLLAMA_MODEL=maya npm run dev"
+echo "  open http://127.0.0.1:43217"
 echo
-echo "She uses this local model to talk. World facts still get a web lookup when needed."
-echo "To bake in your Memory notes later: Customize → Lookup → Download Modelfile, then"
+echo "Ever-learning is memory + optional tiny net, not retraining Llama."
+echo "Walkthrough: BRAIN.md"
+echo "Bake notes later: Customize → Lookup → Download Modelfile, then"
 echo "  ollama create maya -f Modelfile"

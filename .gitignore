@@ -47,6 +47,7 @@ next-env.d.ts
 /data/maya-gpt-meta.json
 /data/train-corpus.txt
 /data/train-status.json
+/data/brain-status.json
 /data/train.log
 __pycache__/
 *.pyc
