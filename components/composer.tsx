@@ -230,7 +230,7 @@ export function Composer({
   return (
     <form
       ref={formRef}
-      className="relative z-20 mx-auto flex w-full max-w-2xl flex-col gap-1 bg-background px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2"
+      className="relative z-20 mx-auto flex w-full max-w-2xl shrink-0 flex-col gap-1 bg-background px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2"
       onSubmit={(event) => {
         event.preventDefault()
         event.stopPropagation()

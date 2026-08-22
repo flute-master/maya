@@ -1125,7 +1125,7 @@ export function MayaApp() {
       ))
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
       <header className="relative z-40 shrink-0 border-b border-border/80 bg-background/95 backdrop-blur-sm">
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
         <div className="min-w-0">
@@ -1249,7 +1249,7 @@ export function MayaApp() {
         </div>
       </header>
 
-      <div className="relative z-0 min-h-0 flex-1 overflow-y-auto">
+      <div className="relative z-0 flex min-h-0 flex-1 flex-col overflow-hidden">
       {empty ? (
         <EmptyState
           name={personality.name}
@@ -1277,61 +1277,59 @@ export function MayaApp() {
           }
         />
       ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          <ChatThread
-            messages={messages}
-            companionName={personality.name}
-            isThinking={isSending && !messages.at(-1)?.content}
-            ticks={ticks}
-            error={error}
-            follow={follow}
-            onSpeak={playVoice}
-            onStopSpeak={haltVoice}
-            onRetry={() => {
-              const last = retryRef.current
-              if (last) void send(last, true)
-            }}
-            onPlayMusic={(next) => {
-              setTrack(next)
-              saveNowPlaying(next)
-              setMusicOpen(true)
-              openYoutubeWindow(next.url)
-            }}
-            onAllowTools={(pending) => {
-              const last = retryRef.current
-              if (!last) return
-              void send(last, {
-                retry: true,
-                approved: pending.map((item) => ({
-                  name: item.name,
-                  args: item.args,
-                })),
-              })
-            }}
-          />
-        </div>
+        <ChatThread
+          messages={messages}
+          companionName={personality.name}
+          isThinking={isSending && !messages.at(-1)?.content}
+          ticks={ticks}
+          error={error}
+          follow={follow}
+          onSpeak={playVoice}
+          onStopSpeak={haltVoice}
+          onRetry={() => {
+            const last = retryRef.current
+            if (last) void send(last, true)
+          }}
+          onPlayMusic={(next) => {
+            setTrack(next)
+            saveNowPlaying(next)
+            setMusicOpen(true)
+            openYoutubeWindow(next.url)
+          }}
+          onAllowTools={(pending) => {
+            const last = retryRef.current
+            if (!last) return
+            void send(last, {
+              retry: true,
+              approved: pending.map((item) => ({
+                name: item.name,
+                args: item.args,
+              })),
+            })
+          }}
+        />
       )}
       </div>
 
       {mode === "sage" && !empty ? (
-        <p className="px-4 text-center text-xs text-muted-foreground">
+        <p className="shrink-0 px-4 text-center text-xs text-muted-foreground">
           {personality.name} used tools on this machine — the body around the
           model.
         </p>
       ) : null}
       {mode === "search" && !empty ? (
-        <p className="px-4 text-center text-xs text-muted-foreground">
+        <p className="shrink-0 px-4 text-center text-xs text-muted-foreground">
           {personality.name} used the web for a fact — not for her voice.
         </p>
       ) : null}
       {mode === "trained" && !empty ? (
-        <p className="px-4 text-center text-xs text-muted-foreground">
+        <p className="shrink-0 px-4 text-center text-xs text-muted-foreground">
           {personality.name} answered with the transformer you trained from
           scratch on this machine.
         </p>
       ) : null}
       {mode === "model" && !empty ? (
-        <p className="px-4 text-center text-xs text-muted-foreground">
+        <p className="shrink-0 px-4 text-center text-xs text-muted-foreground">
           {personality.name} answered with the local Ollama model on this machine.
         </p>
       ) : null}

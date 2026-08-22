@@ -29,7 +29,7 @@ export function PlannerDock({
   if (!openReminders.length && !openTasks.length && !openPlans.length) return null
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-1.5 px-4 pb-1">
+    <div className="mx-auto flex w-full max-w-2xl shrink-0 flex-col gap-1.5 px-4 pb-1">
       {openReminders.map((item) => {
         const due = item.fired
         return (

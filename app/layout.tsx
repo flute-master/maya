@@ -40,7 +40,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`dark ${figtree.variable} ${fraunces.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col overscroll-none">{children}</body>
+      <body className="flex h-full flex-col overflow-hidden overscroll-none">
+        {children}
+      </body>
     </html>
   )
 }

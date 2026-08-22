@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useLayoutEffect, useRef } from "react"
 
 import { Square, Volume2 } from "lucide-react"
 
@@ -54,14 +54,35 @@ export function ChatThread({
     source: string
   }) => void
 }) {
-  const endRef = useRef<HTMLDivElement>(null)
+  const scrollerRef = useRef<HTMLDivElement>(null)
+  const stickRef = useRef(true)
 
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
+  useLayoutEffect(() => {
+    const pin = () => {
+      const el = scrollerRef.current
+      if (!el) return
+      const last = messages.at(-1)
+      if (!stickRef.current && last?.role !== "user" && !isThinking) return
+      el.scrollTop = el.scrollHeight
+    }
+    pin()
+    const frame = requestAnimationFrame(pin)
+    return () => cancelAnimationFrame(frame)
   }, [messages, isThinking, error])
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-6">
+    <div
+      ref={scrollerRef}
+      data-chat-scroll
+      className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden"
+      onScroll={() => {
+        const el = scrollerRef.current
+        if (!el) return
+        stickRef.current =
+          el.scrollHeight - el.scrollTop - el.clientHeight < 96
+      }}
+    >
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 px-4 py-6">
       {messages.map((message) => {
         const mine = message.role === "user"
         return (
@@ -212,7 +233,8 @@ export function ChatThread({
         </div>
       ) : null}
 
-      <div ref={endRef} />
+      <div aria-hidden className="h-px w-full shrink-0" />
+    </div>
     </div>
   )
 }
