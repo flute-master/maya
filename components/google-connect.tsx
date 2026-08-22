@@ -93,9 +93,13 @@ export function GoogleConnect({
 
   async function disconnect() {
     setBusy(true)
-    await fetch("/api/google", { method: "DELETE" })
-    load()
-    setBusy(false)
+    setHint(null)
+    try {
+      await fetch("/api/google", { method: "DELETE" })
+      load()
+    } finally {
+      setBusy(false)
+    }
   }
 
   async function onServiceAccount(file: File | undefined) {

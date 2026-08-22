@@ -43,7 +43,8 @@ export function VoicePicker({
         <p className="text-sm font-medium">Maya&apos;s voice</p>
         <p className="mt-1 text-sm text-muted-foreground">
           Original Indian women — not the anime character, not a celebrity.
-          Chat stays text. These clips play only when you press Hear.
+          Spoken replies use this computer&apos;s voice by default. Press Hear
+          to audition a recorded register.
         </p>
       </div>
 

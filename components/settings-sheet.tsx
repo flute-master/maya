@@ -966,7 +966,7 @@ function RoleSlider({
         <span className="text-xs tabular-nums text-muted-foreground">{value}</span>
       </div>
       <Slider
-        value={value}
+        value={[value]}
         min={0}
         max={100}
         onValueChange={(next) =>

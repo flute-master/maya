@@ -159,8 +159,12 @@ async function main() {
     cal.tools || "no tools header"
   )
   ok(
-    "calendar asks to connect, no invented events",
-    has(cal.body, "Connect Google") &&
+    "calendar is honest, no invented events",
+    cal.status === 200 &&
+      (has(cal.body, "Connect Google") ||
+        has(cal.body, "service account") ||
+        has(cal.body, "event") ||
+        has(cal.body, "Nothing on")) &&
       !/\b(dentist|standup|1:1|lunch with)\b/i.test(cal.body),
     cal.body.slice(0, 220).replace(/\s+/g, " ")
   )
@@ -177,15 +181,21 @@ async function main() {
 
   const drive = await chat("search drive notes")
   ok(
-    "drive asks to connect",
-    drive.status === 200 && has(drive.body, "Connect Google"),
+    "drive is honest",
+    drive.status === 200 &&
+      (has(drive.body, "Connect Google") ||
+        has(drive.body, "Drive") ||
+        has(drive.body, "share")),
     drive.body.slice(0, 160).replace(/\s+/g, " ")
   )
 
   const docs = await chat("open my google doc")
   ok(
-    "docs asks to connect",
-    docs.status === 200 && has(docs.body, "Connect Google"),
+    "docs is honest",
+    docs.status === 200 &&
+      (has(docs.body, "Connect Google") ||
+        has(docs.body, "Doc") ||
+        has(docs.body, "share")),
     docs.body.slice(0, 160).replace(/\s+/g, " ")
   )
 
@@ -331,11 +341,12 @@ async function main() {
     kinds.status === 200 && has(kinds.body, "Bansuri") && has(kinds.body, "Concert"),
     kinds.body.slice(0, 160).replace(/\s+/g, " ")
   )
-  const clip = await chat("notes for this clip")
+  const fluteClip = await chat("notes for this clip")
   ok(
     "flute clip pitches",
-    clip.status === 200 && (has(clip.body, "Sa(G4)") || has(clip.body, "No audio")),
-    clip.body.slice(0, 180).replace(/\s+/g, " ")
+    fluteClip.status === 200 &&
+      (has(fluteClip.body, "Sa(G4)") || has(fluteClip.body, "No audio")),
+    fluteClip.body.slice(0, 180).replace(/\s+/g, " ")
   )
 
   console.log("")

@@ -268,7 +268,25 @@ export function Composer({
           </Button>
         </div>
       </div>
-      <div className="flex items-end gap-2">
+      <div className="flex flex-col gap-2">
+        <textarea
+          ref={boxRef}
+          name="message"
+          rows={1}
+          defaultValue=""
+          onInput={markFilled}
+          onKeyDown={onBoxKeyDown}
+          onKeyUp={onBoxKeyUp}
+          onBlur={() => {
+            shiftHeld.current = false
+          }}
+          onBeforeInput={onBoxBeforeInput}
+          enterKeyHint="send"
+          placeholder={listening ? "Listening…" : `Message ${name}…`}
+          aria-label={`Message ${name}`}
+          className="max-h-36 min-h-11 w-full min-w-0 resize-none rounded-2xl border border-input bg-card px-4 py-2.5 text-base shadow-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        />
+        <div className="flex flex-wrap items-center gap-2">
         <Button
           type="button"
           size="icon-lg"
@@ -294,13 +312,19 @@ export function Composer({
           <label
             className={cn(
               buttonVariants({ variant: "outline", size: "icon-lg" }),
-              "cursor-pointer rounded-full"
+              "relative cursor-pointer overflow-hidden rounded-full"
             )}
+            title="Attach a file Maya can read or hear"
+            aria-label="Add files to Maya's workspace"
           >
+            <Paperclip className="pointer-events-none" />
             <input
               type="file"
-              className="sr-only"
+              hidden
+              className="pointer-events-none"
+              tabIndex={-1}
               multiple
+              accept=".txt,.md,.csv,.json,.py,.ts,.js,.html,.css,.log,.wav,.mp3,.m4a,.ogg,audio/*"
               onChange={(event) => {
                 const list = event.target.files
                 event.target.value = ""
@@ -308,8 +332,6 @@ export function Composer({
                 onAttach(Array.from(list))
               }}
             />
-            <Paperclip />
-            <span className="sr-only">Add files to Maya&apos;s workspace</span>
           </label>
         ) : null}
         {onShareScreen ? (
@@ -324,30 +346,13 @@ export function Composer({
             <Monitor />
           </Button>
         ) : null}
-        <textarea
-          ref={boxRef}
-          name="message"
-          rows={1}
-          defaultValue=""
-          onInput={markFilled}
-          onKeyDown={onBoxKeyDown}
-          onKeyUp={onBoxKeyUp}
-          onBlur={() => {
-            shiftHeld.current = false
-          }}
-          onBeforeInput={onBoxBeforeInput}
-          enterKeyHint="send"
-          placeholder={listening ? "Listening…" : `Message ${name}…`}
-          aria-label={`Message ${name}`}
-          className="max-h-36 min-h-11 flex-1 resize-none rounded-2xl border border-input bg-card px-4 py-2.5 text-base shadow-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-        />
         {busy ? (
           <button
             type="button"
             aria-label="Stop"
             className={cn(
               buttonVariants({ variant: "secondary", size: "icon-lg" }),
-              "rounded-full"
+              "ml-auto rounded-full"
             )}
             onClick={onStop}
           >
@@ -359,13 +364,14 @@ export function Composer({
             aria-label="Send"
             className={cn(
               buttonVariants({ size: "icon-lg" }),
-              "rounded-full",
+              "ml-auto rounded-full",
               !filled && "opacity-60"
             )}
           >
             <ArrowUp />
           </button>
         )}
+        </div>
       </div>
     </form>
   )
