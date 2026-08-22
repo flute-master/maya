@@ -19,6 +19,7 @@ import type { MusicTrack } from "@/lib/music"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DEFAULT_LEARNED, updateLearned } from "@/lib/adapt"
+import { ATMOSPHERES, atmosphereClass } from "@/lib/atmosphere"
 import { isSage } from "@/lib/bonds"
 import { newId } from "@/lib/id"
 import { describePresence } from "@/lib/personality"
@@ -111,6 +112,14 @@ export function MayaApp() {
   const conversation = activeConversation(vault)
   const messages = conversation.messages
   const sage = isSage(personality)
+
+  useEffect(() => {
+    const root = document.documentElement
+    for (const skin of ATMOSPHERES) {
+      root.classList.remove(atmosphereClass(skin.id))
+    }
+    root.classList.add(atmosphereClass(vault.prefs.atmosphere ?? "hearth"))
+  }, [vault.prefs.atmosphere])
 
   useEffect(() => {
     setGpuOk(canRunOnDevice())

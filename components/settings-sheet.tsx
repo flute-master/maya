@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import { Download, Trash2, Upload } from "lucide-react"
 
+import { ATMOSPHERES } from "@/lib/atmosphere"
 import { BONDS, isSage } from "@/lib/bonds"
 import { stopSpeaking } from "@/lib/speak"
 import { ENERGIES, PERSONALITY_PRESETS, TONES, describeBlend } from "@/lib/personality"
@@ -294,6 +295,36 @@ export function SettingsSheet({
                   maxLength={40}
                 />
               </Field>
+
+              <div>
+                <p className="mb-2 text-sm font-medium">The room</p>
+                <p className="mb-2 text-xs text-muted-foreground">
+                  How the screen feels. Hearth is the warm lamp you already
+                  have. Veil and Ink are quieter, more occult — pick one; she
+                  will not change the room without you.
+                </p>
+                <div className="flex flex-col gap-2">
+                  {ATMOSPHERES.map((skin) => (
+                    <button
+                      key={skin.id}
+                      type="button"
+                      onClick={() =>
+                        onPrefsChange({ ...prefs, atmosphere: skin.id })
+                      }
+                      className={`rounded-xl border px-3 py-2 text-left transition-colors ${
+                        (prefs.atmosphere ?? "hearth") === skin.id
+                          ? "border-primary bg-primary/15 text-foreground"
+                          : "border-border bg-card text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <span className="block text-sm font-medium text-foreground">
+                        {skin.label}
+                      </span>
+                      <span className="block text-[11px]">{skin.promise}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               <div>
                 <p className="mb-2 text-sm font-medium">The bond</p>

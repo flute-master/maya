@@ -4,6 +4,8 @@ A text-first inner sage who lives on your laptop. She remembers what you tell he
 
 This is **not** Raphael / Great Sage from *That Time I Got Reincarnated as a Slime*. That voice cannot be cloned. Maya uses an original Indian-English inner-sage register.
 
+Customize → Presence → The room lets you pick how the screen feels: **Hearth** (warm lamp, default), **Veil** (indigo dusk), or **Ink** (near-black, moon-gold). She will not change the room unless you pick.
+
 **Phone and firewall walkthrough:** [DEPLOY.md](./DEPLOY.md)
 
 ---

@@ -1,3 +1,5 @@
+import type { AtmosphereId } from "@/lib/atmosphere"
+
 export type Role = "user" | "assistant"
 
 export type Tone = "warm" | "direct" | "playful" | "calm" | "witty"
@@ -77,6 +79,7 @@ export type Prefs = {
   allowPython: boolean
   allowFileWrite: boolean
   allowGoogleWrite: boolean
+  atmosphere: AtmosphereId
 }
 
 export type Conversation = {

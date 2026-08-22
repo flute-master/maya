@@ -2,6 +2,7 @@ import { DEFAULT_LEARNED } from "@/lib/adapt"
 import { SAGE_DEFAULTS } from "@/lib/bonds"
 import { DEFAULT_PERSONALITY } from "@/lib/personality"
 import { newId } from "@/lib/id"
+import { DEFAULT_ATMOSPHERE, isAtmosphere } from "@/lib/atmosphere"
 import { DEFAULT_VOICE_ID } from "@/lib/voices"
 import type {
   ChatMessage,
@@ -31,6 +32,7 @@ const DEFAULT_PREFS: Prefs = {
   allowPython: false,
   allowFileWrite: false,
   allowGoogleWrite: false,
+  atmosphere: DEFAULT_ATMOSPHERE,
 }
 
 /** Frozen first-paint vault so SSR HTML matches the client (no random IDs). */
@@ -188,6 +190,9 @@ function normalizePrefs(value: unknown, vaultVersion: number): Prefs {
     allowPython: prefs.allowPython === true,
     allowFileWrite: prefs.allowFileWrite === true,
     allowGoogleWrite: prefs.allowGoogleWrite === true,
+    atmosphere: isAtmosphere(prefs.atmosphere)
+      ? prefs.atmosphere
+      : DEFAULT_ATMOSPHERE,
   }
 }
 
