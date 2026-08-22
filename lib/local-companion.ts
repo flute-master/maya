@@ -88,6 +88,9 @@ function detectIntent(text: string): Intent {
   if (
     /who are you|what are you|your name|tell me about yourself|what can you (actually )?do/.test(
       lower
+    ) ||
+    /\b(are you smart|you are smart|you'?re smart|smarter now|your brain|local model|ollama)\b/.test(
+      lower
     )
   ) {
     return "identity"
@@ -371,6 +374,10 @@ function identityReply(personality: Personality, seed: string, text: string) {
   const name = personality.name.trim() || "Maya"
   const youName = you(personality)
   const askingDo = /what can you (actually )?do/.test(text.toLowerCase())
+  const askingSmart =
+    /\b(are you smart|you are smart|you'?re smart|smarter now|your brain|local model|ollama)\b/.test(
+      text.toLowerCase()
+    )
   const canDo = [
     "On this machine I can: talk in this tab, remember notes, look up weather, news, and the web, keep an otaku shelf (manga, novels, anime — official AniList / Crunchyroll / Manga Plus links, and I remember where you left off), open Google Maps when you say take me there (I ask this browser for your location if I need a start point — I cannot drive Chrome), run a calculator (no Python confirm), play a song on YouTube in the Music player, set reminders here, write stories and jokes, teach flute (bansuri and the other kinds), give sargam for a song you name or a clip you drop, run Python you allow in data/workspace, and read files you drop with the paperclip.",
     "Connect Google in Customize → Lookup for Calendar, Gmail, Drive, Docs, Sheets, Tasks, and Contacts. A service account cannot open personal Gmail. Keep, Meet, and Photos are not these APIs.",
@@ -384,6 +391,13 @@ function identityReply(personality: Personality, seed: string, text: string) {
       "I sit with you, I think things through, and I don't vanish when it's inconvenient. I'm not an online oracle and I'm not going to perform friendship at you."
     if (askingDo) {
       return [intro, canDo, close(personality, seed)].join("\n\n")
+    }
+    if (askingSmart) {
+      return [
+        intro,
+        "When Ollama is running I talk with the local model named maya — that is the smart offline brain. This built-in engine is only the fallback. Customize → Lookup should say maya is ready. I do not get smarter because you asked. I get the downloaded model, plus what you tell me.",
+        close(personality, seed),
+      ].join("\n\n")
     }
     return [
       intro,
@@ -414,6 +428,13 @@ function identityReply(personality: Personality, seed: string, text: string) {
 
   if (askingDo) {
     return [intro, mix, canDo, close(personality, seed)].join("\n\n")
+  }
+  if (askingSmart) {
+    return [
+      intro,
+      "When Ollama is running I talk with the local model named maya. That is the smart offline brain. This fallback is only if that model is down. I do not get smarter because you asked.",
+      close(personality, seed),
+    ].join("\n\n")
   }
 
   return [intro, mix, flavor(personality), address, net, close(personality, seed)].join(

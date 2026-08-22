@@ -13,6 +13,8 @@ import {
   mapsQuery,
 } from "../../lib/skills"
 import { intendedMeaning } from "../../lib/typos"
+import { replyLocally } from "../../lib/local-companion"
+import { skipTinyNet } from "../../lib/trained"
 
 test("refresh clears the screen command", () => {
   assert.equal(isClearScreenCommand("refresh"), true)
@@ -100,4 +102,37 @@ test("voice reads the answer, not headers", () => {
   assert.doesNotMatch(spoken, /assessment/i)
   assert.doesNotMatch(spoken, /here is what i actually ran/i)
   assert.match(spoken, /tum hi ho/i)
+})
+
+test("short talk skips only the tiny net, not the meaning", () => {
+  assert.equal(skipTinyNet("so you are smart now"), true)
+  assert.equal(intendedMeaning("who are u to me").toLowerCase(), "who are you to me")
+})
+
+test("smart-now does not get a wander line", () => {
+  const text = replyLocally(
+    [
+      { id: "1", role: "user", content: "hi", createdAt: 1 },
+      { id: "2", role: "assistant", content: "Hey.", createdAt: 2 },
+      { id: "3", role: "user", content: "so you are smart now", createdAt: 3 },
+    ],
+    {
+      name: "Maya",
+      callMe: "Ruthvik",
+      friend: 40,
+      advisor: 95,
+      companion: 45,
+      tone: "direct",
+      energy: "balanced",
+      bondId: "sage",
+      traits: "",
+      values: "",
+      voiceId: "elise",
+      customInstructions: "",
+      boundaries: "",
+    }
+  )
+  assert.doesNotMatch(text, /better would look like/i)
+  assert.doesNotMatch(text, /decision or a feeling/i)
+  assert.match(text, /maya/i)
 })

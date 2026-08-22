@@ -291,6 +291,8 @@ const PHRASES: Array<[RegExp, string]> = [
   [/\bhw\s+to\s+(?:get|reach)\b/gi, "how to reach"],
   [/\banother\s+onw\b/gi, "another one"],
   [/\byou are uo\b/gi, "you are up"],
+  [/\bwho are u\b/gi, "who are you"],
+  [/\bare u\b/gi, "are you"],
   [/\btell me a jok\b/gi, "tell me a joke"],
 ]
 

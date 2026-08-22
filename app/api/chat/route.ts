@@ -260,10 +260,10 @@ export async function POST(request: Request) {
 
   const googleRan = sage.results.some((item) => item.name.startsWith("google_"))
   const grounded = sage.results.some((item) => item.name !== "recall")
-  const skipBrain = skipTinyNet(intended)
+  const skipTiny = skipTinyNet(intended)
 
   let lookup: Lookup =
-    allowSearch && !googleRan && !grounded && !skipBrain
+    allowSearch && !googleRan && !grounded && !skipTiny
       ? await lookupWeb(intended, false, hometown, identity)
       : { hits: [], searched: false, searchFailed: false }
 
@@ -316,13 +316,12 @@ export async function POST(request: Request) {
       "google_people",
     ].includes(item.name)
   )
-  const localOnly = skipBrain && !toolHeavy && !grounded && hits.length === 0
+  const toolAnswered = Boolean(toolHeavy || grounded || googleRan)
 
   let trainedText: string | null = null
   if (
-    !localOnly &&
-    !toolHeavy &&
-    !skipBrain &&
+    !toolAnswered &&
+    !skipTiny &&
     body.useTrained !== false &&
     (await trainedReady())
   ) {
@@ -335,7 +334,7 @@ export async function POST(request: Request) {
   }
 
   let ollamaText =
-    localOnly || trainedText || googleRan || grounded || skipBrain
+    trainedText || toolAnswered
       ? null
       : await replyWithOllama({
           messages: history,

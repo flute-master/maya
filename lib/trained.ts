@@ -29,6 +29,7 @@ export function trainedReplyUsable(text: string) {
   return true
 }
 
+/** Skip the tiny from-scratch net — not Ollama. Short talk still uses `maya`. */
 export function skipTinyNet(text: string) {
   const t = text.trim().toLowerCase()
   if (t.length < 24) return true
