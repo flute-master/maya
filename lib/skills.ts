@@ -19,11 +19,12 @@ export function hometownFromNotes(notes: string[] | undefined): string | undefin
 export function isWeatherQuery(text: string): boolean {
   const lower = intendedMeaning(text).toLowerCase()
   return (
-    /\b(what(?:'s| is) the weather|weather (in|for|at|like|today|now|tomorrow|outside)|forecast( for| in)?|how (hot|cold) is it|will it rain|is it raining)\b/.test(
+    /\b(what(?:'s| is) the weather|how(?:'s| is) the weather|weather (in|for|at|like|today|now|tomorrow|outside)|forecast( for| in)?|how (hot|cold) is it|will it rain|is it raining|is it going to rain|do i need (an? )?(umbrella|jacket|raincoat)|what(?:'s| is) the temperature|mausam)\b/.test(
       lower
     ) ||
     /^(weather|forecast|temperature|aqi)[.!?]?$/.test(lower) ||
-    /\b(temperature|humidity|aqi|air quality) (in|for|at|today|now)\b/.test(lower)
+    /\b(temperature|humidity|aqi|air quality) (in|for|at|today|now)\b/.test(lower) ||
+    /\b(rain today|hot outside|cold outside|umbrella today)\b/.test(lower)
   )
 }
 
@@ -63,6 +64,13 @@ const NEAR_PLACE =
 /** “restaurants near me” — Maps search, not a story about a restaurant. */
 export function isNearbyMapsQuery(text: string): boolean {
   const lower = intendedMeaning(text).toLowerCase()
+  if (
+    /\b(where (can|do) (i|we) eat|where to eat|places to eat|find (me )?(food|something to eat)|closest (restaurant|cafe|pharmacy|atm|hotel|petrol)|i'?m hungry\b.{0,20}\b(find|show|where|near|food|eat))\b/.test(
+      lower
+    )
+  ) {
+    return true
+  }
   if (!NEAR_HERE.test(lower)) return false
   const words = lower.split(/\s+/).filter(Boolean).length
   if (NEAR_PLACE.test(lower) && words <= 10) return true
@@ -138,6 +146,11 @@ export function mapsQuery(
 ): string | undefined {
   text = intendedMeaning(text)
   if (isNearbyMapsQuery(text)) {
+    if (/\b(where (can|do) (i|we) eat|where to eat|places to eat|i'?m hungry|find (me )?(food|something to eat))\b/i.test(text)) {
+      return "restaurants near me"
+    }
+    const closest = text.match(/\bclosest (\w+)/i)
+    if (closest?.[1]) return `${closest[1]} near me`
     const cleaned = tidyPlace(
       text
         .replace(/^(can you |could you |please |just )/i, "")

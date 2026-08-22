@@ -244,7 +244,7 @@ export function planTools(
   }
 
   const wantsGmail =
-    /\b(gmail|inbox|unread (mail|email)|my e-?mails?|check (my )?(e-?mail|inbox)|send (an? )?(e-?mail|mail))\b/.test(
+    /\b(gmail|inbox|unread (mail|email|messages)|my e-?mails?|check (my )?(e-?mail|inbox|mail)|any (new )?(e-?mail|mail)|send (an? )?(e-?mail|mail))\b/.test(
       lower
     )
   if (wantsGmail) {
@@ -270,7 +270,7 @@ export function planTools(
   }
 
   if (
-    /\b(google calendar|gcal|what(?:'s| is) on my calendar|my calendar|calendar today|schedule (a |an )?(meeting|event)|add (an? )?(event|meeting) to (my )?(google )?calendar)\b/.test(
+    /\b(google calendar|gcal|what(?:'s| is) on my calendar|my calendar|calendar today|my schedule|do i have (any )?meetings|what meetings|schedule (a |an )?(meeting|event)|add (an? )?(event|meeting) to (my )?(google )?calendar)\b/.test(
       lower
     )
   ) {

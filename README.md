@@ -147,21 +147,21 @@ Tools run only when the line clearly asks. Typos still count (`wafa` → way to,
 | --- | --- | --- |
 | **Talk** (default) | Anything else. Jokes, opinions, “I feel stuck”, cricket, “who are you to me” | — |
 | **New chat** | `refresh` · `reload` · `clear` · `clear the screen` · `new chat` · `start over` · `reset chat` | The header loop button is the same idea. Memory stays. |
-| **Maps** | `take me to` · `way to` · `directions to` · `navigate to` · `how to get` · `how to reach` · `route to` · `open maps` · `map of` · **`restaurants near me`** · `cafes nearby` · `hotels around me` · `what’s near me` · `find ATMs near me` | `I took the metro` · `I ate at a restaurant yesterday` · a place name alone |
-| **Music / YouTube** | Line starts with `play` · `song` · `music` · `gaana` · `youtube` · or contains `play …` · `put on` · `listen to` · `sunaao` / `suna do` · `open youtube` | `I love that song` · naming a track in a story |
-| **Weather** | `weather in` / `for` / `at` · `what’s the weather` · `forecast` · `how hot is it` · `will it rain` · `is it raining` · `temperature in` · `aqi` / `air quality` · bare `weather` | `the weather was awful yesterday` |
-| **News** | `what’s the news` · `headlines` · `news today` · `local news` · `national news` · `world news` · `news in` / `about` / `from` | `I have good news` · chatting about a story you already heard |
-| **Calculator** | `calculate` · `compute` · `15% of 240` · `7 * 8` · `open calculator` | The word “calculator” in passing |
-| **Web lookup** | `look this up` · `look up` · `search the web` · `search for` · `google this` · `browse` · `find out about` · `check the web` | A bare question mark · `what is love` · `why did the chicken cross the road` |
-| **Memory / Mind** | `what do you remember` · `search your memory` · `forget that I …` · `plan my` · `continue the plan` · `analyze whether` · `what am I supposed to do today` · `what did you access today` · `remind me` · `set a reminder` · `set an alarm` · `add a task` · `mark … done` | `good morning` (that is just a greeting) |
+| **Maps** | `take me to` · `way to` · `directions` · `restaurants near me` · `cafes nearby` · `where can I eat` · `where to eat` · `closest pharmacy` · `find food` · `what’s near me` | `I took the metro` · `I ate at a restaurant yesterday` · `I was hungry yesterday` |
+| **Music / YouTube** | `play …` · `can you play` · `I want to hear` · `put on` · `listen to` · `song …` · `gaana chalao` · `sunaao` | `I love that song` · `I play cricket` |
+| **Weather** | `weather in` · `how’s the weather` · `forecast` · `will it rain` · `is it going to rain` · `do I need an umbrella` · `what’s the temperature` · `mausam` | `the weather was awful yesterday` |
+| **News** | `what’s the news` · `any news` · `headlines` · `catch me up on the news` · `what’s happening in the world` · `news about` | `I have good news` |
+| **Calculator** | `calculate` · `how much is` · `15% of 240` · `7 times 8` · `7 * 8` | The word “calculator” in passing |
+| **Web lookup** | `look this up` · `search the web` · `capital of` · `who won` · `current score` · `prime minister of` · `exchange rate` | `what is love` · `why did the chicken cross the road` |
+| **Memory / Mind** | `what do you remember` · `do you remember` · `forget that I …` · `plan my` · `analyze whether` · `remind me` · `set an alarm` · `add a task` | `good morning` |
 | **Jokes / stories** | `tell me a joke` · `write a story` · `make me laugh` · `another joke` · `another one` after a joke | `I heard a joke` |
 | **Files** | `list your files` · `what’s in your files` · `read hello.txt` · `write` / `save` / `put` `as note.txt` | The word “workspace” in passing |
 | **Python** | `run python:` · `execute python` · `python sandbox` · a ` ```python ` block | A math sum (that is the calculator) |
 | **Screen still** | Monitor button, or `look at my screen` · `observe the screen` · `screenshot` · `what do you see` | She still cannot see pixels without a vision model |
-| **Flute** | `teach me flute` · `flute lesson` · `kinds of flute` · `notes for` · `sargam for` · `how to play flute` · `riyaz` | `I saw a flute in a shop` |
-| **Otaku shelf** | `where can I read` / `watch` · `legal manga` · `official anime links` · `mihon` · `tachiyomi` · `what am I reading` · `my shelf` · `any updates on my manga` · `I’m reading … chapter 12` | `I watched anime last night` |
-| **Gmail** | `gmail` · `inbox` · `unread email` · `check my email` · `send an email to name@x.com` | Talking about email in general without those words |
-| **Calendar** | `google calendar` · `gcal` · `what’s on my calendar` · `my calendar` · `calendar today` · `schedule a meeting` · `add an event` | A calendar invite you only mention |
+| **Flute** | `teach me flute` · `I want to learn flute` · `kinds of flute` · `notes for` · `how to start flute` | `I saw a flute in a shop` |
+| **Otaku shelf** | `where can I read` / `watch` · `where to watch` · `legal stream` · `mihon` · `my shelf` · `any updates on my manga` | `I watched anime last night` |
+| **Gmail** | `gmail` · `inbox` · `unread email` · `any mail` · `check my mail` · `send an email to name@x.com` | Talking about email without those words |
+| **Calendar** | `what’s on my calendar` · `my schedule` · `do I have meetings` · `schedule a meeting` | Mentioning a meeting in a story |
 | **Drive** | `google drive` · `search drive` · `files in drive` · `what’s on my drive` | — |
 | **Docs / Sheets** | `google doc` · `read the google doc` · `google sheets` · `spreadsheet` | — |
 | **Tasks** | `google tasks` · `tasks in google` · `add` / `create` a Google task | The in-app task list uses `add a task` / `mark … done` instead |

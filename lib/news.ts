@@ -83,7 +83,11 @@ export function isNewsQuery(text: string): boolean {
     /\b(what(?:'s| is) happening)\b.{0,24}\b(world|india|news|city|town|hyderabad|delhi|mumbai)\b/.test(
       lower
     ) ||
-    /\bheadlines\b/.test(lower)
+    /\bheadlines\b/.test(lower) ||
+    /^(any news|latest headlines|catch me up|morning news)[.!?]?$/.test(lower) ||
+    /\b(any (latest )?news|what(?:'s| is) happening (in the )?(world|today)|catch me up on (the )?news)\b/.test(
+      lower
+    )
   )
 }
 

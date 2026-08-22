@@ -106,7 +106,7 @@ export function isMindQuery(text: string) {
     return false
   }
   return (
-    /\b(what do you (remember|know) about me|what do you remember|show (me )?your (memory|mind)|your facts)\b/.test(
+    /\b(what do you (remember|know) about me|what do you remember|do you remember( me)?|show (me )?your (memory|mind)|your facts)\b/.test(
       lower
     ) ||
     /\b(forget (that|this|it)|forget that i|stop remembering|delete (that|this) (fact|memory))\b/.test(

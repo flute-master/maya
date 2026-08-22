@@ -1,7 +1,9 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 
+import { isCalcQuery } from "../../lib/calc"
 import { isMusicQuery, musicQuery } from "../../lib/music"
+import { isNewsQuery } from "../../lib/news"
 import { stripSageChrome } from "../../lib/mind"
 import { forSpokenText } from "../../lib/spoken-text"
 import {
@@ -158,7 +160,9 @@ test("smart-now does not get a wander line", () => {
 test("casual talk does not fire features", () => {
   assert.equal(isMapsQuery("I took the metro yesterday"), false)
   assert.equal(isMapsQuery("Miyapur Metro is crowded"), false)
+  assert.equal(isMapsQuery("I was hungry yesterday"), false)
   assert.equal(isMusicQuery("I love that song"), false)
+  assert.equal(isMusicQuery("I play cricket"), false)
   assert.equal(isWeatherQuery("the weather was awful yesterday"), false)
   assert.equal(isOtakuQuery("I watched anime last night"), false)
   assert.equal(isFluteQuery("I saw a flute in a shop"), false)
@@ -167,6 +171,21 @@ test("casual talk does not fire features", () => {
   assert.equal(searchQueryFor("what is love"), null)
   assert.ok(planTools("I took the metro yesterday").length === 0)
   assert.ok(planTools("I watched anime last night").length === 0)
+})
+
+test("natural asks fire the same features", () => {
+  assert.equal(isNearbyMapsQuery("where can I eat"), true)
+  assert.equal(isMapsQuery("closest pharmacy"), true)
+  assert.equal(isWeatherQuery("how's the weather"), true)
+  assert.equal(isWeatherQuery("do I need an umbrella"), true)
+  assert.equal(isMusicQuery("can you play tum hi ho"), true)
+  assert.equal(isMusicQuery("I want to hear kesariya"), true)
+  assert.equal(isNewsQuery("any news"), true)
+  assert.equal(isCalcQuery("how much is 15% of 240"), true)
+  assert.equal(isCalcQuery("what's 7 times 8"), true)
+  assert.ok(searchQueryFor("capital of India"))
+  assert.equal(isFluteQuery("I want to learn flute"), true)
+  assert.equal(isOtakuQuery("where to watch Frieren legally"), true)
 })
 
 test("features fire only when asked", () => {

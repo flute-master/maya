@@ -26,6 +26,9 @@ const INVIDIOUS = [
 export function isMusicQuery(text: string): boolean {
   const lower = intendedMeaning(text).toLowerCase().trim()
   if (/\bflute\b/.test(lower) || /\bpython\b/.test(lower)) return false
+  if (/\bplay\s+(cricket|football|soccer|tennis|hockey|chess|cards|a game)\b/.test(lower)) {
+    return false
+  }
   if (
     /^(play|music|song|gaana|gana|youtube)\b/.test(lower) ||
     /^open (the )?(music player|youtube|player)\b/.test(lower)
@@ -33,9 +36,12 @@ export function isMusicQuery(text: string): boolean {
     return true
   }
   return (
-    /\b(put on|listen to|sunaao|suna do|sunao)\b/.test(lower) ||
+    /\b(put on|listen to|want to (hear|listen)|can you play|play me|gaana (chalao|laga|bajaao|sunaao)|sunaao|suna do|sunao)\b/.test(
+      lower
+    ) ||
     /\bplay\s+(the\s+)?(song|track|album|music)\b/.test(lower) ||
-    /\bplay\s+\S+/.test(lower)
+    /\bplay\s+\S+/.test(lower) ||
+    /^(music please|play something)\b/.test(lower)
   )
 }
 
@@ -46,7 +52,7 @@ export function musicQuery(text: string): string {
   )
   if (url?.[1]) return url[0]
   const after = text.match(
-    /\b(?:play|put on|listen to|youtube|song)\s+(?:me\s+)?(?:the\s+)?(?:song\s+)?(.+)$/i
+    /\b(?:play|put on|listen to|want to (?:hear|listen to)|can you play|youtube|song|gaana)\s+(?:me\s+)?(?:the\s+)?(?:song\s+)?(.+)$/i
   )
   if (after?.[1]) {
     return after[1]

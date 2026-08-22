@@ -9,7 +9,8 @@ export function isCalcQuery(text: string): boolean {
     return true
   }
   if (/\b(\d+(?:\.\d+)?)\s*%\s*of\b/.test(lower)) return true
-  if (/\b(calculate|compute|what(?:'s| is) \d|equals)\b/.test(lower)) return true
+  if (/\b(calculate|compute|what(?:'s| is) \d|how much is|equals)\b/.test(lower)) return true
+  if (/\b\d+\s+(times|plus|minus|divided by)\s+\d/.test(lower)) return true
   return /\b\d+(?:\.\d+)?\s*[+\-*/x×÷^]\s*\d/.test(lower)
 }
 
@@ -17,7 +18,7 @@ export function calcExpr(text: string): string {
   const of = text.match(/\b(\d+(?:\.\d+)?)\s*%\s*of\s+(\d+(?:\.\d+)?)/i)
   if (of) return `${of[1]}% of ${of[2]}`
   const after = text.match(
-    /\b(?:calculate|compute|what(?:'s| is)|equals?)\s+(.+)$/i
+    /\b(?:calculate|compute|what(?:'s| is)|how much is|equals?)\s+(.+)$/i
   )
   if (after?.[1]) return after[1].replace(/[?.!]+$/g, "").trim()
   return text.replace(/[?.!]+$/g, "").trim()

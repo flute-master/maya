@@ -38,7 +38,7 @@ export function isOtakuQuery(text: string): boolean {
   if (/\b(flute|python|weather|calendar|gmail)\b/.test(lower)) return false
   return (
     /\b(tachiyomi|mihon|komga|kavita)\b/.test(lower) ||
-    /\b(where (can|do) i (read|watch)|official (manga|anime) links?|legal (manga|anime)|manga links?|novel links?|episode links?)\b/.test(
+    /\b(where (can|do|to) (i )?(read|watch)|official (manga|anime) links?|legal (manga|anime|stream)|manga links?|novel links?|episode links?)\b/.test(
       lower
     ) ||
     /\b(what am i (reading|watching)|my (manga|anime|novel)s?( list| shelf)?|show (my )?shelf|otaku shelf)\b/.test(
