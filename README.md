@@ -153,7 +153,7 @@ Tools run only when the line clearly asks. Typos still count (`wafa` → way to,
 | **News** | `what’s the news` · `any news` · `headlines` · `catch me up on the news` · `what’s happening in the world` · `news about` | `I have good news` |
 | **Calculator** | `calculate` · `how much is` · `15% of 240` · `7 times 8` · `7 * 8` | The word “calculator” in passing |
 | **Web lookup** | `look this up` · `search the web` · `capital of` · `who won` · `current score` · `prime minister of` · `exchange rate` | `what is love` · `why did the chicken cross the road` |
-| **Memory / Mind** | `what do you remember` · `do you remember` · `forget that I …` · `plan my` · `analyze whether` · `remind me` · `set an alarm` · `add a task` | `good morning` |
+| **Memory / Mind** | `what do you remember` · `do you remember` · `forget that I …` · `plan my` · `analyze whether` · `remind me` · `set up a reminder` · `set an alarm` · `add a task` | `good morning` · `that reminds me` |
 | **Jokes / stories** | `tell me a joke` · `write a story` · `make me laugh` · `another joke` · `another one` after a joke | `I heard a joke` |
 | **Files** | `list your files` · `what’s in your files` · `read hello.txt` · `write` / `save` / `put` `as note.txt` | The word “workspace” in passing |
 | **Python** | `run python:` · `execute python` · `python sandbox` · a ` ```python ` block | A math sum (that is the calculator) |
@@ -161,7 +161,7 @@ Tools run only when the line clearly asks. Typos still count (`wafa` → way to,
 | **Flute** | `teach me flute` · `I want to learn flute` · `kinds of flute` · `notes for` · `how to start flute` | `I saw a flute in a shop` |
 | **Otaku shelf** | `where can I read` / `watch` · `where to watch` · `legal stream` · `mihon` · `my shelf` · `any updates on my manga` | `I watched anime last night` |
 | **Gmail** | `gmail` · `inbox` · `unread email` · `any mail` · `check my mail` · `send an email to name@x.com` | Talking about email without those words |
-| **Calendar** | `what’s on my calendar` · `my schedule` · `do I have meetings` · `schedule a meeting` | Mentioning a meeting in a story |
+| **Calendar** | `what’s on my calendar` · `my schedule` · `do I have meetings` · `schedule a meeting` · `remind me in 10 minutes` (also writes to Calendar if a calendar is shared) | Mentioning a meeting in a story |
 | **Drive** | `google drive` · `search drive` · `files in drive` · `what’s on my drive` | — |
 | **Docs / Sheets** | `google doc` · `read the google doc` · `google sheets` · `spreadsheet` | — |
 | **Tasks** | `google tasks` · `tasks in google` · `add` / `create` a Google task | The in-app task list uses `add a task` / `mark … done` instead |
@@ -305,7 +305,8 @@ Remind me tomorrow morning to call home.
 - A mention in passing is not a settled fact.
 - Analysis Chamber: objective → evidence → gaps → **WAIT**. She will not fabricate a BUY.
 - Reminders fire in **this tab**, not the phone Clock app. Leave the tab open (or recently active). Allow notifications if you want an OS toast.
-- Open reminders, tasks, and plans also show in the dock above the composer. The calendar mark on a reminder opens Google Calendar in the browser (a link, not a login).
+- Uploading a service-account JSON does **not** set a reminder by itself. Share your Google Calendar with the robot email as **Make changes to events**, then say `remind me in 10 minutes to drink water`. She will keep it here and try to put it on that shared calendar.
+- Open reminders, tasks, and plans also show in the dock above the composer. The calendar mark on a reminder opens the event if she created one, otherwise a Google Calendar template link.
 
 ---
 
@@ -526,13 +527,15 @@ It **cannot** open personal Gmail. For inbox and Contacts you still need OAuth (
    - Either upload it in Customize → Lookup (“Service account JSON”), or
    - Copy it to `data/google-service-account.json` in the project folder.
 6. `google-service-account.example.json` shows the **shape** only. Do not put a real `private_key` in git.
-7. **Share the actual data with the robot email** (this step is the one people skip):
-   - Google Calendar → Settings → the calendar → Share with `maya@….iam.gserviceaccount.com` → permission **See all event details** (or Make changes if you want her to create events).
+7. **Share the actual data with the robot email** (this step is the one people skip — the JSON key cannot see your calendar until you do):
+   - Google Calendar → Settings (gear) → Settings → your calendar → Share with specific people → add `maya@….iam.gserviceaccount.com`.
+   - For **reminders** the permission must be **Make changes to events**. “See all event details” is read-only.
    - Google Drive → right-click the folder or file → Share → same email → Viewer (or Editor for writes you later allow).
    - Docs and Sheets: share the document the same way.
 8. Ask in chat:
 
    ```
+   Remind me in 10 minutes to drink water
    What's on my Google Calendar today?
    Search Drive for notes
    Open my Google Doc
@@ -544,6 +547,7 @@ If you have **both** OAuth and a service account, OAuth wins for Gmail and Conta
 ### C. What to say after you are connected
 
 ```
+Remind me in 10 minutes to drink water
 What's on my Google Calendar today?
 Unread email
 Search Drive for notes
@@ -555,7 +559,7 @@ Create a calendar event tomorrow 3pm called Maya review
 Send an email to me that says hello
 ```
 
-**Writes** (create event, add task) ask first unless “Always allow Google writes” is on.
+Saying `remind me …` always sets it in this tab. If a writable calendar is shared (or you connected OAuth), she also creates the event. Other writes (schedule a meeting, add a Google task) still ask first unless “Always allow Google writes” is on.
 
 **Send mail** always asks, even then.
 

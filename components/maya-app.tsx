@@ -67,6 +67,31 @@ import {
   makeTask,
   parsePlan,
 } from "@/lib/reminders"
+
+async function putReminderOnGoogle(item: Reminder) {
+  try {
+    const response = await fetch("/api/google/reminder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: item.text, when: item.at }),
+    })
+    const data = (await response.json()) as {
+      ok?: boolean
+      summary?: string
+      detail?: string
+    }
+    const summary = data.summary?.trim()
+    return {
+      note: summary ? `\n\n${summary}${data.detail ? `\n${data.detail}` : ""}` : "",
+      link: data.detail,
+    }
+  } catch {
+    return {
+      note: "\n\nCould not reach Google Calendar. The reminder is still set in this tab.",
+      link: undefined,
+    }
+  }
+}
 import type { ChatMessage, Personality, Reminder } from "@/lib/types"
 import {
   activeConversation,
@@ -545,11 +570,15 @@ export function MayaApp() {
           let apply = (current: typeof snapshot) => current
           if (plan.kind === "need-time") {
             reply =
-              "Tell me when — in 10 minutes, at 7pm, tomorrow at 9. I’ll hold it in this app and ping you here. I can’t set the Clock app on your phone without Google login."
+              "Tell me when — in 10 minutes, at 7pm, tomorrow at 9. I’ll hold it in this tab and ping you here. The service-account JSON is not enough on its own: share your Google Calendar with the robot email as “Make changes to events” (Customize → Lookup shows the email), then ask again."
           } else if (plan.kind === "reminder" || plan.kind === "alarm") {
             const item = makeReminder(plan)
-            const cal = googleCalendarUrl(item.text, item.at)
-            reply = `Set. ${item.kind === "alarm" ? "Alarm" : "Reminder"} for ${formatWhen(item.at)}: ${item.text}. I’ll speak it here if this tab is open. Optional — add it in Google Calendar:\n${cal}`
+            const google = await putReminderOnGoogle(item)
+            if (google.link) item.calendarUrl = google.link
+            const fallback = googleCalendarUrl(item.text, item.at)
+            reply = `Set. ${item.kind === "alarm" ? "Alarm" : "Reminder"} for ${formatWhen(item.at)}: ${item.text}. I’ll speak it here if this tab is open.${
+              google.note || `\n\nOptional — add it in Google Calendar:\n${fallback}`
+            }`
             apply = (current) => upsertReminder(current, item)
           } else if (plan.kind === "task") {
             const item = makeTask(plan.label)

@@ -112,17 +112,203 @@ async function calendarList(token: string): Promise<CalendarItem[]> {
   return data.items ?? []
 }
 
-function writableCalendarId(items: CalendarItem[]) {
-  const writable = items.filter(
-    (item) => item.accessRole === "owner" || item.accessRole === "writer"
-  )
-  return (
-    writable.find((item) => item.primary)?.id ||
-    writable[0]?.id ||
-    items.find((item) => item.primary)?.id ||
-    items[0]?.id ||
-    "primary"
-  )
+function isWritableRole(role?: string) {
+  return role === "owner" || role === "writer"
+}
+
+function calendarLabel(item: CalendarItem) {
+  return item.summary || item.id || "calendar"
+}
+
+export function shareCalendarInstructions(email: string) {
+  return [
+    `The service-account key is loaded (${email}), but that robot cannot see your calendar yet.`,
+    "Open Google Calendar in the browser you use every day → Settings (gear) → Settings → pick your calendar → Share with specific people.",
+    `Add ${email} and set the permission to “Make changes to events” (See all event details is read-only).`,
+    "Wait a few seconds, then say: remind me in 10 minutes to drink water.",
+  ].join(" ")
+}
+
+function pickWritableCalendar(
+  items: CalendarItem[],
+  kind: "oauth" | "service-account"
+) {
+  const writable = items.filter((item) => isWritableRole(item.accessRole))
+  const chosen =
+    writable.find((item) => item.primary) ||
+    writable[0] ||
+    (kind === "oauth"
+      ? items.find((item) => item.primary) || items[0]
+      : undefined)
+  if (chosen?.id) {
+    return { id: chosen.id, label: calendarLabel(chosen), role: chosen.accessRole }
+  }
+  if (kind === "oauth") {
+    return { id: "primary", label: "primary", role: "owner" }
+  }
+  return null
+}
+
+export type CalendarWriteState = {
+  kind: "oauth" | "service-account" | "none"
+  email: string | null
+  calendarWritable: boolean
+  calendars: Array<{ id: string; summary: string; role: string }>
+  shareHint: string
+}
+
+export async function calendarWriteState(): Promise<CalendarWriteState> {
+  const access = await googleAccess("any")
+  if (!access) {
+    return {
+      kind: "none",
+      email: null,
+      calendarWritable: false,
+      calendars: [],
+      shareHint:
+        "No Google credentials. Upload a service account JSON and share your calendar with its email, or Connect Google.",
+    }
+  }
+
+  try {
+    const items = await calendarList(access.accessToken)
+    const listed = items
+      .filter((item): item is CalendarItem & { id: string } => Boolean(item.id))
+      .map((item) => ({
+        id: item.id,
+        summary: calendarLabel(item),
+        role: item.accessRole || "unknown",
+      }))
+    const writable = pickWritableCalendar(items, access.kind)
+    if (access.kind === "service-account" && !writable) {
+      const reader = listed[0]
+      return {
+        kind: access.kind,
+        email: access.email ?? null,
+        calendarWritable: false,
+        calendars: listed,
+        shareHint: reader
+          ? `I can see “${reader.summary}” as ${reader.role}. Change that share to “Make changes to events”.`
+          : shareCalendarInstructions(access.email || "the robot email"),
+      }
+    }
+    return {
+      kind: access.kind,
+      email: access.email ?? null,
+      calendarWritable: Boolean(writable),
+      calendars: listed,
+      shareHint: writable
+        ? `Can write to ${writable.label}.`
+        : "Google is connected.",
+    }
+  } catch (caught) {
+    const message =
+      caught instanceof Error ? caught.message : "Could not list calendars."
+    const disabled = /has not been used|disabled|access not configured/i.test(
+      message
+    )
+    return {
+      kind: access.kind,
+      email: access.email ?? null,
+      calendarWritable: false,
+      calendars: [],
+      shareHint: disabled
+        ? `Enable the Google Calendar API in that Cloud project, then share your calendar with ${access.email || "the robot email"}.`
+        : access.kind === "service-account" && access.email
+          ? `${message} ${shareCalendarInstructions(access.email)}`
+          : message,
+    }
+  }
+}
+
+export async function createCalendarEvent(input: {
+  title: string
+  when: string | number
+}): Promise<{
+  ok: boolean
+  summary: string
+  detail?: string
+  calendar?: string
+}> {
+  const access = await googleAccess("any")
+  if (!access) {
+    return {
+      ok: false,
+      summary:
+        "The reminder is in this tab. To put it on Google Calendar, upload a service account JSON and share your calendar with that email as “Make changes to events”, or Connect Google.",
+    }
+  }
+
+  const start = new Date(input.when)
+  if (Number.isNaN(start.getTime())) {
+    return { ok: false, summary: "I need a real time for that event." }
+  }
+
+  let items: CalendarItem[] = []
+  try {
+    items = await calendarList(access.accessToken)
+  } catch (caught) {
+    const message =
+      caught instanceof Error ? caught.message : "Could not list calendars."
+    return {
+      ok: false,
+      summary:
+        access.kind === "service-account" && access.email
+          ? `${message} ${shareCalendarInstructions(access.email)}`
+          : message,
+    }
+  }
+
+  const picked = pickWritableCalendar(items, access.kind)
+  if (!picked) {
+    return {
+      ok: false,
+      summary:
+        access.kind === "service-account" && access.email
+          ? shareCalendarInstructions(access.email)
+          : "I could not find a writable Google Calendar.",
+    }
+  }
+
+  const end = new Date(start.getTime() + 15 * 60_000)
+  try {
+    const created = (await googleFetch(
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(picked.id)}/events`,
+      {
+        method: "POST",
+        token: access.accessToken,
+        body: JSON.stringify({
+          summary: input.title,
+          description: "Set by Maya",
+          start: { dateTime: start.toISOString() },
+          end: { dateTime: end.toISOString() },
+          reminders: {
+            useDefault: false,
+            overrides: [
+              { method: "popup", minutes: 0 },
+              { method: "popup", minutes: 10 },
+            ],
+          },
+        }),
+      }
+    )) as { htmlLink?: string; summary?: string }
+    return {
+      ok: true,
+      summary: `Also on Google Calendar (${picked.label}).`,
+      detail: created.htmlLink,
+      calendar: picked.label,
+    }
+  } catch (caught) {
+    const message =
+      caught instanceof Error ? caught.message : "Could not create the event."
+    if (access.kind === "service-account" && access.email) {
+      return {
+        ok: false,
+        summary: `${message} ${shareCalendarInstructions(access.email)}`,
+      }
+    }
+    return { ok: false, summary: message }
+  }
 }
 
 async function eventsOnCalendar(
@@ -203,28 +389,15 @@ export async function runGoogleTool(
     const calendars = await calendarList(access.accessToken).catch(() => [] as CalendarItem[])
     if (action === "create") {
       const title = args.title?.trim() || args.query?.trim() || "Event"
-      const start = args.when ? new Date(args.when) : new Date(Date.now() + 60 * 60_000)
-      if (Number.isNaN(start.getTime())) {
-        return { ok: false, summary: "I need a real time for that event." }
-      }
-      const end = new Date(start.getTime() + 45 * 60_000)
-      const calendarId = writableCalendarId(calendars)
-      const created = (await googleFetch(
-        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,
-        {
-          method: "POST",
-          token: access.accessToken,
-          body: JSON.stringify({
-            summary: title,
-            start: { dateTime: start.toISOString() },
-            end: { dateTime: end.toISOString() },
-          }),
-        }
-      )) as { htmlLink?: string; summary?: string }
+      const created = await createCalendarEvent({
+        title,
+        when: args.when || Date.now() + 60 * 60_000,
+      })
+      if (!created.ok) return created
       return {
         ok: true,
-        summary: `Created calendar event: ${created.summary || title}.`,
-        detail: created.htmlLink,
+        summary: `Created calendar event: ${title}.`,
+        detail: created.detail,
       }
     }
     const from = new Date()
@@ -250,7 +423,9 @@ export async function runGoogleTool(
         ok: true,
         summary:
           access.kind === "service-account"
-            ? "Nothing on calendars this service account can see. Share a calendar with its email, or Connect Google with OAuth for your personal calendar."
+            ? access.email
+              ? shareCalendarInstructions(access.email)
+              : "Nothing on calendars this service account can see. Share a calendar with its email, or Connect Google with OAuth for your personal calendar."
             : "Nothing on your calendars in the next week.",
       }
     }

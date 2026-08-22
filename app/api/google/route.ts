@@ -1,3 +1,4 @@
+import { calendarWriteState } from "@/lib/google/apps"
 import {
   clearOAuthToken,
   googleStatus,
@@ -8,9 +9,13 @@ import {
 export const runtime = "nodejs"
 
 export async function GET(request: Request) {
-  const status = await googleStatus()
+  const [status, calendar] = await Promise.all([
+    googleStatus(),
+    calendarWriteState(),
+  ])
   return Response.json({
     ...status,
+    ...calendar,
     redirectUri: redirectUriFromRequest(request),
   })
 }

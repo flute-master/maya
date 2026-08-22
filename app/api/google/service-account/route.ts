@@ -1,3 +1,4 @@
+import { calendarWriteState } from "@/lib/google/apps"
 import {
   clearServiceAccount,
   googleStatus,
@@ -5,6 +6,14 @@ import {
 } from "@/lib/google/auth"
 
 export const runtime = "nodejs"
+
+async function statusWithCalendar() {
+  const [status, calendar] = await Promise.all([
+    googleStatus(),
+    calendarWriteState(),
+  ])
+  return { ...status, ...calendar }
+}
 
 export async function POST(request: Request) {
   let body: unknown
@@ -15,7 +24,7 @@ export async function POST(request: Request) {
   }
   try {
     const email = await saveServiceAccount(body)
-    return Response.json({ ok: true, ...(await googleStatus()), email })
+    return Response.json({ ok: true, ...(await statusWithCalendar()), email })
   } catch (caught) {
     return Response.json(
       {
@@ -31,5 +40,5 @@ export async function POST(request: Request) {
 
 export async function DELETE() {
   await clearServiceAccount()
-  return Response.json({ ok: true, ...(await googleStatus()) })
+  return Response.json({ ok: true, ...(await statusWithCalendar()) })
 }

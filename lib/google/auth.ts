@@ -283,7 +283,7 @@ export async function googleStatus() {
     note: connected
       ? `Signed in as ${oauth?.email || "your Google account"}.`
       : sa
-        ? `Service account ${sa.client_email} is loaded. Share calendars and Drive files with that email. It cannot open personal Gmail.`
+        ? `Service account ${sa.client_email} is loaded. The key is not enough — share your Google Calendar with that email as “Make changes to events”. It cannot open personal Gmail.`
         : "Not connected. Paste a free OAuth client, then Connect Google — a service account cannot open @gmail.com mail.",
   }
 }

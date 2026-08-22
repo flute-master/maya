@@ -270,12 +270,12 @@ export function planTools(
   }
 
   if (
-    /\b(google calendar|gcal|what(?:'s| is) on my calendar|my calendar|calendar today|my schedule|do i have (any )?meetings|what meetings|schedule (a |an )?(meeting|event)|add (an? )?(event|meeting) to (my )?(google )?calendar)\b/.test(
+    /\b(google calendar|gcal|what(?:'s| is) on my calendar|my calendar|calendar today|my schedule|do i have (any )?meetings|what meetings|schedule (a |an )?(meeting|event)|add (an? )?(event|meeting) to (my )?(google )?calendar|put (a )?reminder on (my )?(google )?calendar)\b/.test(
       lower
     )
   ) {
     const create =
-      /\b(schedule|add (an? )?(event|meeting)|put .* on (my )?calendar|create (an? )?event)\b/.test(
+      /\b(schedule|add (an? )?(event|meeting)|put .* on (my )?calendar|create (an? )?event|put (a )?reminder)\b/.test(
         lower
       )
     add({

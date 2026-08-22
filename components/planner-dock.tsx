@@ -47,11 +47,11 @@ export function PlannerDock({
             </p>
             <a
               className="inline-flex size-7 shrink-0 items-center justify-center rounded-md hover:bg-muted"
-              href={googleCalendarUrl(item.text, item.at)}
+              href={item.calendarUrl || googleCalendarUrl(item.text, item.at)}
               target="_blank"
               rel="noreferrer"
-              title="Add to Google Calendar"
-              aria-label="Add to Google Calendar"
+              title={item.calendarUrl ? "Open Google Calendar event" : "Add to Google Calendar"}
+              aria-label={item.calendarUrl ? "Open Google Calendar event" : "Add to Google Calendar"}
             >
               <GoogleCalendarMark className="size-4" />
             </a>

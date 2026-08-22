@@ -27,6 +27,9 @@ type GoogleStatus = {
   canDrive?: boolean
   canTasks?: boolean
   canContacts?: boolean
+  calendarWritable?: boolean
+  calendars?: Array<{ id: string; summary: string; role: string }>
+  shareHint?: string
   note?: string
   redirectUri?: string
   error?: string
@@ -127,7 +130,9 @@ export function GoogleConnect({
       if (!response.ok) throw new Error(data.error || "Could not save the key.")
       setStatus(data)
       setHint(
-        `Service account ${data.email} saved. Share calendars and Drive files with that email. It still cannot open personal Gmail.`
+        data.calendarWritable
+          ? `Service account ${data.email} saved and can write to ${data.calendars?.[0]?.summary || "a shared calendar"}. Say “remind me in 10 minutes to drink water”.`
+          : `Service account ${data.email} saved. The key is not enough — share your Google Calendar with that email as “Make changes to events”. It still cannot open personal Gmail.`
       )
     } catch (caught) {
       setHint(caught instanceof Error ? caught.message : "Bad JSON key.")
@@ -143,12 +148,11 @@ export function GoogleConnect({
         Google apps
       </p>
       <p className="mt-1 text-sm text-muted-foreground">
-        A service account cannot open your personal Gmail or Calendar. Connect
-        with Google OAuth (free Cloud project, test user = you) for Gmail,
-        Calendar, Drive, Docs, Sheets, Tasks, and Contacts. Optional: upload a
-        service account JSON for Drive/Calendar/Docs you share with its email.
-        Keep, Meet, and Photos Library are not available as these APIs. I
-        cannot create the Cloud project for you.
+        A service account cannot open personal Gmail. It can use Calendar,
+        Drive, Docs, and Sheets only after you share those with the robot
+        email. Connect Google (OAuth) for Gmail, Contacts, and your own
+        calendar without sharing. Keep, Meet, and Photos Library are not
+        these APIs.
       </p>
       <p className="mt-2 text-sm">{status?.note || "Checking…"}</p>
       {status?.redirectUri ? (
@@ -160,7 +164,10 @@ export function GoogleConnect({
         <AppChip live={Boolean(status?.canGmail)} label="Gmail">
           <GmailMark className="size-5" />
         </AppChip>
-        <AppChip live={Boolean(status?.canCalendar)} label="Calendar">
+        <AppChip
+          live={Boolean(status?.calendarWritable || (status?.canCalendar && status?.connected))}
+          label="Calendar"
+        >
           <GoogleCalendarMark className="size-5" />
         </AppChip>
         <AppChip live={Boolean(status?.canDrive)} label="Drive">
@@ -239,18 +246,41 @@ export function GoogleConnect({
         />
       </label>
       {status?.serviceAccount ? (
-        <div className="mt-2 flex items-center justify-between gap-2">
-          <p className="text-xs text-muted-foreground">{status.serviceAccount}</p>
-          <Button
-            type="button"
-            size="xs"
-            variant="ghost"
-            onClick={() => {
-              void fetch("/api/google/service-account", { method: "DELETE" }).then(load)
-            }}
-          >
-            Remove key
-          </Button>
+        <div className="mt-2 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <p className="break-all text-xs text-muted-foreground">{status.serviceAccount}</p>
+            <Button
+              type="button"
+              size="xs"
+              variant="ghost"
+              onClick={() => {
+                void fetch("/api/google/service-account", { method: "DELETE" }).then(load)
+              }}
+            >
+              Remove key
+            </Button>
+          </div>
+          {status.calendarWritable ? (
+            <p className="text-xs text-muted-foreground">
+              {status.shareHint || "Calendar share looks writable. Reminders can land there."}
+            </p>
+          ) : (
+            <div className="rounded-lg bg-muted/60 p-2 text-xs leading-relaxed">
+              <p className="font-medium text-foreground">
+                Key is loaded. Calendar is not shared yet.
+              </p>
+              <ol className="mt-1 list-decimal space-y-1 pl-4 text-muted-foreground">
+                <li>Open Google Calendar as you.</li>
+                <li>Settings (gear) → Settings → your calendar → Share with specific people.</li>
+                <li>
+                  Add{" "}
+                  <code className="break-all text-foreground">{status.serviceAccount}</code>
+                </li>
+                <li>Permission: Make changes to events — not “See all event details”.</li>
+                <li>Then say: remind me in 10 minutes to drink water.</li>
+              </ol>
+            </div>
+          )}
         </div>
       ) : null}
 

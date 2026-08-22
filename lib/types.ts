@@ -66,6 +66,7 @@ export type Reminder = {
   done: boolean
   fired: boolean
   createdAt: number
+  calendarUrl?: string
 }
 
 export type TaskItem = {

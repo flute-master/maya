@@ -88,6 +88,20 @@ export type ParsedPlan =
   | { kind: "task-done"; label: string }
   | { kind: "planner-list" }
 
+const REMIND_LEAD =
+  /^(?:please\s+|can you\s+|could you\s+|would you\s+)?(?:remind(?:\s+me)?|set(?:\s+up)?\s+(?:an?\s+)?(?:reminder|alarm)|setup\s+(?:an?\s+)?reminder|wake me)\s+/i
+
+export function isReminderAsk(text: string) {
+  const lower = text.toLowerCase()
+  if (/\bthat reminds me\b/.test(lower)) return false
+  return (
+    /\b(remind me|remind in|can you remind|could you remind|please remind|set(?:\s+up)?\s+(?:an?\s+)?reminder|setup\s+(?:an?\s+)?reminder|need a reminder|want a reminder|reminder\s+(?:for|at|in|to))\b/.test(
+      lower
+    ) ||
+    /\b(set an? alarm|wake me|alarm for|alarm at)\b/.test(lower)
+  )
+}
+
 export function parsePlan(text: string, now = Date.now()): ParsedPlan | null {
   const t = text.trim()
   const lower = t.toLowerCase()
@@ -111,10 +125,7 @@ export function parsePlan(text: string, now = Date.now()): ParsedPlan | null {
   if (task?.[1]) return { kind: "task", label: tidyLabel(task[1], "Task") }
 
   const wantsAlarm = /\b(set an? alarm|wake me|alarm for|alarm at)\b/.test(lower)
-  const wantsRemind =
-    wantsAlarm ||
-    /\b(remind me|set a reminder|set reminder)\b/.test(lower)
-  if (!wantsRemind) return null
+  if (!wantsAlarm && !isReminderAsk(lower)) return null
 
   const kind: "reminder" | "alarm" = wantsAlarm ? "alarm" : "reminder"
   const fallback = kind === "alarm" ? "Alarm" : "Reminder"
@@ -124,10 +135,7 @@ export function parsePlan(text: string, now = Date.now()): ParsedPlan | null {
   if (morning && !/\bat\s+\d/.test(lower)) {
     const label = tidyLabel(
       t
-        .replace(
-          /^(remind me|set a reminder|set reminder|set an? alarm|wake me)\s+/i,
-          ""
-        )
+        .replace(REMIND_LEAD, "")
         .replace(/\b(tomorrow morning|in the morning|this morning)\b/i, "")
         .replace(/^(to|that|about)\s+/i, ""),
       fallback
@@ -140,7 +148,7 @@ export function parsePlan(text: string, now = Date.now()): ParsedPlan | null {
   }
 
   const rel = t.match(
-    /\bin\s+(\d+)\s*(seconds?|secs?|minutes?|mins?|hours?|hrs?|hr|days?)\b(?:\s+(?:to|that)\s+(.+))?/i
+    /\b(?:in|after|for)\s+(\d+)\s*(seconds?|secs?|minutes?|mins?|hours?|hrs?|hr|days?)\b(?:\s+(?:to|that)\s+(.+))?/i
   )
   if (rel) {
     const n = Number(rel[1])
@@ -149,7 +157,8 @@ export function parsePlan(text: string, now = Date.now()): ParsedPlan | null {
     if (ms && n > 0) {
       const before = t
         .slice(0, rel.index)
-        .replace(/^(remind me|set a reminder|set reminder|set an? alarm|wake me)\s+(to\s+)?/i, "")
+        .replace(REMIND_LEAD, "")
+        .replace(/^(to\s+)?/i, "")
         .trim()
       const label = tidyLabel(rel[3] || before, fallback)
       return { kind, at: now + n * ms, label }
@@ -163,7 +172,13 @@ export function parsePlan(text: string, now = Date.now()): ParsedPlan | null {
     const hours = Number(abs[1])
     const minutes = abs[2] ? Number(abs[2]) : 0
     if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
-      const label = tidyLabel(abs[4], fallback)
+      const after = tidyLabel(abs[4], "")
+      const before = t
+        .slice(0, abs.index)
+        .replace(REMIND_LEAD, "")
+        .replace(/^(to\s+)?/i, "")
+        .trim()
+      const label = tidyLabel(after || before, fallback)
       return {
         kind,
         at: clockAt(hours, minutes, abs[3], tomorrow, new Date(now)),

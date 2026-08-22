@@ -256,7 +256,7 @@ export function creativeTopic(text: string): string {
 export function isPlannerQuery(text: string): boolean {
   const lower = intendedMeaning(text).toLowerCase()
   return (
-    /\b(remind me|set a reminder|set reminder|set an? alarm|wake me|alarm for)\b/.test(
+    /\b(remind me|remind in|can you remind|set(?:\s+up)?\s+(?:an?\s+)?reminder|setup\s+(?:an?\s+)?reminder|need a reminder|reminder\s+(?:for|at|in)|set an? alarm|wake me|alarm for)\b/.test(
       lower
     ) ||
     /\b(add (a )?task|to-?do|my (task )?list|mark .{2,40} done)\b/.test(lower) ||
