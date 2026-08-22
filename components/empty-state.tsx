@@ -84,6 +84,14 @@ export function EmptyState({
       <h1 className="font-heading text-4xl font-medium tracking-tight text-foreground sm:text-5xl">
         {name}
       </h1>
+      <div className="mt-5 flex w-full flex-col items-center gap-2">
+        <p className="text-xs text-muted-foreground">The room</p>
+        <RoomPicker
+          compact
+          value={atmosphere}
+          onPick={onAtmosphere}
+        />
+      </div>
       <p className="mt-4 max-w-sm text-base leading-7 text-muted-foreground">
         {returning
           ? `You're back${who ? `, ${who}` : ""}. I still have us — pick up wherever.`
@@ -111,14 +119,6 @@ export function EmptyState({
         Press play on Maya&apos;s voice below to hear her. Inner sage, Indian
         English — not the anime character.
       </p>
-      <div className="mt-6 flex w-full flex-col items-center gap-2">
-        <p className="text-xs text-muted-foreground">The room</p>
-        <RoomPicker
-          compact
-          value={atmosphere}
-          onPick={onAtmosphere}
-        />
-      </div>
       {past.length > 0 ? (
         <div className="mt-6 flex w-full flex-col gap-2">
           {past.map((item) => (
