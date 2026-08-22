@@ -3,6 +3,7 @@ import { mkdirSync, openSync, writeFileSync } from "node:fs"
 import { access } from "node:fs/promises"
 import { join } from "node:path"
 
+import { isMusicQuery } from "@/lib/music"
 import { isClearScreenCommand, isCreativeQuery, isJokeFollowUp, isMapsQuery } from "@/lib/skills"
 import type {
   ChatMessage,
@@ -31,7 +32,7 @@ export function trainedReplyUsable(text: string) {
 export function skipTinyNet(text: string) {
   const t = text.trim().toLowerCase()
   if (t.length < 24) return true
-  if (isCreativeQuery(text) || isJokeFollowUp(text) || isMapsQuery(text)) return true
+  if (isCreativeQuery(text) || isJokeFollowUp(text) || isMapsQuery(text) || isMusicQuery(text)) return true
   if (isClearScreenCommand(text)) return true
   return (
     /^(hi|hey|hello|yo|hola|namaste|thanks|thank you|bye|goodbye)\b/.test(t) ||

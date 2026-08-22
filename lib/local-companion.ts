@@ -676,17 +676,10 @@ export function replyLocally(
   ).filter((item) => item.detail || item.summary)
   if (tools.length && intent !== "identity") {
     const blocks = tools
-      .map((item) => {
-        const body = item.detail?.trim()
-        return body
-          ? `${item.name}: ${item.summary}\n${body}`
-          : `${item.name}: ${item.summary}`
-      })
+      .map((item) => item.detail?.trim() || item.summary)
+      .filter(Boolean)
       .join("\n\n")
-    const lead = isSage(personality)
-      ? "Here is what I actually ran — not a guess."
-      : "I used the tools on this machine:"
-    return `${lead}\n\n${blocks}`.slice(0, 3500)
+    return blocks.slice(0, 3500)
   }
 
   const voice = voiceById(personality.voiceId)

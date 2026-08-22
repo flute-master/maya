@@ -1,13 +1,15 @@
+import { stripSageChrome } from "@/lib/mind"
+
 /** Turn a chat reply into something a voice can say without sounding like a screen reader. */
 export function forSpokenText(text: string): string {
-  let spoken = text.trim()
+  let spoken = stripSageChrome(text)
   if (!spoken) return ""
 
   spoken = spoken.replace(
-    /^Assessment\s*\r?\nI used what I actually have[^\n]*\r?\n+(?:Answer\s*\r?\n)?/i,
+    /^(Assessment|Answer|Objective|Evidence|Verdict|Gaps|Risks|Playing|YouTube|Player|Source)\s*:?\s*/gim,
     ""
   )
-  spoken = spoken.replace(/^Here is what I actually ran[^\n]*\r?\n+/i, "")
+  spoken = spoken.replace(/\bI cannot stream Spotify[^.]*\./gi, "")
   spoken = spoken.replace(/```[\s\S]*?```/g, " ")
   spoken = spoken.replace(/`([^`]+)`/g, "$1")
   spoken = spoken.replace(/\*\*([^*]+)\*\*/g, "$1")

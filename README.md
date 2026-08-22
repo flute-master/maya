@@ -318,7 +318,7 @@ Header YouTube mark, or:
 Play tum hi ho on YouTube
 ```
 
-She embeds or links YouTube. She cannot log into Spotify. She does not download the audio.
+She **opens YouTube** in a new tab as soon as you name a song, then pins the video in her player when she can. `play tum hi ho`, `song kesariya`, or `gaana` all count. She cannot log into Spotify. She does not download the audio. If a popup is blocked, use the YouTube mark in the header.
 
 ---
 

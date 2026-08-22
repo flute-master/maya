@@ -39,15 +39,27 @@ export function readBrowserOrigin(timeoutMs = 3500): Promise<BrowserOrigin | nul
   })
 }
 
-export function openMapsWindow(url: string, existing?: Window | null) {
+function openNamedWindow(
+  url: string,
+  name: string,
+  existing?: Window | null
+) {
   try {
     if (existing && !existing.closed) {
       existing.location.href = url
       existing.focus()
       return existing
     }
-    return window.open(url, "maya-maps")
+    return window.open(url, name)
   } catch {
     return null
   }
+}
+
+export function openMapsWindow(url: string, existing?: Window | null) {
+  return openNamedWindow(url, "maya-maps", existing)
+}
+
+export function openYoutubeWindow(url: string, existing?: Window | null) {
+  return openNamedWindow(url, "maya-youtube", existing)
 }

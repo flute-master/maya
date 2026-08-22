@@ -25,7 +25,7 @@ import {
 import { MayaMark } from "@/components/maya-mark"
 import { PlannerDock } from "@/components/planner-dock"
 import { SettingsSheet } from "@/components/settings-sheet"
-import type { MusicTrack } from "@/lib/music"
+import { isMusicQuery, musicQuery, youtubeSearchUrl, type MusicTrack } from "@/lib/music"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DEFAULT_LEARNED, updateLearned } from "@/lib/adapt"
@@ -56,7 +56,7 @@ import {
 import { voiceById } from "@/lib/voices"
 import { hometownFromNotes, isClearScreenCommand, isDirectionsQuery, isMapsQuery, lastPlaceFromMessages, mapsQuery } from "@/lib/skills"
 import { googleMapsDirUrl, googleMapsSearchUrl } from "@/lib/maps"
-import { openMapsWindow, readBrowserOrigin } from "@/lib/geo"
+import { openMapsWindow, openYoutubeWindow, readBrowserOrigin } from "@/lib/geo"
 import { readPublicIdentity } from "@/lib/identity"
 import { intendedMeaning } from "@/lib/typos"
 import { canRunOnDevice } from "@/lib/webgpu"
@@ -131,6 +131,7 @@ export function MayaApp() {
   const sendGen = useRef(0)
   const lastDestRef = useRef<string | null>(null)
   const mapsWinRef = useRef<Window | null>(null)
+  const youtubeWinRef = useRef<Window | null>(null)
   vaultRef.current = vault
 
   const personality = vault.personality
@@ -451,11 +452,23 @@ export function MayaApp() {
       setPresence("thinking")
       setTicks(["Understanding request", "Checking memory"])
       const mapsAsk = isMapsQuery(meaning) || isMapsQuery(trimmed)
+      const musicAsk = isMusicQuery(meaning) || isMusicQuery(trimmed)
       if (mapsAsk) {
         try {
           mapsWinRef.current = window.open("about:blank", "maya-maps")
         } catch {
           mapsWinRef.current = null
+        }
+      }
+      if (musicAsk) {
+        const song = musicQuery(meaning) || musicQuery(trimmed)
+        try {
+          youtubeWinRef.current = openYoutubeWindow(
+            song ? youtubeSearchUrl(song) : "https://www.youtube.com",
+            youtubeWinRef.current
+          )
+        } catch {
+          youtubeWinRef.current = null
         }
       }
 
@@ -833,6 +846,7 @@ export function MayaApp() {
                 setTrack(next)
                 saveNowPlaying(next)
                 setMusicOpen(true)
+                openYoutubeWindow(next.url, youtubeWinRef.current)
               }
             }
           } catch {
@@ -1252,6 +1266,7 @@ export function MayaApp() {
               setTrack(next)
               saveNowPlaying(next)
               setMusicOpen(true)
+              openYoutubeWindow(next.url)
             }}
             onAllowTools={(pending) => {
               const last = retryRef.current

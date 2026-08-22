@@ -380,13 +380,21 @@ export function renderSage(body: string) {
   return body.trim()
 }
 
-/** Drop the old Assessment/Answer chrome if a model copies it. */
+/** Drop Assessment / Answer / tool-name headers so the reply reads like a person. */
 export function stripSageChrome(text: string) {
   return text
     .replace(
       /^Assessment\s*\r?\nI used what I actually have[^\n]*\r?\n+(?:Answer\s*\r?\n)?/i,
       ""
     )
+    .replace(/^Assessment\s*\r?\n[\s\S]*?\r?\nAnswer\s*\r?\n/i, "")
+    .replace(/^Here is what I actually ran[^\n]*\r?\n+/i, "")
+    .replace(/^I used the tools on this machine:\s*/i, "")
+    .replace(
+      /^(maps|music|weather|news|calc|otaku|flute|lookup|files_read|files_list|files_write|python|google_\w+|recall|mind):\s*/gim,
+      ""
+    )
+    .replace(/^(Assessment|Answer)\s*:?\s*$/gim, "")
     .trim()
 }
 

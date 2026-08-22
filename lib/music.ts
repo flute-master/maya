@@ -26,14 +26,17 @@ export function isMusicQuery(text: string): boolean {
   const lower = text.toLowerCase().trim()
   if (/\bflute\b/.test(lower) || /\bpython\b/.test(lower)) return false
   if (
-    /^(play|music|song|youtube)$/.test(lower) ||
+    /^(play|music|song|gaana|gana|youtube)$/.test(lower) ||
     /^open (the )?(music player|youtube|player)\b/.test(lower)
   ) {
     return true
   }
   return (
-    /\b(put on|listen to|music player|now playing|youtube)\b/.test(lower) ||
-    /\bplay\s+\S+/.test(lower)
+    /\b(put on|listen to|music player|now playing|youtube|gaana|sunaao|suna do|sunao)\b/.test(
+      lower
+    ) ||
+    /\bplay\s+\S+/.test(lower) ||
+    /\b(song|track|album)\s+\S+/.test(lower)
   )
 }
 
@@ -189,13 +192,11 @@ export async function findSong(query: string): Promise<MusicTrack> {
 }
 
 export function musicReply(track: MusicTrack) {
-  const lines = [
-    track.videoId
-      ? `Playing: ${track.title}`
-      : `I could not pin one video. Open the YouTube search for “${track.title}”.`,
-    `YouTube: ${track.url}`,
-  ]
-  if (track.embed) lines.push(`Player: ${track.embed}`)
-  lines.push("I cannot stream Spotify or Apple Music from here — YouTube is the free player.")
+  const lines = track.videoId
+    ? [`Playing ${track.title} on YouTube.`, track.url]
+    : [
+        `I could not pin one video. Here is the YouTube search for “${track.title}”.`,
+        track.url,
+      ]
   return { summary: track.title, detail: lines.join("\n"), url: track.url, track }
 }

@@ -1,7 +1,9 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 
+import { isMusicQuery, musicQuery } from "../../lib/music"
 import { stripSageChrome } from "../../lib/mind"
+import { forSpokenText } from "../../lib/spoken-text"
 import {
   isClearScreenCommand,
   isCreativeQuery,
@@ -53,4 +55,24 @@ test("stock Assessment chrome is stripped", () => {
     "Here is the joke.",
   ].join("\n")
   assert.equal(stripSageChrome(raw), "Here is the joke.")
+})
+
+test("song asks are YouTube music queries", () => {
+  assert.equal(isMusicQuery("play tum hi ho"), true)
+  assert.equal(isMusicQuery("song kesariya"), true)
+  assert.equal(musicQuery("play tum hi ho on youtube"), "tum hi ho")
+})
+
+test("voice reads the answer, not headers", () => {
+  const spoken = forSpokenText(
+    [
+      "Here is what I actually ran — not a guess.",
+      "music: Tum Hi Ho",
+      "Playing: Tum Hi Ho",
+      "YouTube: https://www.youtube.com/watch?v=Umqb9KENgmk",
+    ].join("\n")
+  )
+  assert.doesNotMatch(spoken, /assessment/i)
+  assert.doesNotMatch(spoken, /here is what i actually ran/i)
+  assert.match(spoken, /tum hi ho/i)
 })
